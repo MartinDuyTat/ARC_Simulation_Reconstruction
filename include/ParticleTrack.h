@@ -6,9 +6,12 @@
 #ifndef PARTICLETRACK
 #define PARTICLETRACK
 
-#include"Vector3Dfwd.h"
+#include<vector>
+#include"Math/Vector3Dfwd.h"
+#include"Math/DisplacementVector3D.h"
 #include"Photon.h"
 #include"TrackingVolume.h"
+#include"RadiatorCell.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -31,11 +34,11 @@ class ParticleTrack {
   /**
    * Convert to local radiator coordinates
    */
-  void ConvertToRadiatorCoordinates();
+  void ConvertToRadiatorCoordinates(const RadiatorCell &Cell);
   /**
    * Track particle through radiator cell
    */
-  void TrackThroughRadiatorCell();
+  void TrackThroughRadiatorCell(const RadiatorCell &Cell);
   /**
    * Generate Cherenkov photon from aerogel
    */
@@ -45,11 +48,24 @@ class ParticleTrack {
    */
   Photon GeneratePhotonFromGas() const;
   /**
+   * Generate Cherenkov photons from aerogel according to Frank-Tamm relation
+   */
+  std::vector<Photon> GeneratePhotonsFromAerogel() const;
+  /**
+   * Generate Cherenkov photons from gas according to Frank-Tamm relation
+   */
+  std::vector<Photon> GeneratePhotonsFromGas() const;
+  /**
    * Generate Cherenkov photon
    * @param Entry point of radiator
    * @param Exit point of ratiator
+   * @param n_phase Index of refraction for phase velocity
    */
-  Photon GeneratePhoton(const Vector &Entry, const Vector &Exit) const;
+  Photon GeneratePhoton(const Vector &Entry, const Vector &Exit, double n_phase) const;
+  /**
+   * Get the particle speed, in units of c
+   */
+  double Beta() const;
  private:
   /**
    * Particle momentum, in GeV
@@ -91,6 +107,10 @@ class ParticleTrack {
    * Which coordinate system the momentum and position is given in
    */
   CoordinateSystem m_CoordinateSystem;
+  /**
+   * Frank-Tamm relation for photon yield
+   */
+  double GetPhotonYield(double x, double Beta, double n) const;
 };
 
 #endif

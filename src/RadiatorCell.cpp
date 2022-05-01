@@ -16,20 +16,29 @@ double RadiatorCell::GetRadiatorThickness() const {
   return m_RadiatorThickness;
 }
 
-double VesselCell::GetVesselThickness() const {
+double RadiatorCell::GetVesselThickness() const {
   return m_VesselThickness;
 }
 
-double CoolingCell::GetCoolingThickness() const {
+double RadiatorCell::GetCoolingThickness() const {
   return m_CoolingThickness;
 }
 
-double AerogelCell::GetAerogelThickness() const {
+double RadiatorCell::GetAerogelThickness() const {
   return m_AerogelThickness;
 }
 
+const Vector& RadiatorCell::GetMirrorCentre() const {
+  return m_MirrorCentre;
+}
+
 double RadiatorCell::GetMirrorCurvatureCentreZ() const {
-  return m_RadiatorThickness - m_MirrorCurvature - 2*VesselThickness - m_CoolingThickness;
+  // TODO: Allow for off-axis mirror
+  return m_RadiatorThickness - m_MirrorCurvature - 2*m_VesselThickness - m_CoolingThickness;
+}
+
+double RadiatorCell::GetMirrorCurvature() const {
+  return m_MirrorCurvature;
 }
 
 const Vector& RadiatorCell::GetRadiatorPosition() const {

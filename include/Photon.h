@@ -6,7 +6,8 @@
 #ifndef PHOTON
 #define PHOTON
 
-#include"Vector3Dfwd.h"
+#include"Math/Vector3Dfwd.h"
+#include"Math/DisplacementVector3D.h"
 
 using Vector = ROOT::Math::XYZVector;
 

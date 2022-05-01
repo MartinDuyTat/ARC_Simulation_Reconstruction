@@ -7,6 +7,10 @@
 #ifndef SIPM
 #define SIPM
 
+#include<vector>
+#include<string>
+#include"Photon.h"
+
 struct PhotonHit {
   /**
    * Constructor saving the photon hits
@@ -25,6 +29,14 @@ class SiPM {
    * Constructor setting up the detector coordinates and detector size
    */
   SiPM();
+  /**
+   * Add a photon hit
+   */
+  void AddPhotonHit(const Photon &photon);
+  /**
+   * Plot photon hits
+   */
+  void PlotHits(const std::string &Filename) const;
  private:
   /**
    * Size of detector in x direction
@@ -47,3 +59,5 @@ class SiPM {
    */
   std::vector<PhotonHit> m_PhotonHits;
 };
+
+#endif

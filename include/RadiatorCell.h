@@ -8,7 +8,8 @@
 #ifndef RADIATORCELL
 #define RADIATORCELL
 
-#include"Vector3Dfwd.h"
+#include"Math/Vector3Dfwd.h"
+#include"SiPM.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -35,15 +36,27 @@ class RadiatorCell {
    * Get thickness of aerogel
    */
   double GetAerogelThickness() const;
+  /**
+   * Get the mirror centre of curvature
+   */
+  const Vector& GetMirrorCentre() const;
+  /**
+   * Get the mirror curvature
+   */
+  double GetMirrorCurvature() const;
+  /**
+   * The SiPM in the radiator cell
+   */
+  SiPM m_Detector;
+  /**
+   * Get the radiator cell position in the global coordinates
+   */
+  const Vector& GetRadiatorPosition() const;
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
    */
   double GetMirrorCurvatureCentreZ() const;
-  /**
-   * Get the radiator cell position in the global coordinates
-   */
-  const Vector& GetRadiatorPosition() const;
   /**
    * The full thickness of the radiator cell
    */

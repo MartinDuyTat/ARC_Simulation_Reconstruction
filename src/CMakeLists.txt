@@ -1,6 +1,8 @@
 add_library(ARC_Simulation_Reconstruction
 	    ParticleTrack.cpp
+	    ParticleMass.cpp
 	    Photon.cpp
+	    PhotonMapper.cpp
 	    RadiatorCell.cpp
 	    SiPM.cpp
 	    TrackingVolume.cpp)
