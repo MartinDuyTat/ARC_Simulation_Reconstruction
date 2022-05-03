@@ -1,0 +1,233 @@
+\begin{theindex}
+
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/apps/CMakeLists.txt}, 
+		\hyperpage{27}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/apps/RunARC.cpp}, 
+		\hyperpage{23}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/ParticleMass.h}, 
+		\hyperpage{24}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/ParticleTrack.h}, 
+		\hyperpage{24}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/Photon.h}, 
+		\hyperpage{25}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/PhotonMapper.h}, 
+		\hyperpage{26}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/RadiatorCell.h}, 
+		\hyperpage{26}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/SiPM.h}, 
+		\hyperpage{27}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/include/TrackingVolume.h}, 
+		\hyperpage{27}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/CMakeLists.txt}, 
+		\hyperpage{27}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/ParticleMass.cpp}, 
+		\hyperpage{27}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/ParticleTrack.cpp}, 
+		\hyperpage{28}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/Photon.cpp}, 
+		\hyperpage{28}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/PhotonMapper.cpp}, 
+		\hyperpage{28}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/RadiatorCell.cpp}, 
+		\hyperpage{29}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/SiPM.cpp}, 
+		\hyperpage{29}
+  \item {/data/lhcb/users/tat/ARC\_Simulation\_Reconstruction/src/TrackingVolume.cpp}, 
+		\hyperpage{29}
+
+  \indexspace
+
+  \item {AddPhotonHit}
+    \subitem {SiPM}, \hyperpage{20}
+  \item {Aerogel}
+    \subitem {Photon}, \hyperpage{13}
+
+  \indexspace
+
+  \item {Beta}
+    \subitem {ParticleTrack}, \hyperpage{10}
+
+  \indexspace
+
+  \item {ConvertToRadiatorCoordinates}
+    \subitem {ParticleTrack}, \hyperpage{10}
+  \item {CoordinateSystem}
+    \subitem {ParticleTrack}, \hyperpage{9}
+
+  \indexspace
+
+  \item {Gas}
+    \subitem {Photon}, \hyperpage{13}
+  \item {GeneratePhoton}
+    \subitem {ParticleTrack}, \hyperpage{10}
+  \item {GeneratePhotonFromAerogel}
+    \subitem {ParticleTrack}, \hyperpage{11}
+  \item {GeneratePhotonFromGas}
+    \subitem {ParticleTrack}, \hyperpage{11}
+  \item {GeneratePhotonsFromAerogel}
+    \subitem {ParticleTrack}, \hyperpage{11}
+  \item {GeneratePhotonsFromGas}
+    \subitem {ParticleTrack}, \hyperpage{11}
+  \item {GetAerogelThickness}
+    \subitem {RadiatorCell}, \hyperpage{17}
+  \item {GetCoolingThickness}
+    \subitem {RadiatorCell}, \hyperpage{17}
+  \item {GetFieldStrength}
+    \subitem {TrackingVolume}, \hyperpage{21}
+  \item {GetMass}
+    \subitem {ParticleMass}, \hyperpage{7}
+  \item {GetMirrorCentre}
+    \subitem {RadiatorCell}, \hyperpage{17}
+  \item {GetMirrorCurvature}
+    \subitem {RadiatorCell}, \hyperpage{18}
+  \item {GetRadiatorPosition}
+    \subitem {RadiatorCell}, \hyperpage{18}
+  \item {GetRadiatorThickness}
+    \subitem {RadiatorCell}, \hyperpage{18}
+  \item {GetRadius}
+    \subitem {TrackingVolume}, \hyperpage{21}
+  \item {GetVesselThickness}
+    \subitem {RadiatorCell}, \hyperpage{18}
+  \item {GlobalDetector}
+    \subitem {ParticleTrack}, \hyperpage{10}
+
+  \indexspace
+
+  \item {LocalRadiator}
+    \subitem {ParticleTrack}, \hyperpage{10}
+
+  \indexspace
+
+  \item {m\_Detector}
+    \subitem {RadiatorCell}, \hyperpage{19}
+  \item {m\_Direction}
+    \subitem {Photon}, \hyperpage{14}
+  \item {m\_EmissionPoint}
+    \subitem {Photon}, \hyperpage{14}
+  \item {m\_Energy}
+    \subitem {Photon}, \hyperpage{14}
+  \item {m\_Photon}
+    \subitem {PhotonHit}, \hyperpage{16}
+  \item {m\_Position}
+    \subitem {Photon}, \hyperpage{14}
+  \item {m\_Radiator}
+    \subitem {Photon}, \hyperpage{14}
+  \item {main}
+    \subitem {RunARC.cpp}, \hyperpage{24}
+
+  \indexspace
+
+  \item {ParticleMass}, \hyperpage{7}
+    \subitem {GetMass}, \hyperpage{7}
+  \item {ParticleTrack}, \hyperpage{9}
+    \subitem {Beta}, \hyperpage{10}
+    \subitem {ConvertToRadiatorCoordinates}, \hyperpage{10}
+    \subitem {CoordinateSystem}, \hyperpage{9}
+    \subitem {GeneratePhoton}, \hyperpage{10}
+    \subitem {GeneratePhotonFromAerogel}, \hyperpage{11}
+    \subitem {GeneratePhotonFromGas}, \hyperpage{11}
+    \subitem {GeneratePhotonsFromAerogel}, \hyperpage{11}
+    \subitem {GeneratePhotonsFromGas}, \hyperpage{11}
+    \subitem {GlobalDetector}, \hyperpage{10}
+    \subitem {LocalRadiator}, \hyperpage{10}
+    \subitem {ParticleTrack}, \hyperpage{10}
+    \subitem {TrackThroughRadiatorCell}, \hyperpage{12}
+    \subitem {TrackThroughTracker}, \hyperpage{12}
+  \item {ParticleTrack.h}
+    \subitem {Vector}, \hyperpage{25}
+  \item {Photon}, \hyperpage{12}
+    \subitem {Aerogel}, \hyperpage{13}
+    \subitem {Gas}, \hyperpage{13}
+    \subitem {m\_Direction}, \hyperpage{14}
+    \subitem {m\_EmissionPoint}, \hyperpage{14}
+    \subitem {m\_Energy}, \hyperpage{14}
+    \subitem {m\_Position}, \hyperpage{14}
+    \subitem {m\_Radiator}, \hyperpage{14}
+    \subitem {Photon}, \hyperpage{13}
+    \subitem {Radiator}, \hyperpage{13}
+    \subitem {Unknown}, \hyperpage{13}
+  \item {Photon.h}
+    \subitem {Vector}, \hyperpage{25}
+  \item {PhotonHit}, \hyperpage{15}
+    \subitem {m\_Photon}, \hyperpage{16}
+    \subitem {PhotonHit}, \hyperpage{15}
+    \subitem {x}, \hyperpage{16}
+    \subitem {y}, \hyperpage{16}
+  \item {PhotonMapper}, \hyperpage{7}
+    \subitem {PhotonMirrorDistance}, \hyperpage{8}
+    \subitem {TracePhoton}, \hyperpage{8}
+    \subitem {TracePhotonToDetector}, \hyperpage{8}
+    \subitem {TracePhotonToMirror}, \hyperpage{8}
+  \item {PhotonMirrorDistance}
+    \subitem {PhotonMapper}, \hyperpage{8}
+  \item {PlotHits}
+    \subitem {SiPM}, \hyperpage{20}
+
+  \indexspace
+
+  \item {Radiator}
+    \subitem {Photon}, \hyperpage{13}
+  \item {RadiatorCell}, \hyperpage{16}
+    \subitem {GetAerogelThickness}, \hyperpage{17}
+    \subitem {GetCoolingThickness}, \hyperpage{17}
+    \subitem {GetMirrorCentre}, \hyperpage{17}
+    \subitem {GetMirrorCurvature}, \hyperpage{18}
+    \subitem {GetRadiatorPosition}, \hyperpage{18}
+    \subitem {GetRadiatorThickness}, \hyperpage{18}
+    \subitem {GetVesselThickness}, \hyperpage{18}
+    \subitem {m\_Detector}, \hyperpage{19}
+    \subitem {RadiatorCell}, \hyperpage{17}
+  \item {RadiatorCell.h}
+    \subitem {Vector}, \hyperpage{26}
+  \item {RunARC.cpp}
+    \subitem {main}, \hyperpage{24}
+    \subitem {Vector}, \hyperpage{23}
+
+  \indexspace
+
+  \item {SiPM}, \hyperpage{19}
+    \subitem {AddPhotonHit}, \hyperpage{20}
+    \subitem {PlotHits}, \hyperpage{20}
+    \subitem {SiPM}, \hyperpage{19}
+
+  \indexspace
+
+  \item {TracePhoton}
+    \subitem {PhotonMapper}, \hyperpage{8}
+  \item {TracePhotonToDetector}
+    \subitem {PhotonMapper}, \hyperpage{8}
+  \item {TracePhotonToMirror}
+    \subitem {PhotonMapper}, \hyperpage{8}
+  \item {TrackingVolume}, \hyperpage{20}
+    \subitem {GetFieldStrength}, \hyperpage{21}
+    \subitem {GetRadius}, \hyperpage{21}
+    \subitem {TrackingVolume}, \hyperpage{20}
+  \item {TrackThroughRadiatorCell}
+    \subitem {ParticleTrack}, \hyperpage{12}
+  \item {TrackThroughTracker}
+    \subitem {ParticleTrack}, \hyperpage{12}
+
+  \indexspace
+
+  \item {Unknown}
+    \subitem {Photon}, \hyperpage{13}
+
+  \indexspace
+
+  \item {Vector}
+    \subitem {ParticleTrack.h}, \hyperpage{25}
+    \subitem {Photon.h}, \hyperpage{25}
+    \subitem {RadiatorCell.h}, \hyperpage{26}
+    \subitem {RunARC.cpp}, \hyperpage{23}
+
+  \indexspace
+
+  \item {x}
+    \subitem {PhotonHit}, \hyperpage{16}
+
+  \indexspace
+
+  \item {y}
+    \subitem {PhotonHit}, \hyperpage{16}
+
+\end{theindex}

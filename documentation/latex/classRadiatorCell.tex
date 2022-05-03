@@ -1,0 +1,147 @@
+\hypertarget{classRadiatorCell}{}\doxysection{Radiator\+Cell Class Reference}
+\label{classRadiatorCell}\index{RadiatorCell@{RadiatorCell}}
+
+
+{\ttfamily \#include $<$Radiator\+Cell.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classRadiatorCell_a3e76fefbe96afc9ae06477ccad5a7c52}{Radiator\+Cell}} (const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&Position)
+\item 
+double \mbox{\hyperlink{classRadiatorCell_a8a9a7e46d1afaf70f846e9f888cafd61}{Get\+Radiator\+Thickness}} () const
+\item 
+double \mbox{\hyperlink{classRadiatorCell_a5b69e00beb3f61f8a5d0211b551e7fef}{Get\+Vessel\+Thickness}} () const
+\item 
+double \mbox{\hyperlink{classRadiatorCell_ac521c4891d2d14a586f4087ae708a5df}{Get\+Cooling\+Thickness}} () const
+\item 
+double \mbox{\hyperlink{classRadiatorCell_af970de29ec343b71c3506a7fd10e2328}{Get\+Aerogel\+Thickness}} () const
+\item 
+const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \& \mbox{\hyperlink{classRadiatorCell_ad6f3814cfcf554390c7715a659cf9516}{Get\+Mirror\+Centre}} () const
+\item 
+double \mbox{\hyperlink{classRadiatorCell_a27c298bdc22f41231b11cd434d66bd1e}{Get\+Mirror\+Curvature}} () const
+\item 
+const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \& \mbox{\hyperlink{classRadiatorCell_a75c9abe651d9c8ef556b41a21a7ba4ae}{Get\+Radiator\+Position}} () const
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classSiPM}{Si\+PM}} \mbox{\hyperlink{classRadiatorCell_aa92c253e42428b4893f6a4768de918c2}{m\+\_\+\+Detector}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 16 of file Radiator\+Cell.\+h.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classRadiatorCell_a3e76fefbe96afc9ae06477ccad5a7c52}\label{classRadiatorCell_a3e76fefbe96afc9ae06477ccad5a7c52}} 
+\index{RadiatorCell@{RadiatorCell}!RadiatorCell@{RadiatorCell}}
+\index{RadiatorCell@{RadiatorCell}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{RadiatorCell()}{RadiatorCell()}}
+{\footnotesize\ttfamily Radiator\+Cell\+::\+Radiator\+Cell (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&}]{Position }\end{DoxyParamCaption})}
+
+Constructor that sets up the geometry 
+\begin{DoxyParams}{Parameters}
+{\em Position} & Position of radiator cell in global coordinates \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 5 of file Radiator\+Cell.\+cpp.
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classRadiatorCell_af970de29ec343b71c3506a7fd10e2328}\label{classRadiatorCell_af970de29ec343b71c3506a7fd10e2328}} 
+\index{RadiatorCell@{RadiatorCell}!GetAerogelThickness@{GetAerogelThickness}}
+\index{GetAerogelThickness@{GetAerogelThickness}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetAerogelThickness()}{GetAerogelThickness()}}
+{\footnotesize\ttfamily double Radiator\+Cell\+::\+Get\+Aerogel\+Thickness (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get thickness of aerogel 
+
+Definition at line 27 of file Radiator\+Cell.\+cpp.
+
+\mbox{\Hypertarget{classRadiatorCell_ac521c4891d2d14a586f4087ae708a5df}\label{classRadiatorCell_ac521c4891d2d14a586f4087ae708a5df}} 
+\index{RadiatorCell@{RadiatorCell}!GetCoolingThickness@{GetCoolingThickness}}
+\index{GetCoolingThickness@{GetCoolingThickness}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetCoolingThickness()}{GetCoolingThickness()}}
+{\footnotesize\ttfamily double Radiator\+Cell\+::\+Get\+Cooling\+Thickness (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get thickness of cooling plate 
+
+Definition at line 23 of file Radiator\+Cell.\+cpp.
+
+\mbox{\Hypertarget{classRadiatorCell_ad6f3814cfcf554390c7715a659cf9516}\label{classRadiatorCell_ad6f3814cfcf554390c7715a659cf9516}} 
+\index{RadiatorCell@{RadiatorCell}!GetMirrorCentre@{GetMirrorCentre}}
+\index{GetMirrorCentre@{GetMirrorCentre}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetMirrorCentre()}{GetMirrorCentre()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \& Radiator\+Cell\+::\+Get\+Mirror\+Centre (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get the mirror centre of curvature 
+
+Definition at line 31 of file Radiator\+Cell.\+cpp.
+
+\mbox{\Hypertarget{classRadiatorCell_a27c298bdc22f41231b11cd434d66bd1e}\label{classRadiatorCell_a27c298bdc22f41231b11cd434d66bd1e}} 
+\index{RadiatorCell@{RadiatorCell}!GetMirrorCurvature@{GetMirrorCurvature}}
+\index{GetMirrorCurvature@{GetMirrorCurvature}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetMirrorCurvature()}{GetMirrorCurvature()}}
+{\footnotesize\ttfamily double Radiator\+Cell\+::\+Get\+Mirror\+Curvature (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get the mirror curvature 
+
+Definition at line 40 of file Radiator\+Cell.\+cpp.
+
+\mbox{\Hypertarget{classRadiatorCell_a75c9abe651d9c8ef556b41a21a7ba4ae}\label{classRadiatorCell_a75c9abe651d9c8ef556b41a21a7ba4ae}} 
+\index{RadiatorCell@{RadiatorCell}!GetRadiatorPosition@{GetRadiatorPosition}}
+\index{GetRadiatorPosition@{GetRadiatorPosition}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetRadiatorPosition()}{GetRadiatorPosition()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \& Radiator\+Cell\+::\+Get\+Radiator\+Position (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get the radiator cell position in the global coordinates 
+
+Definition at line 44 of file Radiator\+Cell.\+cpp.
+
+\mbox{\Hypertarget{classRadiatorCell_a8a9a7e46d1afaf70f846e9f888cafd61}\label{classRadiatorCell_a8a9a7e46d1afaf70f846e9f888cafd61}} 
+\index{RadiatorCell@{RadiatorCell}!GetRadiatorThickness@{GetRadiatorThickness}}
+\index{GetRadiatorThickness@{GetRadiatorThickness}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetRadiatorThickness()}{GetRadiatorThickness()}}
+{\footnotesize\ttfamily double Radiator\+Cell\+::\+Get\+Radiator\+Thickness (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get total radiator cell thickness 
+
+Definition at line 15 of file Radiator\+Cell.\+cpp.
+
+\mbox{\Hypertarget{classRadiatorCell_a5b69e00beb3f61f8a5d0211b551e7fef}\label{classRadiatorCell_a5b69e00beb3f61f8a5d0211b551e7fef}} 
+\index{RadiatorCell@{RadiatorCell}!GetVesselThickness@{GetVesselThickness}}
+\index{GetVesselThickness@{GetVesselThickness}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{GetVesselThickness()}{GetVesselThickness()}}
+{\footnotesize\ttfamily double Radiator\+Cell\+::\+Get\+Vessel\+Thickness (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get thickness of vessel 
+
+Definition at line 19 of file Radiator\+Cell.\+cpp.
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classRadiatorCell_aa92c253e42428b4893f6a4768de918c2}\label{classRadiatorCell_aa92c253e42428b4893f6a4768de918c2}} 
+\index{RadiatorCell@{RadiatorCell}!m\_Detector@{m\_Detector}}
+\index{m\_Detector@{m\_Detector}!RadiatorCell@{RadiatorCell}}
+\doxysubsubsection{\texorpdfstring{m\_Detector}{m\_Detector}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classSiPM}{Si\+PM}} Radiator\+Cell\+::m\+\_\+\+Detector}
+
+The \mbox{\hyperlink{classSiPM}{Si\+PM}} in the radiator cell 
+
+Definition at line 50 of file Radiator\+Cell.\+h.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/data/lhcb/users/tat/\+ARC\+\_\+\+Simulation\+\_\+\+Reconstruction/include/\mbox{\hyperlink{RadiatorCell_8h}{Radiator\+Cell.\+h}}\item 
+/data/lhcb/users/tat/\+ARC\+\_\+\+Simulation\+\_\+\+Reconstruction/src/\mbox{\hyperlink{RadiatorCell_8cpp}{Radiator\+Cell.\+cpp}}\end{DoxyCompactItemize}

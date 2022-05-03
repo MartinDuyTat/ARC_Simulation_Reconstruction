@@ -1,0 +1,194 @@
+\hypertarget{classParticleTrack}{}\doxysection{Particle\+Track Class Reference}
+\label{classParticleTrack}\index{ParticleTrack@{ParticleTrack}}
+
+
+{\ttfamily \#include $<$Particle\+Track.\+h$>$}
+
+\doxysubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{classParticleTrack_a980296a6298c37aa0bb7476dda166d17}{Coordinate\+System}} \{ \mbox{\hyperlink{classParticleTrack_a980296a6298c37aa0bb7476dda166d17a7051b329989f543f42be257f0da1c9e0}{Coordinate\+System\+::\+Global\+Detector}}, 
+\mbox{\hyperlink{classParticleTrack_a980296a6298c37aa0bb7476dda166d17ae2cf374cebaa4fc973bad2217179249f}{Coordinate\+System\+::\+Local\+Radiator}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classParticleTrack_ab6478539056cdf311cc5176f7220790c}{Particle\+Track}} (const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&Momentum, int Particle\+ID)
+\item 
+void \mbox{\hyperlink{classParticleTrack_ab973f1dd60489b8879f4c77b52b4e9c1}{Track\+Through\+Tracker}} (const \mbox{\hyperlink{classTrackingVolume}{Tracking\+Volume}} \&Inner\+Tracker)
+\item 
+void \mbox{\hyperlink{classParticleTrack_a4c82d1fffa4e9f2821f37dec0e32073a}{Convert\+To\+Radiator\+Coordinates}} (const \mbox{\hyperlink{classRadiatorCell}{Radiator\+Cell}} \&Cell)
+\item 
+void \mbox{\hyperlink{classParticleTrack_a82b873e3ee7313d189a9632b93efa27a}{Track\+Through\+Radiator\+Cell}} (const \mbox{\hyperlink{classRadiatorCell}{Radiator\+Cell}} \&Cell)
+\item 
+\mbox{\hyperlink{structPhoton}{Photon}} \mbox{\hyperlink{classParticleTrack_aaee5d5771935cf3f2579562df89274c5}{Generate\+Photon\+From\+Aerogel}} () const
+\item 
+\mbox{\hyperlink{structPhoton}{Photon}} \mbox{\hyperlink{classParticleTrack_a8ad2426f9af5a5de7df7a76ec10779ec}{Generate\+Photon\+From\+Gas}} () const
+\item 
+std\+::vector$<$ \mbox{\hyperlink{structPhoton}{Photon}} $>$ \mbox{\hyperlink{classParticleTrack_a3a12e716eb5b8427f3b8f9db4c20bc6f}{Generate\+Photons\+From\+Aerogel}} () const
+\item 
+std\+::vector$<$ \mbox{\hyperlink{structPhoton}{Photon}} $>$ \mbox{\hyperlink{classParticleTrack_a69fb378aa93a96e4d67cd4fdc6d3fd55}{Generate\+Photons\+From\+Gas}} () const
+\item 
+\mbox{\hyperlink{structPhoton}{Photon}} \mbox{\hyperlink{classParticleTrack_a5e545dc04c491d412fa9a08cd44ccc30}{Generate\+Photon}} (const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&Entry, const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&Exit, double n\+\_\+phase) const
+\item 
+double \mbox{\hyperlink{classParticleTrack_afade63088fe6480464793747d37c87e2}{Beta}} () const
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 18 of file Particle\+Track.\+h.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\mbox{\Hypertarget{classParticleTrack_a980296a6298c37aa0bb7476dda166d17}\label{classParticleTrack_a980296a6298c37aa0bb7476dda166d17}} 
+\index{ParticleTrack@{ParticleTrack}!CoordinateSystem@{CoordinateSystem}}
+\index{CoordinateSystem@{CoordinateSystem}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{CoordinateSystem}{CoordinateSystem}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{classParticleTrack_a980296a6298c37aa0bb7476dda166d17}{Particle\+Track\+::\+Coordinate\+System}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+Enum with the two coordinate systems used \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{GlobalDetector@{GlobalDetector}!ParticleTrack@{ParticleTrack}}\index{ParticleTrack@{ParticleTrack}!GlobalDetector@{GlobalDetector}}}\mbox{\Hypertarget{classParticleTrack_a980296a6298c37aa0bb7476dda166d17a7051b329989f543f42be257f0da1c9e0}\label{classParticleTrack_a980296a6298c37aa0bb7476dda166d17a7051b329989f543f42be257f0da1c9e0}} 
+Global\+Detector&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LocalRadiator@{LocalRadiator}!ParticleTrack@{ParticleTrack}}\index{ParticleTrack@{ParticleTrack}!LocalRadiator@{LocalRadiator}}}\mbox{\Hypertarget{classParticleTrack_a980296a6298c37aa0bb7476dda166d17ae2cf374cebaa4fc973bad2217179249f}\label{classParticleTrack_a980296a6298c37aa0bb7476dda166d17ae2cf374cebaa4fc973bad2217179249f}} 
+Local\+Radiator&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 29 of file Particle\+Track.\+h.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classParticleTrack_ab6478539056cdf311cc5176f7220790c}\label{classParticleTrack_ab6478539056cdf311cc5176f7220790c}} 
+\index{ParticleTrack@{ParticleTrack}!ParticleTrack@{ParticleTrack}}
+\index{ParticleTrack@{ParticleTrack}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{ParticleTrack()}{ParticleTrack()}}
+{\footnotesize\ttfamily Particle\+Track\+::\+Particle\+Track (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&}]{Momentum,  }\item[{int}]{Particle\+ID }\end{DoxyParamCaption})}
+
+Construct a charged particle with momentum and ID at the interaction point 
+\begin{DoxyParams}{Parameters}
+{\em Momentum} & Particle momentum, in GeV \\
+\hline
+{\em Particle\+ID} & PDG particle ID convention \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 12 of file Particle\+Track.\+cpp.
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classParticleTrack_afade63088fe6480464793747d37c87e2}\label{classParticleTrack_afade63088fe6480464793747d37c87e2}} 
+\index{ParticleTrack@{ParticleTrack}!Beta@{Beta}}
+\index{Beta@{Beta}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{Beta()}{Beta()}}
+{\footnotesize\ttfamily double Particle\+Track\+::\+Beta (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Get the particle speed, in units of c 
+
+Definition at line 117 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_a4c82d1fffa4e9f2821f37dec0e32073a}\label{classParticleTrack_a4c82d1fffa4e9f2821f37dec0e32073a}} 
+\index{ParticleTrack@{ParticleTrack}!ConvertToRadiatorCoordinates@{ConvertToRadiatorCoordinates}}
+\index{ConvertToRadiatorCoordinates@{ConvertToRadiatorCoordinates}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{ConvertToRadiatorCoordinates()}{ConvertToRadiatorCoordinates()}}
+{\footnotesize\ttfamily void Particle\+Track\+::\+Convert\+To\+Radiator\+Coordinates (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classRadiatorCell}{Radiator\+Cell}} \&}]{Cell }\end{DoxyParamCaption})}
+
+Convert to local radiator coordinates 
+
+Definition at line 34 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_a5e545dc04c491d412fa9a08cd44ccc30}\label{classParticleTrack_a5e545dc04c491d412fa9a08cd44ccc30}} 
+\index{ParticleTrack@{ParticleTrack}!GeneratePhoton@{GeneratePhoton}}
+\index{GeneratePhoton@{GeneratePhoton}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{GeneratePhoton()}{GeneratePhoton()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structPhoton}{Photon}} Particle\+Track\+::\+Generate\+Photon (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&}]{Entry,  }\item[{const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&}]{Exit,  }\item[{double}]{n\+\_\+phase }\end{DoxyParamCaption}) const}
+
+Generate Cherenkov photon 
+\begin{DoxyParams}{Parameters}
+{\em Entry} & point of radiator \\
+\hline
+{\em Exit} & point of ratiator \\
+\hline
+{\em n\+\_\+phase} & Index of refraction for phase velocity \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 104 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_aaee5d5771935cf3f2579562df89274c5}\label{classParticleTrack_aaee5d5771935cf3f2579562df89274c5}} 
+\index{ParticleTrack@{ParticleTrack}!GeneratePhotonFromAerogel@{GeneratePhotonFromAerogel}}
+\index{GeneratePhotonFromAerogel@{GeneratePhotonFromAerogel}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{GeneratePhotonFromAerogel()}{GeneratePhotonFromAerogel()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structPhoton}{Photon}} Particle\+Track\+::\+Generate\+Photon\+From\+Aerogel (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Generate Cherenkov photon from aerogel 
+
+Definition at line 58 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_a8ad2426f9af5a5de7df7a76ec10779ec}\label{classParticleTrack_a8ad2426f9af5a5de7df7a76ec10779ec}} 
+\index{ParticleTrack@{ParticleTrack}!GeneratePhotonFromGas@{GeneratePhotonFromGas}}
+\index{GeneratePhotonFromGas@{GeneratePhotonFromGas}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{GeneratePhotonFromGas()}{GeneratePhotonFromGas()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structPhoton}{Photon}} Particle\+Track\+::\+Generate\+Photon\+From\+Gas (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Generate Cherenkov photon from gas 
+
+Definition at line 67 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_a3a12e716eb5b8427f3b8f9db4c20bc6f}\label{classParticleTrack_a3a12e716eb5b8427f3b8f9db4c20bc6f}} 
+\index{ParticleTrack@{ParticleTrack}!GeneratePhotonsFromAerogel@{GeneratePhotonsFromAerogel}}
+\index{GeneratePhotonsFromAerogel@{GeneratePhotonsFromAerogel}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{GeneratePhotonsFromAerogel()}{GeneratePhotonsFromAerogel()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{structPhoton}{Photon}} $>$ Particle\+Track\+::\+Generate\+Photons\+From\+Aerogel (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Generate Cherenkov photons from aerogel according to Frank-\/\+Tamm relation 
+
+Definition at line 76 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_a69fb378aa93a96e4d67cd4fdc6d3fd55}\label{classParticleTrack_a69fb378aa93a96e4d67cd4fdc6d3fd55}} 
+\index{ParticleTrack@{ParticleTrack}!GeneratePhotonsFromGas@{GeneratePhotonsFromGas}}
+\index{GeneratePhotonsFromGas@{GeneratePhotonsFromGas}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{GeneratePhotonsFromGas()}{GeneratePhotonsFromGas()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{structPhoton}{Photon}} $>$ Particle\+Track\+::\+Generate\+Photons\+From\+Gas (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+Generate Cherenkov photons from gas according to Frank-\/\+Tamm relation 
+
+Definition at line 90 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_a82b873e3ee7313d189a9632b93efa27a}\label{classParticleTrack_a82b873e3ee7313d189a9632b93efa27a}} 
+\index{ParticleTrack@{ParticleTrack}!TrackThroughRadiatorCell@{TrackThroughRadiatorCell}}
+\index{TrackThroughRadiatorCell@{TrackThroughRadiatorCell}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{TrackThroughRadiatorCell()}{TrackThroughRadiatorCell()}}
+{\footnotesize\ttfamily void Particle\+Track\+::\+Track\+Through\+Radiator\+Cell (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classRadiatorCell}{Radiator\+Cell}} \&}]{Cell }\end{DoxyParamCaption})}
+
+Track particle through radiator cell 
+
+Definition at line 42 of file Particle\+Track.\+cpp.
+
+\mbox{\Hypertarget{classParticleTrack_ab973f1dd60489b8879f4c77b52b4e9c1}\label{classParticleTrack_ab973f1dd60489b8879f4c77b52b4e9c1}} 
+\index{ParticleTrack@{ParticleTrack}!TrackThroughTracker@{TrackThroughTracker}}
+\index{TrackThroughTracker@{TrackThroughTracker}!ParticleTrack@{ParticleTrack}}
+\doxysubsubsection{\texorpdfstring{TrackThroughTracker()}{TrackThroughTracker()}}
+{\footnotesize\ttfamily void Particle\+Track\+::\+Track\+Through\+Tracker (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classTrackingVolume}{Tracking\+Volume}} \&}]{Inner\+Tracker }\end{DoxyParamCaption})}
+
+Track particle through inner tracker with magnetic field 
+
+Definition at line 25 of file Particle\+Track.\+cpp.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/data/lhcb/users/tat/\+ARC\+\_\+\+Simulation\+\_\+\+Reconstruction/include/\mbox{\hyperlink{ParticleTrack_8h}{Particle\+Track.\+h}}\item 
+/data/lhcb/users/tat/\+ARC\+\_\+\+Simulation\+\_\+\+Reconstruction/src/\mbox{\hyperlink{ParticleTrack_8cpp}{Particle\+Track.\+cpp}}\end{DoxyCompactItemize}

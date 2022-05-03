@@ -1,0 +1,147 @@
+\hypertarget{structPhoton}{}\doxysection{Photon Struct Reference}
+\label{structPhoton}\index{Photon@{Photon}}
+
+
+{\ttfamily \#include $<$Photon.\+h$>$}
+
+\doxysubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0}{Radiator}} \{ \mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0a386aea25181c5644e1828f43133923f2}{Radiator\+::\+Aerogel}}, 
+\mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0a635459702f9817de29e608fa3395637c}{Radiator\+::\+Gas}}, 
+\mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0a88183b946cc5f0e8c96b2e66e1c74a7e}{Radiator\+::\+Unknown}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structPhoton_af07c6ae063a9ee8b6aa81b07f4b604f2}{Photon}} (const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&Position, const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&Direction, double Energy)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \mbox{\hyperlink{structPhoton_a7d938a280def2454b14b5f00d49f191e}{m\+\_\+\+Position}}
+\item 
+const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \mbox{\hyperlink{structPhoton_ac29e03ffb4ecdd3612c18fa979223d17}{m\+\_\+\+Emission\+Point}}
+\item 
+\mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \mbox{\hyperlink{structPhoton_a1793a4c8f8a6961f762a0e524c1324db}{m\+\_\+\+Direction}}
+\item 
+const double \mbox{\hyperlink{structPhoton_a8e29ccdcd393f9a33784875f3050ea35}{m\+\_\+\+Energy}}
+\item 
+\mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0}{Radiator}} \mbox{\hyperlink{structPhoton_a05035a4c6d1d5290e460213e027f0b1e}{m\+\_\+\+Radiator}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 14 of file Photon.\+h.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\mbox{\Hypertarget{structPhoton_a57e9205218efa5311a4b84b22b1919c0}\label{structPhoton_a57e9205218efa5311a4b84b22b1919c0}} 
+\index{Photon@{Photon}!Radiator@{Radiator}}
+\index{Radiator@{Radiator}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{Radiator}{Radiator}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0}{Photon\+::\+Radiator}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+Enum class classifying which radiator the photon was emitted from \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Aerogel@{Aerogel}!Photon@{Photon}}\index{Photon@{Photon}!Aerogel@{Aerogel}}}\mbox{\Hypertarget{structPhoton_a57e9205218efa5311a4b84b22b1919c0a386aea25181c5644e1828f43133923f2}\label{structPhoton_a57e9205218efa5311a4b84b22b1919c0a386aea25181c5644e1828f43133923f2}} 
+Aerogel&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Gas@{Gas}!Photon@{Photon}}\index{Photon@{Photon}!Gas@{Gas}}}\mbox{\Hypertarget{structPhoton_a57e9205218efa5311a4b84b22b1919c0a635459702f9817de29e608fa3395637c}\label{structPhoton_a57e9205218efa5311a4b84b22b1919c0a635459702f9817de29e608fa3395637c}} 
+Gas&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Unknown@{Unknown}!Photon@{Photon}}\index{Photon@{Photon}!Unknown@{Unknown}}}\mbox{\Hypertarget{structPhoton_a57e9205218efa5311a4b84b22b1919c0a88183b946cc5f0e8c96b2e66e1c74a7e}\label{structPhoton_a57e9205218efa5311a4b84b22b1919c0a88183b946cc5f0e8c96b2e66e1c74a7e}} 
+Unknown&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 18 of file Photon.\+h.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{structPhoton_af07c6ae063a9ee8b6aa81b07f4b604f2}\label{structPhoton_af07c6ae063a9ee8b6aa81b07f4b604f2}} 
+\index{Photon@{Photon}!Photon@{Photon}}
+\index{Photon@{Photon}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{Photon()}{Photon()}}
+{\footnotesize\ttfamily Photon\+::\+Photon (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&}]{Position,  }\item[{const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} \&}]{Direction,  }\item[{double}]{Energy }\end{DoxyParamCaption})}
+
+Construct a photon with position, direction and energy 
+\begin{DoxyParams}{Parameters}
+{\em Position} & Position vector \\
+\hline
+{\em Direction} & Direction vector \\
+\hline
+{\em Energy} & \mbox{\hyperlink{structPhoton}{Photon}} energy \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 5 of file Photon.\+cpp.
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structPhoton_a1793a4c8f8a6961f762a0e524c1324db}\label{structPhoton_a1793a4c8f8a6961f762a0e524c1324db}} 
+\index{Photon@{Photon}!m\_Direction@{m\_Direction}}
+\index{m\_Direction@{m\_Direction}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{m\_Direction}{m\_Direction}}
+{\footnotesize\ttfamily \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} Photon\+::m\+\_\+\+Direction}
+
+\mbox{\hyperlink{structPhoton}{Photon}} direction vector 
+
+Definition at line 37 of file Photon.\+h.
+
+\mbox{\Hypertarget{structPhoton_ac29e03ffb4ecdd3612c18fa979223d17}\label{structPhoton_ac29e03ffb4ecdd3612c18fa979223d17}} 
+\index{Photon@{Photon}!m\_EmissionPoint@{m\_EmissionPoint}}
+\index{m\_EmissionPoint@{m\_EmissionPoint}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{m\_EmissionPoint}{m\_EmissionPoint}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} Photon\+::m\+\_\+\+Emission\+Point}
+
+Emission point 
+
+Definition at line 33 of file Photon.\+h.
+
+\mbox{\Hypertarget{structPhoton_a8e29ccdcd393f9a33784875f3050ea35}\label{structPhoton_a8e29ccdcd393f9a33784875f3050ea35}} 
+\index{Photon@{Photon}!m\_Energy@{m\_Energy}}
+\index{m\_Energy@{m\_Energy}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{m\_Energy}{m\_Energy}}
+{\footnotesize\ttfamily const double Photon\+::m\+\_\+\+Energy}
+
+\mbox{\hyperlink{structPhoton}{Photon}} energy 
+
+Definition at line 41 of file Photon.\+h.
+
+\mbox{\Hypertarget{structPhoton_a7d938a280def2454b14b5f00d49f191e}\label{structPhoton_a7d938a280def2454b14b5f00d49f191e}} 
+\index{Photon@{Photon}!m\_Position@{m\_Position}}
+\index{m\_Position@{m\_Position}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{m\_Position}{m\_Position}}
+{\footnotesize\ttfamily \mbox{\hyperlink{ParticleTrack_8h_ac21e558cd6d8c2f9488feb4e16579394}{Vector}} Photon\+::m\+\_\+\+Position}
+
+\mbox{\hyperlink{structPhoton}{Photon}} position in local cell coordinates, in m 
+
+Definition at line 29 of file Photon.\+h.
+
+\mbox{\Hypertarget{structPhoton_a05035a4c6d1d5290e460213e027f0b1e}\label{structPhoton_a05035a4c6d1d5290e460213e027f0b1e}} 
+\index{Photon@{Photon}!m\_Radiator@{m\_Radiator}}
+\index{m\_Radiator@{m\_Radiator}!Photon@{Photon}}
+\doxysubsubsection{\texorpdfstring{m\_Radiator}{m\_Radiator}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structPhoton_a57e9205218efa5311a4b84b22b1919c0}{Radiator}} Photon\+::m\+\_\+\+Radiator}
+
+Flag specifying which radiator the photon was emitted from 
+
+Definition at line 45 of file Photon.\+h.
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/data/lhcb/users/tat/\+ARC\+\_\+\+Simulation\+\_\+\+Reconstruction/include/\mbox{\hyperlink{Photon_8h}{Photon.\+h}}\item 
+/data/lhcb/users/tat/\+ARC\+\_\+\+Simulation\+\_\+\+Reconstruction/src/\mbox{\hyperlink{Photon_8cpp}{Photon.\+cpp}}\end{DoxyCompactItemize}
