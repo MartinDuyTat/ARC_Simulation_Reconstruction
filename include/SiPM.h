@@ -15,12 +15,16 @@ struct PhotonHit {
   /**
    * Constructor saving the photon hits
    */
-  PhotonHit(double x, double y): x(x), y(y) {}
+  PhotonHit(double x, double y, const Photon *photon): x(x), y(y), m_Photon(photon) {}
   /**
    * Detector hit coordinates
    */
   const double x;
   const double y;
+  /**
+   * Pointer to the photon that caused this hit
+   */
+  const Photon *m_Photon;
 };
 
 class SiPM {
@@ -37,6 +41,10 @@ class SiPM {
    * Plot photon hits
    */
   void PlotHits(const std::string &Filename) const;
+  /**
+   * Get photon hits
+   */
+  const std::vector<PhotonHit>& GetPhotonHits() const;
  private:
   /**
    * Size of detector in x direction

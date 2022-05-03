@@ -66,6 +66,10 @@ class ParticleTrack {
    * Get the particle speed, in units of c
    */
   double Beta() const;
+  /**
+   * Get momentum vector
+   */
+  const Vector& GetMomentum() const;
  private:
   /**
    * Particle momentum, in GeV

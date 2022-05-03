@@ -19,6 +19,7 @@ ParticleTrack::ParticleTrack(const Vector &Momentum, int ParticleID): m_Momentum
 								      m_GasEntry(0.0, 0.0, 0.0),
 								      m_GasExit(0.0, 0.0, 0.0),
 								      m_CoordinateSystem(CoordinateSystem::GlobalDetector) {
+  gRandom->SetSeed(42);
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -58,14 +59,18 @@ Photon ParticleTrack::GeneratePhotonFromAerogel() const {
   if(!m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot generate photons from tracks that have not been tracked through the radiator");
   }
-  return GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.03);
+  Photon photon = GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.03);
+  photon.m_Radiator = Photon::Radiator::Aerogel;
+  return photon;
 }
 
 Photon ParticleTrack::GeneratePhotonFromGas() const {
   if(!m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot generate photons from tracks that have not been tracked through the radiator");
   }
-  return GeneratePhoton(m_GasEntry, m_GasExit, 1.0049);
+  Photon photon = GeneratePhoton(m_GasEntry, m_GasExit, 1.0049);
+  photon.m_Radiator = Photon::Radiator::Gas;
+  return photon;
 }
 
 std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
@@ -77,6 +82,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
   std::vector<Photon> Photons;
   for(int i = 0; i < PhotonYield; i++) {
     Photons.push_back(GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.05));
+    Photons.back().m_Radiator = Photon::Radiator::Aerogel;
   }
   return Photons;
 }
@@ -90,6 +96,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   std::vector<Photon> Photons;
   for(int i = 0; i < PhotonYield; i++) {
     Photons.push_back(GeneratePhoton(m_GasEntry, m_GasExit, 1.0049));
+    Photons.back().m_Radiator = Photon::Radiator::Gas;
   }
   return Photons;
 }
@@ -104,13 +111,17 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, do
   const double CosTheta = 1.0/(Beta()*n_phase);
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
   const Vector Direction(SinTheta*TMath::Cos(phi), SinTheta*TMath::Sin(phi), CosTheta);
-  return Photon{EmissionPoint, Direction, 0.0};
+  return Photon{EmissionPoint, Direction, 0.0, TMath::ACos(CosTheta)};
 }
 
 double ParticleTrack::Beta() const {
   const double Momentum = TMath::Sqrt(m_Momentum.Mag2());
   const double Mass = ParticleMass::GetMass(m_ParticleID);
   return Momentum/TMath::Sqrt(Mass*Mass + Momentum*Momentum);
+}
+
+const Vector& ParticleTrack::GetMomentum() const {
+  return m_Momentum;
 }
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
