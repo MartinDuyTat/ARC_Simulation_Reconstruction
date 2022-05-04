@@ -3,8 +3,6 @@
 #include"ReconstructedPhoton.h"
 
 ReconstructedPhoton::ReconstructedPhoton(const Photon &photon): m_Photon(&photon),
-								m_CherenkovAngle_TrueEmission_TrueIndexRefraction(0.0),
-								m_CherenkovAngle_TrueEmission(0.0),
-								m_CherenkovAngle_TrueIndexRefraction(0.0),
+								m_CherenkovAngle_TrueEmissionPoint(0.0),
 								m_CherenkovAngle(0.0) {
 }

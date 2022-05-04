@@ -26,10 +26,14 @@ namespace PhotonMapper {
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
+    // TODO: Check that photon hits mirror
+    if(true) {
+      photon.m_MirrorHit = true;
+    }
   }
 
   void TracePhotonToDetector(Photon &photon, RadiatorCell &radiatorCell) {
-    photon.m_Position += photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))*photon.m_Direction;
+    photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
     radiatorCell.m_Detector.AddPhotonHit(photon);
   }
 

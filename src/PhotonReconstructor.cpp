@@ -16,9 +16,21 @@ using Polynomial = ROOT::Math::Polynomial;
 
 namespace PhotonReconstructor {
 
-  ReconstructedPhoton ReconstructPhoton(const ParticleTrack &Particle, const PhotonHit &photonHit, const RadiatorCell &radiatorCell) {
+  double ReconstructCherenkovAngle(const ParticleTrack &Particle,
+				   const PhotonHit &photonHit,
+				   const RadiatorCell &radiatorCell,
+				   bool TrueEmissionPoint,
+				   Photon::Radiator Radiator) {
     auto MirrorCentre = radiatorCell.GetMirrorCentre();
-    const Vector EmissionPoint = photonHit.m_Photon->m_EmissionPoint - MirrorCentre;
+    auto GetEmissionPoint = [=]() {
+      if(TrueEmissionPoint) {
+	return photonHit.m_Photon->m_EmissionPoint - MirrorCentre;
+      } else {
+	// TODO: Tidy up this line
+	return Particle.GetEntryPoint(Radiator) + (Particle.GetExitPoint(Radiator) - Particle.GetEntryPoint(Radiator))*0.5 - MirrorCentre;
+      }
+    };
+    const Vector EmissionPoint = GetEmissionPoint();
     const Vector DetectionPoint = Vector(photonHit.x, photonHit.y, 0.0) - MirrorCentre;
     const double MirrorCurvature = radiatorCell.GetMirrorCurvature();
     // Distance between emission point and mirror centre, in units of mirror curvature
@@ -27,19 +39,25 @@ namespace PhotonReconstructor {
     const double DetectionMirrorParaDist = EmissionPoint.Dot(DetectionPoint)/(EmissionMirrorDist*MirrorCurvature*MirrorCurvature);
     const double DetectionMirrorPerpDist = TMath::Sqrt(DetectionPoint.Mag2()/TMath::Power(MirrorCurvature, 2) - DetectionMirrorParaDist*DetectionMirrorParaDist);
     auto quarticSolution = SolveQuartic(EmissionMirrorDist, DetectionMirrorParaDist, DetectionMirrorPerpDist);
-    Vector ReflectionPoint = MirrorCentre;
-    ReflectionPoint += EmissionPoint*quarticSolution.m_CosBeta[0]/EmissionMirrorDist;
+    Vector ReflectionPoint = EmissionPoint*quarticSolution.m_CosBeta[0]/EmissionMirrorDist;
     ReflectionPoint += quarticSolution.m_SinBeta[0]*(DetectionPoint - EmissionPoint*DetectionMirrorParaDist/EmissionMirrorDist)/DetectionMirrorPerpDist;
-    Vector OtherReflectionPoint = MirrorCentre;
-    OtherReflectionPoint += EmissionPoint*quarticSolution.m_CosBeta[1]/EmissionMirrorDist;
+    Vector OtherReflectionPoint = EmissionPoint*quarticSolution.m_CosBeta[1]/EmissionMirrorDist;
     OtherReflectionPoint += quarticSolution.m_SinBeta[1]*(DetectionPoint - EmissionPoint*DetectionMirrorParaDist/EmissionMirrorDist)/DetectionMirrorPerpDist;
     if(OtherReflectionPoint.Z() > ReflectionPoint.Z()) {
       std::swap(ReflectionPoint, OtherReflectionPoint);
     }
-    const Vector ReflectionEmissionPoint = ReflectionPoint - EmissionPoint - MirrorCentre;
-    ReconstructedPhoton reconstructedPhoton(*photonHit.m_Photon);
+    const Vector ReflectionEmissionPoint = ReflectionPoint - EmissionPoint;
     const double CosTheta = ReflectionEmissionPoint.Unit().Dot(Particle.GetMomentum().Unit());
-    reconstructedPhoton.m_CherenkovAngle_TrueEmission_TrueIndexRefraction = TMath::ACos(CosTheta);
+    return TMath::ACos(CosTheta);
+  }
+  
+  ReconstructedPhoton ReconstructPhoton(const ParticleTrack &Particle,
+					const PhotonHit &photonHit,
+					const RadiatorCell &radiatorCell,
+					Photon::Radiator Radiator) {
+    ReconstructedPhoton reconstructedPhoton(*photonHit.m_Photon);
+    reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint = ReconstructCherenkovAngle(Particle, photonHit, radiatorCell, true, Radiator);
+    reconstructedPhoton.m_CherenkovAngle = ReconstructCherenkovAngle(Particle, photonHit, radiatorCell, false, Radiator);
     return reconstructedPhoton;
   }
 

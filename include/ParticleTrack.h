@@ -70,6 +70,14 @@ class ParticleTrack {
    * Get momentum vector
    */
   const Vector& GetMomentum() const;
+  /**
+   * Get entry point of particle in radiator
+   */
+  const Vector& GetEntryPoint(Photon::Radiator Radiator) const;
+  /**
+   * Get exit point of particle in radiator
+   */
+  const Vector& GetExitPoint(Photon::Radiator Radiator) const;
  private:
   /**
    * Particle momentum, in GeV

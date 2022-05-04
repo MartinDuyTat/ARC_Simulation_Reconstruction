@@ -48,6 +48,10 @@ struct Photon {
    * Cherenkov angle
    */
   const double m_CherenkovAngle;
+  /**
+   * Flag that is true when photon has hit the mirror
+   */
+  bool m_MirrorHit;
 };
 
 #endif

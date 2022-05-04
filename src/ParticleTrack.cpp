@@ -32,6 +32,7 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
 }
 
 void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
+  // TODO: Account for rotation of global and local coordinate systems
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
   }
@@ -78,10 +79,10 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
     throw std::runtime_error("Cannot generate photons from tracks that have not been tracked through the radiator");
   }
   const double RadiatorDistance = TMath::Sqrt((m_AerogelExit - m_AerogelEntry).Mag2());
-  const int PhotonYield = GetPhotonYield(RadiatorDistance, Beta(), 1.03);
+  const int PhotonYield = std::round(GetPhotonYield(RadiatorDistance, Beta(), 1.03));
   std::vector<Photon> Photons;
   for(int i = 0; i < PhotonYield; i++) {
-    Photons.push_back(GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.05));
+    Photons.push_back(GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.03));
     Photons.back().m_Radiator = Photon::Radiator::Aerogel;
   }
   return Photons;
@@ -92,7 +93,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
     throw std::runtime_error("Cannot generate photons from tracks that have not been tracked through the radiator");
   }
   const double RadiatorDistance = TMath::Sqrt((m_GasExit - m_GasEntry).Mag2());
-  const int PhotonYield = GetPhotonYield(RadiatorDistance, Beta(), 1.0049);
+  const int PhotonYield = std::round(GetPhotonYield(RadiatorDistance, Beta(), 1.0049));
   std::vector<Photon> Photons;
   for(int i = 0; i < PhotonYield; i++) {
     Photons.push_back(GeneratePhoton(m_GasEntry, m_GasExit, 1.0049));
@@ -104,9 +105,8 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
 Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, double n_phase) const {
   // TODO: Rotate between local particle coordinate, beamline coordinates and local radiator coordinates
   // TODO: Account for dispersion
-  const double Length = TMath::Sqrt((Exit - Entry).Mag2());
   const double RandomFraction = gRandom->Uniform(0, 1);
-  const Vector EmissionPoint = Entry + (Exit - Entry)*Length*RandomFraction;
+  const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
@@ -122,6 +122,26 @@ double ParticleTrack::Beta() const {
 
 const Vector& ParticleTrack::GetMomentum() const {
   return m_Momentum;
+}
+
+const Vector& ParticleTrack::GetEntryPoint(Photon::Radiator Radiator) const {
+  if(Radiator == Photon::Radiator::Gas) {
+    return m_GasEntry;
+  } else if(Radiator == Photon::Radiator::Aerogel) {
+    return m_AerogelEntry;
+  } else {
+    throw std::runtime_error("Cannot find entry point of unknown radiator");
+  }
+}
+
+const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
+  if(Radiator == Photon::Radiator::Gas) {
+    return m_GasExit;
+  } else if(Radiator == Photon::Radiator::Aerogel) {
+    return m_AerogelExit;
+  } else {
+    throw std::runtime_error("Cannot find entry point of unknown radiator");
+  }
 }
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {

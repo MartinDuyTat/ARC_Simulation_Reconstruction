@@ -4,7 +4,7 @@
 
 RadiatorCell::RadiatorCell(const Vector &Position): m_RadiatorThickness(0.20),
 						    m_VesselThickness(0.02),
-						    m_CoolingThickness(0.02),
+						    m_CoolingThickness(0.01),
 						    m_AerogelThickness(0.02),
 						    m_MirrorCurvature(0.30),
 						    m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),

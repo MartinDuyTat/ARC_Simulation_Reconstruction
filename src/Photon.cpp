@@ -7,5 +7,6 @@ Photon::Photon(const Vector &Position, const Vector &Direction, double Energy, d
 												       m_Direction(Direction),
 												       m_Energy(Energy),
 												       m_Radiator(Radiator::Unknown),
-												       m_CherenkovAngle(CherenkovAngle) {
+												       m_CherenkovAngle(CherenkovAngle),
+												       m_MirrorHit(false) {
 }
