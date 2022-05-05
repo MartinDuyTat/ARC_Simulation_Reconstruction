@@ -6,6 +6,7 @@ add_library(ARC_Simulation_Reconstruction
 	    PhotonReconstructor.cpp
 	    RadiatorCell.cpp
 	    ReconstructedPhoton.cpp
+	    Settings.cpp
 	    SiPM.cpp
 	    TrackingVolume.cpp)
 

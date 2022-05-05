@@ -1,7 +1,8 @@
 // Martin Duy Tat 1st May 2022
 /**
  * RunARC is an application for running ARC simulations and reconstructions
- * Run with RunARC <run mode>
+ * Run with RunARC <run mode> <settings name> <settings filename> ...
+ * There can be an arbitrary number of settings files added
  * Possible run modes:
  * "SingleTrack" Send a single charged track and generate a photon hit map
  * "CherenkovAngleResolution" Generate photons from a single track, reconstruct the photons and study the Cherenkov angle resolution
@@ -20,14 +21,21 @@
 #include"PhotonMapper.h"
 #include"PhotonReconstructor.h"
 #include"RadiatorCell.h"
+#include"Settings.h"
 
 using Vector = ROOT::Math::XYZVector;
 
 int main(int argc, char *argv[]) {
-  if(argc != 2) {
+  if(argc%2 != 0) {
     return 0;
   }
   std::cout << "Welcome to the ARC simulation and reconstruction\n";
+  for(int i = 2; i < argc; i += 2) {
+    const std::string SettingsName = argv[i];
+    const std::string SettingsFilename = argv[i + 1];
+    Settings::AddSettings(SettingsName, SettingsFilename);
+    std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
+  }
   const std::string RunMode(argv[1]);
   const Vector Momentum(0.0, 0.0, 5.0);
   const int ParticleID = 211;
