@@ -13,6 +13,8 @@
 #include<vector>
 #include"TFile.h"
 #include"TTree.h"
+#include"TMath.h"
+#include"TRandom.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 #include"ParticleTrack.h"
@@ -24,6 +26,8 @@
 #include"Settings.h"
 
 using Vector = ROOT::Math::XYZVector;
+
+Vector VectorFromSpherical(double R, double Theta, double Phi);
 
 int main(int argc, char *argv[]) {
   if(argc%2 != 0) {
@@ -37,16 +41,21 @@ int main(int argc, char *argv[]) {
     std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
   }
   const std::string RunMode(argv[1]);
-  const Vector Momentum(0.0, 0.0, 5.0);
-  const int ParticleID = 211;
-  ParticleTrack particleTrack(Momentum, ParticleID);
+  if(Settings::Exists("General/Seed")) {
+    gRandom->SetSeed(Settings::GetInt("General/Seed"));
+  }
   const TrackingVolume InnerTracker(1.05, 2.0);
-  RadiatorCell radiatorCell(Vector(0.0, 0.0, 1.09));
-  particleTrack.TrackThroughTracker(InnerTracker);
-  particleTrack.ConvertToRadiatorCoordinates(radiatorCell);
-  particleTrack.TrackThroughRadiatorCell(radiatorCell);
+  RadiatorCell radiatorCell(Vector(0.0, 0.0, 1.08));
   if(RunMode == "SingleTrack") {
     std::cout << "Run mode: Single track\n";
+    const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"),
+						Settings::GetDouble("Particle/Theta"),
+						Settings::GetDouble("Particle/Phi"));
+    const int ParticleID = Settings::GetInt("Particle/ID");;
+    ParticleTrack particleTrack(Momentum, ParticleID);
+    particleTrack.TrackThroughTracker(InnerTracker);
+    particleTrack.ConvertToRadiatorCoordinates(radiatorCell);
+    particleTrack.TrackThroughRadiatorCell(radiatorCell);
     auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
     auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
     for(auto &photon : PhotonsAerogel) {
@@ -66,6 +75,14 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
     std::vector<Photon> Photons;
     for(int i = 0; i < 10000; i++) {
+      const double Phi = gRandom->Uniform(-TMath::Pi(), TMath::Pi());
+      const double Theta = gRandom->Uniform(Settings::GetDouble("Particle/Theta_min"), Settings::GetDouble("Particle/Theta_max"));;
+      const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"), Theta, Phi);
+      const int ParticleID = Settings::GetInt("Particle/ID");;
+      ParticleTrack particleTrack(Momentum, ParticleID);
+      particleTrack.TrackThroughTracker(InnerTracker);
+      particleTrack.ConvertToRadiatorCoordinates(radiatorCell);
+      particleTrack.TrackThroughRadiatorCell(radiatorCell);
       Photons.push_back(particleTrack.GeneratePhotonFromGas());
       CherenkovAngle_True = Photons.back().m_CherenkovAngle;
       PhotonMapper::TracePhoton(Photons.back(), radiatorCell);
@@ -81,4 +98,12 @@ int main(int argc, char *argv[]) {
     CherenkovFile.Close();
   }
   return 0;
+}
+
+Vector VectorFromSpherical(double R, double Theta, double Phi) {
+  const double CosTheta = TMath::Cos(Theta);
+  const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
+  const double CosPhi = TMath::Cos(Phi);
+  const double SinPhi = TMath::Sqrt(1.0 - CosPhi*CosPhi);
+  return Vector{R*CosPhi*SinTheta, R*SinPhi*SinTheta, R*CosTheta};
 }

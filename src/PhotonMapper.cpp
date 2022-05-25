@@ -5,6 +5,7 @@
 #include"PhotonMapper.h"
 #include"RadiatorCell.h"
 #include"Photon.h"
+#include"Settings.h"
 
 namespace PhotonMapper {
 
@@ -27,7 +28,15 @@ namespace PhotonMapper {
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
     // TODO: Check that photon hits mirror
-    if(true) {
+    const double CellThetaLength = Settings::GetDouble("ARCGeometry/Length")/Settings::GetInt("ARCGeometry/ThetaCells");
+    const double ThetaAcceptance = TMath::ATan(0.5*CellThetaLength/Settings::GetDouble("ARCGeometry/Radius"));
+    const double PhiAcceptance = 0.5*2*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells");
+    const Vector PhotonPositionGlobal = photon.m_Position + radiatorCell.GetRadiatorPosition();
+    // TODO: Fix this, it's not correct
+    if(TMath::Abs(TMath::ATan2(PhotonPositionGlobal.X(), PhotonPositionGlobal.Z())) > ThetaAcceptance ||
+       TMath::Abs(TMath::ATan2(PhotonPositionGlobal.Y(), PhotonPositionGlobal.Z())) > PhiAcceptance) {
+      photon.m_MirrorHit = false;
+    } else {
       photon.m_MirrorHit = true;
     }
   }
@@ -39,7 +48,9 @@ namespace PhotonMapper {
 
   void TracePhoton(Photon &photon, RadiatorCell &radiatorCell) {
     TracePhotonToMirror(photon, radiatorCell);
-    TracePhotonToDetector(photon, radiatorCell);
+    if(photon.m_MirrorHit) {
+      TracePhotonToDetector(photon, radiatorCell);
+    }
   }
 
 }

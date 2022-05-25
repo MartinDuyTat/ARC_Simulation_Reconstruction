@@ -39,6 +39,10 @@ class Settings {
    * Get bool setting (if string is "true" this evaluates to true)
    */
   static bool GetBool(const std::string &Setting);
+  /**
+   * Check if setting exists
+   */
+  static bool Exists(const std::string &Setting);
  private:
   /**
    * Map where keys are name of settings file and values are maps with settings

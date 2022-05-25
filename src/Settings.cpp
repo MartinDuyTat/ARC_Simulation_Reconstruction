@@ -60,3 +60,12 @@ int Settings::GetInt(const std::string &Setting) {
 bool Settings::GetBool(const std::string &Setting) {
   return GetString(Setting) == "true";
 }
+
+bool Settings::Exists(const std::string &Setting) {
+  try {
+    GetString(Setting);
+  } catch(const std::runtime_error&) {
+    return false;
+  }
+  return true;
+}

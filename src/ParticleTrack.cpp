@@ -3,11 +3,14 @@
 #include<stdexcept>
 #include"TMath.h"
 #include"TRandom.h"
+#include"Math/RotationY.h"
+#include"Math/RotationZ.h"
 #include"ParticleTrack.h"
 #include"Photon.h"
 #include"TrackingVolume.h"
 #include"RadiatorCell.h"
 #include"ParticleMass.h"
+#include"Settings.h"
 
 ParticleTrack::ParticleTrack(const Vector &Momentum, int ParticleID): m_Momentum(Momentum),
 								      m_Position(0.0, 0.0, 0.0),
@@ -19,7 +22,6 @@ ParticleTrack::ParticleTrack(const Vector &Momentum, int ParticleID): m_Momentum
 								      m_GasEntry(0.0, 0.0, 0.0),
 								      m_GasExit(0.0, 0.0, 0.0),
 								      m_CoordinateSystem(CoordinateSystem::GlobalDetector) {
-  gRandom->SetSeed(42);
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -33,26 +35,54 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
 
 void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
   // TODO: Account for rotation of global and local coordinate systems
+  // Check if particle is within acceptance
+  const double CellThetaLength = Settings::GetDouble("ARCGeometry/Length")/Settings::GetInt("ARCGeometry/ThetaCells");
+  const double ThetaAcceptance = TMath::ATan(0.5*CellThetaLength/Settings::GetDouble("ARCGeometry/Radius"));
+  //const double PhiAcceptance = 0.5*2*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells");
+  if(TMath::Abs(m_Position.Theta() - TMath::Pi()/2.0) > ThetaAcceptance) {
+    throw std::runtime_error("Particle outside of radiator acceptance");
+  }
+  // Check if coordinate system if correct
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
   }
+  // First rotate in azimuthal direction to map to cell near phi = 0
+  MapPhiBack(m_Position);
+  MapPhiBack(m_Momentum);
+  // Then rotate around y-axis so that z axis now points towards the high pT cell
+  RotateY(m_Position);
+  RotateY(m_Momentum);
+  // Finally shift coordinates so that the origin is the detector plane of the radiator cell
   m_Position -= Cell.GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
 }
 
 void ParticleTrack::TrackThroughRadiatorCell(const RadiatorCell &Cell) {
-  // TODO: Allow for tracks in all directions
   if(m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot track particle through radiator cell again");
   }
   if(!m_TrackedThroughTracker) {
     throw std::runtime_error("Particle must be tracked through inner tracker before tracking through radiator cell");
   }
-  m_AerogelEntry = Vector(0.0, 0.0, 0.0);
-  m_AerogelExit = Vector(0.0, 0.0, Cell.GetAerogelThickness());
+  const double ZDistToAerogel = -m_Position.Z();
+  const double Slope = 1.0/TMath::Cos(m_Momentum.Theta());
+  m_Position += m_Momentum.Unit()*Slope*ZDistToAerogel;
+  m_AerogelEntry = m_Position;
+  m_Position += m_Momentum.Unit()*Slope*Cell.GetAerogelThickness();
+  m_AerogelExit = m_Position;
   m_GasEntry = m_AerogelExit;
-  double GasThickness = Cell.GetRadiatorThickness() - 2*Cell.GetVesselThickness() - Cell.GetCoolingThickness() - Cell.GetAerogelThickness();
-  m_GasExit = m_GasEntry + Vector(0.0, 0.0, GasThickness);
+  // Solve quadratic s^2 - 2sb + c = 0 to find interserction of particle track and mirror
+  auto MirrorCentre = Cell.GetMirrorCentre();
+  const double MirrorRadius = Cell.GetMirrorCurvature();
+  const auto Direction = m_Momentum.Unit();
+  const double b = (MirrorCentre - m_Position).Dot(Direction);
+  const double c = MirrorCentre.Mag2() + m_Position.Mag2() - MirrorRadius*MirrorRadius - 2*m_Position.Dot(MirrorCentre);
+  const double s1 = b + TMath::Sqrt(b*b - c);
+  const double s2 = b - TMath::Sqrt(b*b - c);
+  // Pick forwards moving particle solution
+  const double s = std::max(s1, s2);
+  m_Position += Direction*s;
+  m_GasExit = m_Position;
   m_TrackedThroughRadiator = true;
 }
 
@@ -105,13 +135,18 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
 Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, double n_phase) const {
   // TODO: Rotate between local particle coordinate, beamline coordinates and local radiator coordinates
   // TODO: Account for dispersion
-  const double RandomFraction = gRandom->Uniform(0, 1);
+  const double RandomFraction = gRandom->Uniform(0.005, 0.995);
   const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
-  const Vector Direction(SinTheta*TMath::Cos(phi), SinTheta*TMath::Sin(phi), CosTheta);
-  return Photon{EmissionPoint, Direction, 0.0, TMath::ACos(CosTheta)};
+  Vector Direction(SinTheta*TMath::Cos(phi), SinTheta*TMath::Sin(phi), CosTheta);
+  // Rotate to particle frame
+  const ROOT::Math::RotationY RotateY(m_Momentum.Theta());
+  Direction = RotateY(Direction);
+  const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
+  Direction = RotateZ(Direction);
+  return {EmissionPoint, Direction, 0.0, TMath::ACos(CosTheta)};
 }
 
 double ParticleTrack::Beta() const {
@@ -149,4 +184,19 @@ double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   const double Efficiency = 0.20;
   const double DeltaE = 4.0;
   return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
+}
+
+void ParticleTrack::MapPhiBack(Vector &Vec) const {
+  const int PhiCells = Settings::GetInt("ARCGeometry/PhiCells");
+  const double DeltaPhi = 2.0*TMath::Pi()/PhiCells;
+  const int Sign = Vec.Phi() > 0 ? 1 : -1;
+  const int PhiUnits = Sign*static_cast<int>((Sign*Vec.Phi() + 0.5*DeltaPhi)/DeltaPhi);
+  const ROOT::Math::RotationZ RotateZ(-PhiUnits*DeltaPhi);
+  Vec = RotateZ(Vec);
+}
+
+void ParticleTrack::RotateY(Vector &Vec) const {
+  const double Temp = Vec.X();
+  Vec.SetX(-Vec.Z());
+  Vec.SetZ(Temp);
 }

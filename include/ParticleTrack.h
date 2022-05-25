@@ -123,6 +123,14 @@ class ParticleTrack {
    * Frank-Tamm relation for photon yield
    */
   double GetPhotonYield(double x, double Beta, double n) const;
+  /**
+   * Helper function that maps the phi direction to the cell near phi = 0
+   */
+  void MapPhiBack(Vector &Vec) const;
+  /**
+   * Helper function to rotate around y axis in coordinate transformation
+   */
+  void RotateY(Vector &Vec) const;
 };
 
 #endif

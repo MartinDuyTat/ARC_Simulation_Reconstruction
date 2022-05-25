@@ -24,13 +24,13 @@ namespace PhotonReconstructor {
     auto MirrorCentre = radiatorCell.GetMirrorCentre();
     auto GetEmissionPoint = [=]() {
       if(TrueEmissionPoint) {
-	return photonHit.m_Photon->m_EmissionPoint - MirrorCentre;
+	return photonHit.m_Photon->m_EmissionPoint;
       } else {
 	// TODO: Tidy up this line
-	return Particle.GetEntryPoint(Radiator) + (Particle.GetExitPoint(Radiator) - Particle.GetEntryPoint(Radiator))*0.5 - MirrorCentre;
+	return (Particle.GetExitPoint(Radiator) + Particle.GetEntryPoint(Radiator))*0.5;
       }
     };
-    const Vector EmissionPoint = GetEmissionPoint();
+    const Vector EmissionPoint = GetEmissionPoint() - MirrorCentre;
     const Vector DetectionPoint = Vector(photonHit.x, photonHit.y, 0.0) - MirrorCentre;
     const double MirrorCurvature = radiatorCell.GetMirrorCurvature();
     // Distance between emission point and mirror centre, in units of mirror curvature
