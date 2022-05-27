@@ -6,14 +6,15 @@
 #ifndef TRACKINGVOLUME
 #define TRACKINGVOLUME
 
+#include<memory>
+#include"TObject.h"
+
 class TrackingVolume {
  public:
   /**
    * Constructor that sets up the geometry of the tracking volume
-   * @param Radius The inner radius of the tracker
-   * @param FieldStrength The magnetic field strenth, in T
    */
-  TrackingVolume(double Radius, double FieldStrength);
+  TrackingVolume();
   /**
    * Get inner tracking radius
    */
@@ -22,11 +23,27 @@ class TrackingVolume {
    * Get magnetic field strength
    */
   double GetFieldStrength() const;
+  /**
+   * Draw ARC geometry
+   */
+  std::vector<std::unique_ptr<TObject>> DrawARCGeometry() const;
  private:
   /**
    * The inner tracking radius
    */
   const double m_Radius;
+  /**
+   * Length of detector
+   */
+  const double m_Length;
+  /**
+   * Number of cells in theta direction
+   */
+  const int m_ThetaCells;
+  /**
+   * Number of cells in phi direction
+   */
+  const int m_PhiCells;
   /**
    * The magnetic field strength
    */

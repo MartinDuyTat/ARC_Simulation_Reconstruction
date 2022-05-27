@@ -24,6 +24,7 @@
 #include"PhotonReconstructor.h"
 #include"RadiatorCell.h"
 #include"Settings.h"
+#include"EventDisplay.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -44,7 +45,9 @@ int main(int argc, char *argv[]) {
   if(Settings::Exists("General/Seed")) {
     gRandom->SetSeed(Settings::GetInt("General/Seed"));
   }
-  const TrackingVolume InnerTracker(1.05, 2.0);
+  EventDisplay eventDisplay;
+  const TrackingVolume InnerTracker;
+  eventDisplay.AddObject(InnerTracker.DrawARCGeometry());
   RadiatorCell radiatorCell(Vector(0.0, 0.0, 1.08));
   if(RunMode == "SingleTrack") {
     std::cout << "Run mode: Single track\n";
@@ -94,6 +97,7 @@ int main(int argc, char *argv[]) {
       CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;
       CherenkovTree.Fill();
     }
+    eventDisplay.DrawEventDisplay("EventDisplay.png");
     CherenkovTree.Write();
     CherenkovFile.Close();
   }
