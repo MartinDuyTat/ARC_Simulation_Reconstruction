@@ -9,6 +9,7 @@
 #include<string>
 #include<vector>
 #include<utility>
+#include<utility>
 #include<memory>
 #include"TObject.h"
 
@@ -25,16 +26,16 @@ class EventDisplay {
   /**
    * Add object to event display
    */
-  void AddObject(std::unique_ptr<TObject> Object);
+  void AddObject(std::unique_ptr<TObject> Object, const std::string &Option = "");
   /**
    * Add objects to event display
    */
-  void AddObject(std::vector<std::unique_ptr<TObject>> Objects);
+  void AddObject(std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Objects);
  private:
   /**
    * Vector storing all the objects to be drawn
    */
-  std::vector<std::unique_ptr<TObject>> m_EventObjects;
+  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> m_EventObjects;
 };
 
 #endif

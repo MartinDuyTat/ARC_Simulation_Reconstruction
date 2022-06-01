@@ -14,6 +14,7 @@
 
 ParticleTrack::ParticleTrack(const Vector &Momentum, int ParticleID): m_Momentum(Momentum),
 								      m_Position(0.0, 0.0, 0.0),
+								      m_InitialPosition(0.0, 0.0, 0.0),
 								      m_ParticleID(ParticleID),
 								      m_TrackedThroughTracker(false),
 								      m_TrackedThroughRadiator(false),
@@ -35,6 +36,7 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
 
 void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
   // TODO: Account for rotation of global and local coordinate systems
+  m_RadiatorCell = &Cell;
   // Check if particle is within acceptance
   const double CellThetaLength = Settings::GetDouble("ARCGeometry/Length")/Settings::GetInt("ARCGeometry/ThetaCells");
   const double ThetaAcceptance = TMath::ATan(0.5*CellThetaLength/Settings::GetDouble("ARCGeometry/Radius"));
@@ -57,7 +59,7 @@ void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
 }
 
-void ParticleTrack::TrackThroughRadiatorCell(const RadiatorCell &Cell) {
+void ParticleTrack::TrackThroughRadiatorCell() {
   if(m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot track particle through radiator cell again");
   }
@@ -68,12 +70,12 @@ void ParticleTrack::TrackThroughRadiatorCell(const RadiatorCell &Cell) {
   const double Slope = 1.0/TMath::Cos(m_Momentum.Theta());
   m_Position += m_Momentum.Unit()*Slope*ZDistToAerogel;
   m_AerogelEntry = m_Position;
-  m_Position += m_Momentum.Unit()*Slope*Cell.GetAerogelThickness();
+  m_Position += m_Momentum.Unit()*Slope*m_RadiatorCell->GetAerogelThickness();
   m_AerogelExit = m_Position;
   m_GasEntry = m_AerogelExit;
   // Solve quadratic s^2 - 2sb + c = 0 to find interserction of particle track and mirror
-  auto MirrorCentre = Cell.GetMirrorCentre();
-  const double MirrorRadius = Cell.GetMirrorCurvature();
+  auto MirrorCentre = m_RadiatorCell->GetMirrorCentre();
+  const double MirrorRadius = m_RadiatorCell->GetMirrorCurvature();
   const auto Direction = m_Momentum.Unit();
   const double b = (MirrorCentre - m_Position).Dot(Direction);
   const double c = MirrorCentre.Mag2() + m_Position.Mag2() - MirrorRadius*MirrorRadius - 2*m_Position.Dot(MirrorCentre);
@@ -199,4 +201,9 @@ void ParticleTrack::RotateY(Vector &Vec) const {
   const double Temp = Vec.X();
   Vec.SetX(-Vec.Z());
   Vec.SetZ(Temp);
+}
+
+std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
+  TLine Track(0.0, 0.0, 1.0, 1.0);
+  return std::make_unique<TLine>(Track);
 }

@@ -8,6 +8,10 @@
 #ifndef RADIATORCELL
 #define RADIATORCELL
 
+#include<string>
+#include<vector>
+#include<utility>
+#include<memory>
 #include"Math/Vector3Dfwd.h"
 #include"SiPM.h"
 
@@ -52,6 +56,10 @@ class RadiatorCell {
    * Get the radiator cell position in the global coordinates
    */
   const Vector& GetRadiatorPosition() const;
+  /**
+   * Draw radiator geometry
+   */
+  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorGeometry() const;
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates

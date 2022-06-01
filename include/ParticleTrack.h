@@ -7,6 +7,8 @@
 #define PARTICLETRACK
 
 #include<vector>
+#include<memory>
+#include"TLine.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 #include"Photon.h"
@@ -25,6 +27,8 @@ class ParticleTrack {
   ParticleTrack(const Vector &Momentum, int ParticleID);
   /**
    * Enum with the two coordinate systems used
+   * GlobalDetector: z along symmetry axis, x is up, y is out of the plane
+   * LocalRadiator: z axis in the radial direction, x in the theta direction and y in the phi direction
    */
   enum class CoordinateSystem{GlobalDetector, LocalRadiator};
   /**
@@ -38,7 +42,7 @@ class ParticleTrack {
   /**
    * Track particle through radiator cell
    */
-  void TrackThroughRadiatorCell(const RadiatorCell &Cell);
+  void TrackThroughRadiatorCell();
   /**
    * Generate Cherenkov photon from aerogel
    */
@@ -78,6 +82,10 @@ class ParticleTrack {
    * Get exit point of particle in radiator
    */
   const Vector& GetExitPoint(Photon::Radiator Radiator) const;
+  /**
+   * Draw particle track
+   */
+  std::unique_ptr<TLine> DrawParticleTrack() const;
  private:
   /**
    * Particle momentum, in GeV
@@ -88,9 +96,17 @@ class ParticleTrack {
    */
   Vector m_Position;
   /**
+   * Initial particle position, in m
+   */
+  const Vector m_InitialPosition;
+  /**
    * Particle ID
    */
   int m_ParticleID;
+  /**
+   * Pointer to the radiator cell that track enters
+   */
+  const RadiatorCell *m_RadiatorCell;
   /**
    * Flag that is true when track has been traced through inner tracker detector
    */

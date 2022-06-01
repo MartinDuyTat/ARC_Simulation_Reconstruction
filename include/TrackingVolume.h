@@ -7,6 +7,9 @@
 #define TRACKINGVOLUME
 
 #include<memory>
+#include<utility>
+#include<string>
+#include<vector>
 #include"TObject.h"
 
 class TrackingVolume {
@@ -26,7 +29,7 @@ class TrackingVolume {
   /**
    * Draw ARC geometry
    */
-  std::vector<std::unique_ptr<TObject>> DrawARCGeometry() const;
+  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawARCGeometry() const;
  private:
   /**
    * The inner tracking radius

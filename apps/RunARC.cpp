@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
   const TrackingVolume InnerTracker;
   eventDisplay.AddObject(InnerTracker.DrawARCGeometry());
   RadiatorCell radiatorCell(Vector(0.0, 0.0, 1.08));
+  eventDisplay.AddObject(radiatorCell.DrawRadiatorGeometry());
   if(RunMode == "SingleTrack") {
     std::cout << "Run mode: Single track\n";
     const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"),
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
     ParticleTrack particleTrack(Momentum, ParticleID);
     particleTrack.TrackThroughTracker(InnerTracker);
     particleTrack.ConvertToRadiatorCoordinates(radiatorCell);
-    particleTrack.TrackThroughRadiatorCell(radiatorCell);
+    particleTrack.TrackThroughRadiatorCell();
     auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
     auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
     for(auto &photon : PhotonsAerogel) {
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
       ParticleTrack particleTrack(Momentum, ParticleID);
       particleTrack.TrackThroughTracker(InnerTracker);
       particleTrack.ConvertToRadiatorCoordinates(radiatorCell);
-      particleTrack.TrackThroughRadiatorCell(radiatorCell);
+      particleTrack.TrackThroughRadiatorCell();
       Photons.push_back(particleTrack.GeneratePhotonFromGas());
       CherenkovAngle_True = Photons.back().m_CherenkovAngle;
       PhotonMapper::TracePhoton(Photons.back(), radiatorCell);
