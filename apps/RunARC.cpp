@@ -78,7 +78,8 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
     std::vector<Photon> Photons;
-    for(int i = 0; i < 10000; i++) {
+    const int NumberTracks = Settings::GetInt("General/NumberTracks");
+    for(int i = 0; i < NumberTracks; i++) {
       const double Phi = gRandom->Uniform(-TMath::Pi(), TMath::Pi());
       const double Theta = gRandom->Uniform(Settings::GetDouble("Particle/Theta_min"), Settings::GetDouble("Particle/Theta_max"));;
       const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"), Theta, Phi);
@@ -90,6 +91,10 @@ int main(int argc, char *argv[]) {
       Photons.push_back(particleTrack.GeneratePhotonFromGas());
       CherenkovAngle_True = Photons.back().m_CherenkovAngle;
       PhotonMapper::TracePhoton(Photons.back(), radiatorCell);
+      if(i == 0) {
+	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
+	eventDisplay.AddObject(Photons.back().DrawPhotonPath());
+      }
       if(!Photons.back().m_MirrorHit) {
 	continue;
       }

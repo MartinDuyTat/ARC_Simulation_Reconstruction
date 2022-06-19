@@ -204,6 +204,8 @@ void ParticleTrack::RotateY(Vector &Vec) const {
 }
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
-  TLine Track(0.0, 0.0, 1.0, 1.0);
+  const auto CurrentPosition = m_RadiatorCell->GetRadiatorPosition() + m_Position;
+  TLine Track(m_InitialPosition.X(), m_InitialPosition.Z(), CurrentPosition.X(), CurrentPosition.Z());
+  Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
 }

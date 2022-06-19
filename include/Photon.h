@@ -6,6 +6,8 @@
 #ifndef PHOTON
 #define PHOTON
 
+#include<memory>
+#include"TLine.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 
@@ -24,6 +26,10 @@ struct Photon {
    * @param CherenkovAngle Cherenkov angle
    */
   Photon(const Vector &Position, const Vector &Direction, double Energy, double CherenkovAngle);
+  /**
+   * Draw photon path
+   */
+  std::unique_ptr<TLine> DrawPhotonPath() const;
   /**
    * Photon position in local cell coordinates, in m
    */
