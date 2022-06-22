@@ -73,10 +73,13 @@ int main(int argc, char *argv[]) {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
     TTree CherenkovTree("CherenkovTree", "");
-    double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco, CherenkovAngle_True;
+    double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco, CherenkovAngle_True, PhotonEnergy;
+    int DetectorHit;
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint", &CherenkovAngle_Reco_TrueEmissionPoint);
     CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
+    CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy);
+    CherenkovTree.Branch("DetectorHit", &DetectorHit);
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
     const int TrackToDraw = Settings::GetInt("General/TrackToDraw");
     const bool DrawThetaMiss = Settings::GetBool("General/DrawThetaMiss");
@@ -109,6 +112,8 @@ int main(int argc, char *argv[]) {
 	  continue;
 	}
 	auto reconstructedPhoton = PhotonReconstructor::ReconstructPhoton(particleTrack, radiatorCell.m_Detector.GetPhotonHits().back(), radiatorCell, Photon::Radiator::Gas);
+	PhotonEnergy = Photon.m_Energy;
+	DetectorHit = Photon.m_Status == Photon::Status::DetectorHit ? 1 : 0;
 	CherenkovAngle_Reco_TrueEmissionPoint = reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
 	CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;
 	CherenkovTree.Fill();

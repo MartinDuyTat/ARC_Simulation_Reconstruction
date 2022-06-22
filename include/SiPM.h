@@ -9,6 +9,7 @@
 
 #include<vector>
 #include<string>
+#include"Math/Interpolator.h"
 #include"Photon.h"
 
 struct PhotonHit {
@@ -36,7 +37,7 @@ class SiPM {
   /**
    * Add a photon hit
    */
-  void AddPhotonHit(const Photon &photon);
+  bool AddPhotonHit(const Photon &photon);
   /**
    * Plot photon hits
    */
@@ -63,9 +64,25 @@ class SiPM {
    */
   const double m_DetectorPositionY;
   /**
+   * Max PDE
+   */
+  const double m_MaxPDE;
+  /**
+   * Interpolator for PDE
+   */
+  ROOT::Math::Interpolator m_Interpolator;
+  /**
    * Vector of photon hits
    */
   std::vector<PhotonHit> m_PhotonHits;
+  /**
+   * Get the wavelengths used to measure PDE in SiPM, in nm
+   */
+  constexpr std::array<double, 15> GetPDEWavelengths() const;
+  /**
+   * Get the measured PDE
+   */
+  constexpr std::array<double, 15> GetMeasuredPDE() const;
 };
 
 #endif

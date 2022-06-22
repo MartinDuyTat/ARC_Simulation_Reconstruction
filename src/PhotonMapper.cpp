@@ -39,8 +39,7 @@ namespace PhotonMapper {
 
   void TracePhotonToDetector(Photon &photon, RadiatorCell &radiatorCell) {
     photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
-    radiatorCell.m_Detector.AddPhotonHit(photon);
-    photon.m_Status = Photon::Status::DetectorHit;
+    photon.m_Status = radiatorCell.m_Detector.AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::DetectorMiss;
   }
 
   void TracePhoton(Photon &photon, RadiatorCell &radiatorCell) {

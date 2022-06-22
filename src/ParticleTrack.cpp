@@ -148,7 +148,8 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, do
   Direction = RotateY(Direction);
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
-  return {EmissionPoint, Direction, 0.0, TMath::ACos(CosTheta)};
+  const double Energy = gRandom->Uniform(1.78, 4.31);
+  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta)};
 }
 
 double ParticleTrack::Beta() const {
@@ -183,8 +184,8 @@ const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   // TODO: Move this to separate class
-  const double Efficiency = 0.20;
-  const double DeltaE = 4.0;
+  const double Efficiency = 0.60;
+  const double DeltaE = 2.55;
   return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
 }
 

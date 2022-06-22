@@ -26,7 +26,7 @@ struct Photon {
   /**
    * Enum class classifying whether the photon has been tracked or if it missed the mirror
    */
-  enum class Status{Emitted, MirrorHit, DetectorHit, MissedTheta, MissedPhi};
+  enum class Status{Emitted, MirrorHit, DetectorHit, DetectorMiss, MissedTheta, MissedPhi};
   /**
    * Construct a photon with position, direction and energy
    * @param Position Position vector
