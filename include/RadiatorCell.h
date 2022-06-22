@@ -14,6 +14,7 @@
 #include<memory>
 #include"Math/Vector3Dfwd.h"
 #include"SiPM.h"
+#include"Photon.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -57,6 +58,14 @@ class RadiatorCell {
    */
   const Vector& GetRadiatorPosition() const;
   /**
+   * Function that checks if the photon is inside the radiator in the theta direction
+   */
+  bool IsInsideThetaBoundary(const Photon &photon) const;
+  /**
+   * Function that checks if the photon is inside the radiator in the phi direction
+   */
+  bool IsInsidePhiBoundary(const Photon &photon) const;
+  /**
    * Draw radiator geometry
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorGeometry() const;
@@ -93,6 +102,14 @@ class RadiatorCell {
    * Position of origin of radiator cell in global coordinate system
    */
   const Vector m_Position;
+  /**
+   * Length of the radiator cell in the theta direction
+   */
+  const double m_ThetaLength;
+  /**
+   * Angular size of the radiator cell in the phi direction
+   */
+  const double m_DeltaPhi;
 };
 
 #endif

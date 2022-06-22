@@ -77,8 +77,10 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint", &CherenkovAngle_Reco_TrueEmissionPoint);
     CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
-    std::vector<Photon> Photons;
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
+    const int TrackToDraw = Settings::GetInt("General/TrackToDraw");
+    const bool DrawThetaMiss = Settings::GetBool("General/DrawThetaMiss");
+    const bool DrawPhiMiss = Settings::GetBool("General/DrawPhiMiss");
     for(int i = 0; i < NumberTracks; i++) {
       const double Phi = gRandom->Uniform(-TMath::Pi(), TMath::Pi());
       const double Theta = gRandom->Uniform(Settings::GetDouble("Particle/Theta_min"), Settings::GetDouble("Particle/Theta_max"));;
@@ -88,22 +90,31 @@ int main(int argc, char *argv[]) {
       particleTrack.TrackThroughTracker(InnerTracker);
       particleTrack.ConvertToRadiatorCoordinates(radiatorCell);
       particleTrack.TrackThroughRadiatorCell();
-      Photons.push_back(particleTrack.GeneratePhotonFromGas());
-      CherenkovAngle_True = Photons.back().m_CherenkovAngle;
-      PhotonMapper::TracePhoton(Photons.back(), radiatorCell);
-      if(i == 0) {
+      if(i == TrackToDraw) {
 	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
-	eventDisplay.AddObject(Photons.back().DrawPhotonPath());
       }
-      if(!Photons.back().m_MirrorHit) {
-	continue;
+      auto Photons = particleTrack.GeneratePhotonsFromGas();
+      for(auto &Photon : Photons) {
+	CherenkovAngle_True = Photon.m_CherenkovAngle;
+	PhotonMapper::TracePhoton(Photon, radiatorCell);
+	if(i == TrackToDraw) {
+	  eventDisplay.AddObject(Photon.DrawPhotonPath(radiatorCell));
+	}
+	if(!Photon.m_MirrorHitPosition) {
+	  if(DrawThetaMiss && Photon.m_Status == Photon::Status::MissedTheta) {
+	    eventDisplay.AddObject(Photon.DrawPhotonPath(radiatorCell));
+	  } else if(DrawPhiMiss && Photon.m_Status == Photon::Status::MissedPhi) {
+	    eventDisplay.AddObject(Photon.DrawPhotonPath(radiatorCell));
+	  }
+	  continue;
+	}
+	auto reconstructedPhoton = PhotonReconstructor::ReconstructPhoton(particleTrack, radiatorCell.m_Detector.GetPhotonHits().back(), radiatorCell, Photon::Radiator::Gas);
+	CherenkovAngle_Reco_TrueEmissionPoint = reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
+	CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;
+	CherenkovTree.Fill();
       }
-      auto reconstructedPhoton = PhotonReconstructor::ReconstructPhoton(particleTrack, radiatorCell.m_Detector.GetPhotonHits().back(), radiatorCell, Photon::Radiator::Gas);
-      CherenkovAngle_Reco_TrueEmissionPoint = reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
-      CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;
-      CherenkovTree.Fill();
     }
-    eventDisplay.DrawEventDisplay("EventDisplay.png");
+    eventDisplay.DrawEventDisplay("EventDisplay.pdf");
     CherenkovTree.Write();
     CherenkovFile.Close();
   }

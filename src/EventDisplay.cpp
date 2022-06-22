@@ -5,10 +5,12 @@
 #include"TCanvas.h"
 #include"TPad.h"
 #include"TLine.h"
+#include"TStyle.h"
 #include"EventDisplay.h"
 #include"Settings.h"
 
 void EventDisplay::DrawEventDisplay(const std::string &Filename) {
+  gStyle->SetLineScalePS(0.01);
   TCanvas c("c", "", Settings::GetInt("EventDisplay/CanvasWidth"), Settings::GetInt("EventDisplay/CanvasHeight"));
   gPad->DrawFrame(-Settings::GetDouble("ARCGeometry/Length")/2.0,
 		  0.0,

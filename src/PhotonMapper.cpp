@@ -27,28 +27,25 @@ namespace PhotonMapper {
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
-    // TODO: Check that photon hits mirror
-    const double CellThetaLength = Settings::GetDouble("ARCGeometry/Length")/Settings::GetInt("ARCGeometry/ThetaCells");
-    const double ThetaAcceptance = TMath::ATan(0.5*CellThetaLength/Settings::GetDouble("ARCGeometry/Radius"));
-    const double PhiAcceptance = 0.5*2*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells");
-    const Vector PhotonPositionGlobal = photon.m_Position + radiatorCell.GetRadiatorPosition();
-    // TODO: Fix this, it's not correct
-    if(TMath::Abs(TMath::ATan2(PhotonPositionGlobal.X(), PhotonPositionGlobal.Z())) > ThetaAcceptance ||
-       TMath::Abs(TMath::ATan2(PhotonPositionGlobal.Y(), PhotonPositionGlobal.Z())) > PhiAcceptance) {
-      photon.m_MirrorHit = false;
+    if(!radiatorCell.IsInsideThetaBoundary(photon)) {
+      photon.m_Status = Photon::Status::MissedTheta;
+    } else if(!radiatorCell.IsInsidePhiBoundary(photon)) {
+      photon.m_Status = Photon::Status::MissedPhi;
     } else {
-      photon.m_MirrorHit = true;
+      photon.m_Status = Photon::Status::MirrorHit;
+      photon.m_MirrorHitPosition = std::make_unique<Vector>(photon.m_Position);
     }
   }
 
   void TracePhotonToDetector(Photon &photon, RadiatorCell &radiatorCell) {
     photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
     radiatorCell.m_Detector.AddPhotonHit(photon);
+    photon.m_Status = Photon::Status::DetectorHit;
   }
 
   void TracePhoton(Photon &photon, RadiatorCell &radiatorCell) {
     TracePhotonToMirror(photon, radiatorCell);
-    if(photon.m_MirrorHit) {
+    if(photon.m_MirrorHitPosition) {
       TracePhotonToDetector(photon, radiatorCell);
     }
   }
