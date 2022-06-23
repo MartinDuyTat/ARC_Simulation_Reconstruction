@@ -12,6 +12,7 @@
 #include<vector>
 #include<utility>
 #include<memory>
+#include"TMath.h"
 #include"Math/Vector3Dfwd.h"
 #include"SiPM.h"
 #include"Photon.h"
@@ -22,7 +23,7 @@ class RadiatorCell {
  public:
   /**
    * Constructor that sets up the geometry
-   * @param Position Position of radiator cell in global coordinates
+   * @param Position Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
    */
   RadiatorCell(const Vector &Position);
   /**
@@ -57,6 +58,10 @@ class RadiatorCell {
    * Get the radiator cell position in the global coordinates
    */
   const Vector& GetRadiatorPosition() const;
+  /**
+   * Function that checks if the position is inside the radiator in the theta direction
+   */
+  bool IsInsideThetaBoundary(const Vector &Position) const;
   /**
    * Function that checks if the photon is inside the radiator in the theta direction
    */

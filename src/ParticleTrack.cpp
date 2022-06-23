@@ -35,15 +35,7 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
 }
 
 void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
-  // TODO: Account for rotation of global and local coordinate systems
   m_RadiatorCell = &Cell;
-  // Check if particle is within acceptance
-  const double CellThetaLength = Settings::GetDouble("ARCGeometry/Length")/Settings::GetInt("ARCGeometry/ThetaCells");
-  const double ThetaAcceptance = TMath::ATan(0.5*CellThetaLength/Settings::GetDouble("ARCGeometry/Radius"));
-  //const double PhiAcceptance = 0.5*2*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells");
-  if(TMath::Abs(m_Position.Theta() - TMath::Pi()/2.0) > ThetaAcceptance) {
-    throw std::runtime_error("Particle outside of radiator acceptance");
-  }
   // Check if coordinate system if correct
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
@@ -57,6 +49,10 @@ void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
   // Finally shift coordinates so that the origin is the detector plane of the radiator cell
   m_Position -= Cell.GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
+  // Check if particle is within acceptance
+  if(!Cell.IsInsideThetaBoundary(m_Position)) {
+    throw std::runtime_error("Particle outside of radiator acceptance");
+  }
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {
@@ -92,8 +88,7 @@ Photon ParticleTrack::GeneratePhotonFromAerogel() const {
   if(!m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot generate photons from tracks that have not been tracked through the radiator");
   }
-  Photon photon = GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.03);
-  photon.m_Radiator = Photon::Radiator::Aerogel;
+  Photon photon = GeneratePhoton(m_AerogelEntry, m_AerogelExit, Photon::Radiator::Aerogel);
   return photon;
 }
 
@@ -101,8 +96,7 @@ Photon ParticleTrack::GeneratePhotonFromGas() const {
   if(!m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot generate photons from tracks that have not been tracked through the radiator");
   }
-  Photon photon = GeneratePhoton(m_GasEntry, m_GasExit, 1.0049);
-  photon.m_Radiator = Photon::Radiator::Gas;
+  Photon photon = GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas);
   return photon;
 }
 
@@ -114,8 +108,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
   const int PhotonYield = std::round(GetPhotonYield(RadiatorDistance, Beta(), 1.03));
   std::vector<Photon> Photons;
   for(int i = 0; i < PhotonYield; i++) {
-    Photons.push_back(GeneratePhoton(m_AerogelEntry, m_AerogelExit, 1.03));
-    Photons.back().m_Radiator = Photon::Radiator::Aerogel;
+    Photons.push_back(GeneratePhoton(m_AerogelEntry, m_AerogelExit, Photon::Radiator::Aerogel));
   }
   return Photons;
 }
@@ -128,16 +121,34 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   const int PhotonYield = std::round(GetPhotonYield(RadiatorDistance, Beta(), 1.0049));
   std::vector<Photon> Photons;
   for(int i = 0; i < PhotonYield; i++) {
-    Photons.push_back(GeneratePhoton(m_GasEntry, m_GasExit, 1.0049));
-    Photons.back().m_Radiator = Photon::Radiator::Gas;
+    Photons.push_back(GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas));
   }
   return Photons;
 }
 
-Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, double n_phase) const {
-  // TODO: Rotate between local particle coordinate, beamline coordinates and local radiator coordinates
+double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energy) const {
+  switch(Radiator) {
+    case Photon::Radiator::Aerogel:
+      return 1.03;
+    case Photon::Radiator::Gas:
+      {
+	const double Lambda = 1239.8/Energy;
+	if(Settings::GetBool("General/ChromaticDispersion")) {
+	  return 1.0 + 0.0035 + 0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(Lambda*Lambda)));
+	} else {
+	  return 1.0049;
+	}
+      }
+    default:
+      return 1.0;
+  }
+}
+
+Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, Photon::Radiator Radiator) const {
   // TODO: Account for dispersion
-  const double RandomFraction = gRandom->Uniform(0.005, 0.995);
+  const double Energy = gRandom->Uniform(1.78, 4.31);
+  const double n_phase = GetIndexRefraction(Radiator, Energy);
+  const double RandomFraction = Settings::GetBool("General/RandomEmissionPoint") ? gRandom->Uniform(0.005, 0.995) : 0.5;
   const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
@@ -148,8 +159,7 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, do
   Direction = RotateY(Direction);
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
-  const double Energy = gRandom->Uniform(1.78, 4.31);
-  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta)};
+  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta), Radiator};
 }
 
 double ParticleTrack::Beta() const {

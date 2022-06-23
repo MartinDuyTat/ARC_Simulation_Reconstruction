@@ -27,7 +27,7 @@ class ParticleTrack {
   ParticleTrack(const Vector &Momentum, int ParticleID);
   /**
    * Enum with the two coordinate systems used
-   * GlobalDetector: z along symmetry axis, x is up, y is out of the plane
+   * GlobalDetector: z along symmetry axis, x is up, y is out of the plane (only used to generate charged tracks)
    * LocalRadiator: z axis in the radial direction, x in the theta direction and y in the phi direction
    */
   enum class CoordinateSystem{GlobalDetector, LocalRadiator};
@@ -60,12 +60,16 @@ class ParticleTrack {
    */
   std::vector<Photon> GeneratePhotonsFromGas() const;
   /**
+   * Get index of fraction
+   */
+  double GetIndexRefraction(Photon::Radiator Radiator, double Energy) const;
+  /**
    * Generate Cherenkov photon
    * @param Entry point of radiator
    * @param Exit point of ratiator
-   * @param n_phase Index of refraction for phase velocity
+   * @param Radiator The medium the photon was emitted in, to determine the index of refraction
    */
-  Photon GeneratePhoton(const Vector &Entry, const Vector &Exit, double n_phase) const;
+  Photon GeneratePhoton(const Vector &Entry, const Vector &Exit, Photon::Radiator Radiator) const;
   /**
    * Get the particle speed, in units of c
    */

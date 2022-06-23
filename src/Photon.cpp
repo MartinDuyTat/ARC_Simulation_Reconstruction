@@ -11,14 +11,15 @@
 Photon::Photon(const Vector &Position,
 	       const Vector &Direction,
 	       double Energy,
-	       double CherenkovAngle): m_Position(Position),
-				       m_EmissionPoint(Position),
-				       m_Direction(Direction),
-				       m_Energy(Energy),
-				       m_Radiator(Radiator::Unknown),
-				       m_CherenkovAngle(CherenkovAngle),
-				       m_Status(Status::Emitted),
-				       m_MirrorHitPosition(nullptr) {
+	       double CherenkovAngle,
+	       Radiator radiator): m_Position(Position),
+				   m_EmissionPoint(Position),
+				   m_Direction(Direction),
+				   m_Energy(Energy),
+				   m_Radiator(radiator),
+				   m_CherenkovAngle(CherenkovAngle),
+				   m_Status(Status::Emitted),
+				   m_MirrorHitPosition(nullptr) {
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Photon::DrawPhotonPath(const RadiatorCell &radiatorCell) const {

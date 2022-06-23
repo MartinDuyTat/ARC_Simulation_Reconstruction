@@ -22,7 +22,7 @@ struct Photon {
   /**
    * Enum class classifying which radiator the photon was emitted from
    */
-  enum class Radiator{Aerogel, Gas, Unknown};
+  enum class Radiator{Aerogel, Gas};
   /**
    * Enum class classifying whether the photon has been tracked or if it missed the mirror
    */
@@ -34,7 +34,7 @@ struct Photon {
    * @param Energy Photon energy
    * @param CherenkovAngle Cherenkov angle
    */
-  Photon(const Vector &Position, const Vector &Direction, double Energy, double CherenkovAngle);
+  Photon(const Vector &Position, const Vector &Direction, double Energy, double CherenkovAngle, Radiator radiator);
   /**
    * Draw photon path
    */

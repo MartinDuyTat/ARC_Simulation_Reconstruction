@@ -27,8 +27,8 @@ bool SiPM::AddPhotonHit(const Photon &photon) {
   }
   const double RandomNumber = gRandom->Uniform(0.0, m_MaxPDE);
   const double Efficiency = m_Interpolator.Eval(PhotonLambda);
+  m_PhotonHits.emplace_back(photon.m_Position.X(), photon.m_Position.Y(), &photon);
   if(RandomNumber <= Efficiency) {
-    m_PhotonHits.emplace_back(photon.m_Position.X(), photon.m_Position.Y(), &photon);
     return true;
   } else {
     return false;

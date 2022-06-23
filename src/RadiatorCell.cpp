@@ -57,8 +57,12 @@ const Vector& RadiatorCell::GetRadiatorPosition() const {
   return m_Position;
 }
 
+bool RadiatorCell::IsInsideThetaBoundary(const Vector &Position) const {
+  return TMath::Abs(Position.X()) <= m_ThetaLength/2.0;
+}
+
 bool RadiatorCell::IsInsideThetaBoundary(const Photon &photon) const {
-  return TMath::Abs(photon.m_Position.X()) <= m_ThetaLength/2.0;
+  return IsInsideThetaBoundary(photon.m_Position);
 }
 
 bool RadiatorCell::IsInsidePhiBoundary(const Photon &photon) const {
@@ -69,7 +73,7 @@ bool RadiatorCell::IsInsidePhiBoundary(const Photon &photon) const {
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorCell::DrawRadiatorGeometry() const {
   const auto MirrorCentreGlobal = m_Position + m_MirrorCentre;
   const double ArcAngle = TMath::ASin(0.5*m_ThetaLength/m_MirrorCurvature)*180.0/TMath::Pi();
-  TArc MirrorArc(MirrorCentreGlobal.Y(),
+  TArc MirrorArc(MirrorCentreGlobal.X(),
 		 MirrorCentreGlobal.Z(),
 		 m_MirrorCurvature,
 		 90.0 - ArcAngle, 90.0 + ArcAngle);
@@ -77,27 +81,27 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorCell::Draw
   MirrorArc.SetLineWidth(2);
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Objects;
   Objects.push_back(std::make_pair(std::make_unique<TArc>(MirrorArc), "ONLY"));
-  TLine LeftLine(-m_ThetaLength/2.0,
+  TLine LeftLine(-m_ThetaLength/2.0 + m_Position.X(),
 		 Settings::GetDouble("ARCGeometry/Radius"),
-		 -m_ThetaLength/2.0,
+		 -m_ThetaLength/2.0 + m_Position.X(),
 		 Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
   LeftLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(LeftLine), ""));
-  TLine RightLine(m_ThetaLength/2.0,
+  TLine RightLine(m_ThetaLength/2.0 + m_Position.X(),
 		  Settings::GetDouble("ARCGeometry/Radius"),
-		  m_ThetaLength/2.0,
+		  m_ThetaLength/2.0 + m_Position.X(),
 		  Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
   RightLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(RightLine), ""));
-  TLine DetectorLine(-m_ThetaLength/2.0,
+  TLine DetectorLine(-m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness,
-		     m_ThetaLength/2.0,
+		     m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness);
   DetectorLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(DetectorLine), ""));
-  TLine AerogelLine(-m_ThetaLength/2.0,
+  TLine AerogelLine(-m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness,
-		     m_ThetaLength/2.0,
+		     m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness);
   AerogelLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(AerogelLine), ""));
