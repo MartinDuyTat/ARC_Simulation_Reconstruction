@@ -3,15 +3,14 @@
 #include<algorithm>
 #include"TMath.h"
 #include"PhotonMapper.h"
-#include"RadiatorCell.h"
 #include"Photon.h"
 #include"Settings.h"
 
 namespace PhotonMapper {
 
-  double PhotonMirrorDistance(const Photon &photon, const RadiatorCell &radiatorCell) {
-    auto MirrorCentre = radiatorCell.GetMirrorCentre();
-    const double R = radiatorCell.GetMirrorCurvature();
+  double PhotonMirrorDistance(const Photon &photon) {
+    auto MirrorCentre = photon.m_RadiatorCell->GetMirrorCentre();
+    const double R = photon.m_RadiatorCell->GetMirrorCurvature();
     const double a = 1.0;
     const double b = -2*photon.m_Direction.Dot(MirrorCentre - photon.m_Position);
     const double c = (MirrorCentre - photon.m_Position).Mag2() - R*R;
@@ -20,16 +19,16 @@ namespace PhotonMapper {
     return std::max(s1, s2);
   }
 
-  void TracePhotonToMirror(Photon &photon, const RadiatorCell &radiatorCell) {
-    const double s = PhotonMirrorDistance(photon, radiatorCell);
+  void TracePhotonToMirror(Photon &photon) {
+    const double s = PhotonMirrorDistance(photon);
     const Vector Mirror = photon.m_Position + s*photon.m_Direction;
-    const Vector Normal = (Mirror - radiatorCell.GetMirrorCentre())/radiatorCell.GetMirrorCurvature();
+    const Vector Normal = (Mirror - photon.m_RadiatorCell->GetMirrorCentre())/photon.m_RadiatorCell->GetMirrorCurvature();
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
-    if(!radiatorCell.IsInsideThetaBoundary(photon)) {
+    if(!photon.m_RadiatorCell->IsInsideThetaBoundary(photon)) {
       photon.m_Status = Photon::Status::MissedTheta;
-    } else if(!radiatorCell.IsInsidePhiBoundary(photon)) {
+    } else if(!photon.m_RadiatorCell->IsInsidePhiBoundary(photon)) {
       photon.m_Status = Photon::Status::MissedPhi;
     } else {
       photon.m_Status = Photon::Status::MirrorHit;
@@ -37,15 +36,15 @@ namespace PhotonMapper {
     }
   }
 
-  void TracePhotonToDetector(Photon &photon, RadiatorCell &radiatorCell) {
+  void TracePhotonToDetector(Photon &photon) {
     photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
-    photon.m_Status = radiatorCell.m_Detector.AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::DetectorMiss;
+    photon.m_Status = photon.m_RadiatorCell->m_Detector.AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::DetectorMiss;
   }
 
-  void TracePhoton(Photon &photon, RadiatorCell &radiatorCell) {
-    TracePhotonToMirror(photon, radiatorCell);
+  void TracePhoton(Photon &photon) {
+    TracePhotonToMirror(photon);
     if(photon.m_MirrorHitPosition) {
-      TracePhotonToDetector(photon, radiatorCell);
+      TracePhotonToDetector(photon);
     }
   }
 

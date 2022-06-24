@@ -18,10 +18,10 @@ namespace PhotonReconstructor {
 
   double ReconstructCherenkovAngle(const ParticleTrack &Particle,
 				   const PhotonHit &photonHit,
-				   const RadiatorCell &radiatorCell,
 				   bool TrueEmissionPoint,
 				   Photon::Radiator Radiator) {
-    auto MirrorCentre = radiatorCell.GetMirrorCentre();
+    const RadiatorCell *radiatorCell = photonHit.m_Photon->m_RadiatorCell;
+    auto MirrorCentre = radiatorCell->GetMirrorCentre();
     auto GetEmissionPoint = [=]() {
       if(TrueEmissionPoint) {
 	return photonHit.m_Photon->m_EmissionPoint;
@@ -32,7 +32,7 @@ namespace PhotonReconstructor {
     };
     const Vector EmissionPoint = GetEmissionPoint() - MirrorCentre;
     const Vector DetectionPoint = Vector(photonHit.x, photonHit.y, 0.0) - MirrorCentre;
-    const double MirrorCurvature = radiatorCell.GetMirrorCurvature();
+    const double MirrorCurvature = radiatorCell->GetMirrorCurvature();
     // Distance between emission point and mirror centre, in units of mirror curvature
     const double EmissionMirrorDist = TMath::Sqrt(EmissionPoint.Mag2())/MirrorCurvature;
     // Parallel component of distance between detection point and mirror centre, in units of mirror curvature
@@ -53,11 +53,10 @@ namespace PhotonReconstructor {
   
   ReconstructedPhoton ReconstructPhoton(const ParticleTrack &Particle,
 					const PhotonHit &photonHit,
-					const RadiatorCell &radiatorCell,
 					Photon::Radiator Radiator) {
     ReconstructedPhoton reconstructedPhoton(*photonHit.m_Photon);
-    reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint = ReconstructCherenkovAngle(Particle, photonHit, radiatorCell, true, Radiator);
-    reconstructedPhoton.m_CherenkovAngle = ReconstructCherenkovAngle(Particle, photonHit, radiatorCell, false, Radiator);
+    reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint = ReconstructCherenkovAngle(Particle, photonHit, true, Radiator);
+    reconstructedPhoton.m_CherenkovAngle = ReconstructCherenkovAngle(Particle, photonHit, false, Radiator);
     return reconstructedPhoton;
   }
 

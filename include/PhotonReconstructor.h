@@ -18,13 +18,11 @@ namespace PhotonReconstructor {
    * Reconstruct Cherenkov angle of photon from the photon hit, charged track and mirror geometry
    * @param Particle The charged particle that emitted the photon
    * @param photonHit The photon hit in the detector
-   * @param radiatorCell The radiator cell
    * @param TrueEmissionPoint Set to true to use the true emission point
    * @param Radiator The radiator that the photon was emitted from
    */
   double ReconstructCherenkovAngle(const ParticleTrack &Particle,
 				   const PhotonHit &photonHit,
-				   const RadiatorCell &radiatorCell,
 				   bool TrueEmissionPoint,
 				   Photon::Radiator Radiator);
   /**
@@ -36,7 +34,6 @@ namespace PhotonReconstructor {
    */
   ReconstructedPhoton ReconstructPhoton(const ParticleTrack &Particle,
 					const PhotonHit &photonHit,
-					const RadiatorCell &radiatorCell,
 					Photon::Radiator Radiator);
   /**
    * Struct with solutions to the quartic equation

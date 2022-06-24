@@ -10,6 +10,7 @@
 
 #include<string>
 #include<map>
+#include<vector>
 
 class Settings {
  public:
@@ -39,6 +40,10 @@ class Settings {
    * Get bool setting (if string is "true" this evaluates to true)
    */
   static bool GetBool(const std::string &Setting);
+  /**
+   * Get vector of int, comma separated in options file
+   */
+  static std::vector<int> GetIntVector(const std::string &Setting);
   /**
    * Check if setting exists
    */

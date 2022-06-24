@@ -6,6 +6,9 @@
 #include<utility>
 #include<fstream>
 #include<sstream>
+#include<vector>
+#include<sstream>
+#include<algorithm>
 #include"Settings.h"
 
 std::map<std::string, std::map<std::string, std::string>> Settings::m_Settings;
@@ -59,6 +62,18 @@ int Settings::GetInt(const std::string &Setting) {
 
 bool Settings::GetBool(const std::string &Setting) {
   return GetString(Setting) == "true";
+}
+
+std::vector<int> Settings::GetIntVector(const std::string &Setting) {
+  std::string CommaSeparatedList = GetString(Setting);
+  std::replace(CommaSeparatedList.begin(), CommaSeparatedList.end(), ',', ' ');
+  std::stringstream ss(CommaSeparatedList);
+  std::vector<int> List;
+  int Number;
+  while(ss >> Number) {
+    List.push_back(Number);
+  }
+  return List;
 }
 
 bool Settings::Exists(const std::string &Setting) {

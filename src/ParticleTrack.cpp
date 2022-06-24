@@ -11,6 +11,8 @@
 #include"RadiatorCell.h"
 #include"ParticleMass.h"
 #include"Settings.h"
+#include"SiPM.h"
+#include"RadiatorArray.h"
 
 ParticleTrack::ParticleTrack(const Vector &Momentum, int ParticleID): m_Momentum(Momentum),
 								      m_Position(0.0, 0.0, 0.0),
@@ -30,12 +32,11 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   if(m_TrackedThroughTracker) {
     throw std::runtime_error("Cannot track particle through inner tracker again");
   }
-  m_Position += m_Momentum.Unit()*InnerTracker.GetRadius();
+  m_Position += m_Momentum.Unit()*InnerTracker.GetRadius()/TMath::Sin(m_Momentum.Theta());
   m_TrackedThroughTracker = true;
 }
 
-void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
-  m_RadiatorCell = &Cell;
+void ParticleTrack::ConvertToRadiatorCoordinates(RadiatorArray &radiatorArray) {
   // Check if coordinate system if correct
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
@@ -46,16 +47,19 @@ void ParticleTrack::ConvertToRadiatorCoordinates(const RadiatorCell &Cell) {
   // Then rotate around y-axis so that z axis now points towards the high pT cell
   RotateY(m_Position);
   RotateY(m_Momentum);
+  // Figure out which radiator cell the track goes through
+  m_RadiatorCell = radiatorArray.WhichRadiator(m_Position);
   // Finally shift coordinates so that the origin is the detector plane of the radiator cell
-  m_Position -= Cell.GetRadiatorPosition();
+  m_Position -= m_RadiatorCell->GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
   // Check if particle is within acceptance
-  if(!Cell.IsInsideThetaBoundary(m_Position)) {
+  if(!m_RadiatorCell->IsInsideThetaBoundary(m_Position)) {
     throw std::runtime_error("Particle outside of radiator acceptance");
   }
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {
+  // TODO: Allow particle to go through multiple cells
   if(m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot track particle through radiator cell again");
   }
@@ -159,7 +163,7 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, Ph
   Direction = RotateY(Direction);
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
-  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta), Radiator};
+  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta), Radiator, m_RadiatorCell};
 }
 
 double ParticleTrack::Beta() const {
@@ -219,4 +223,8 @@ std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
   TLine Track(m_InitialPosition.X(), m_InitialPosition.Z(), CurrentPosition.X(), CurrentPosition.Z());
   Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
+}
+
+const std::vector<PhotonHit>& ParticleTrack::GetPhotonHits() const {
+  return m_RadiatorCell->m_Detector.GetPhotonHits();
 }

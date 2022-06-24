@@ -5,6 +5,7 @@ add_library(ARC_Simulation_Reconstruction
 	    Photon.cpp
 	    PhotonMapper.cpp
 	    PhotonReconstructor.cpp
+	    RadiatorArray.cpp
 	    RadiatorCell.cpp
 	    ReconstructedPhoton.cpp
 	    Settings.cpp

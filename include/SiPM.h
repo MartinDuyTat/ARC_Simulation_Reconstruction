@@ -43,7 +43,7 @@ class SiPM {
    */
   void PlotHits(const std::string &Filename) const;
   /**
-   * Get photon hits
+   * Get photon hits in SiPM
    */
   const std::vector<PhotonHit>& GetPhotonHits() const;
  private:

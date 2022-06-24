@@ -13,19 +13,19 @@ namespace PhotonMapper {
   /**
    * Find the distance between the photon and the mirror
    */
-  double PhotonMirrorDistance(const Photon &photon, const RadiatorCell &radiatorCell);
+  double PhotonMirrorDistance(const Photon &photon);
   /**
    * Trace photon from emission point to mirror
    */
-  void TracePhotonToMirror(Photon &photon, const RadiatorCell &radiatorCell);
+  void TracePhotonToMirror(Photon &photon);
   /**
    * Trace photon from mirror to detector plane and register detector hit
    */
-  void TracePhotonToDetector(Photon &photon, RadiatorCell &radiatorCell);
+  void TracePhotonToDetector(Photon &photon);
   /**
    * Trace photon from emission point to detector and register detector hit
    */
-  void TracePhoton(Photon &photon, RadiatorCell &radiatorCell);
+  void TracePhoton(Photon &photon);
 }
 
 #endif

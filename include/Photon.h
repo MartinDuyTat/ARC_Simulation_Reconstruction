@@ -33,12 +33,19 @@ struct Photon {
    * @param Direction Direction vector
    * @param Energy Photon energy
    * @param CherenkovAngle Cherenkov angle
+   * @param radiator Aerogel or gas radiator where this photon was emitted
+   * @param radiatorCell The radiator cell where this photon was emitted
    */
-  Photon(const Vector &Position, const Vector &Direction, double Energy, double CherenkovAngle, Radiator radiator);
+  Photon(const Vector &Position,
+	 const Vector &Direction,
+	 double Energy,
+	 double CherenkovAngle,
+	 Radiator radiator,
+	 RadiatorCell *radiatorCell);
   /**
    * Draw photon path
    */
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawPhotonPath(const RadiatorCell &radiatorCell) const;
+  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawPhotonPath() const;
   /**
    * Photon position in local cell coordinates, in m
    */
@@ -71,6 +78,10 @@ struct Photon {
    * Hit position of the mirror, or nullptr if the photon missed the mirror
    */
   std::unique_ptr<Vector> m_MirrorHitPosition;
+  /**
+   * Pointer to the radiator cell that this photon is inside
+   */
+  RadiatorCell *m_RadiatorCell;
 };
 
 #endif

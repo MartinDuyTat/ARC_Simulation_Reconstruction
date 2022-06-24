@@ -23,9 +23,9 @@ class RadiatorCell {
  public:
   /**
    * Constructor that sets up the geometry
-   * @param Position Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
+   * @param CellNumber Unique number that identifies the position of the cell
    */
-  RadiatorCell(const Vector &Position);
+  RadiatorCell(int CellNumber);
   /**
    * Get total radiator cell thickness
    */
@@ -74,11 +74,23 @@ class RadiatorCell {
    * Draw radiator geometry
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorGeometry() const;
+  /**
+   * Get length of cell in theta direction
+   */
+  double GetThetaLength() const;
+  /**
+   * Get cell number
+   */
+  double GetCellNumber() const;
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
    */
   double GetMirrorCurvatureCentreZ() const;
+  /**
+   * Length of the radiator cell in the theta direction
+   */
+  const double m_ThetaLength;
   /**
    * The full thickness of the radiator cell
    */
@@ -104,17 +116,23 @@ class RadiatorCell {
    */
   const Vector m_MirrorCentre;
   /**
-   * Position of origin of radiator cell in global coordinate system
+   * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
    */
   const Vector m_Position;
-  /**
-   * Length of the radiator cell in the theta direction
-   */
-  const double m_ThetaLength;
   /**
    * Angular size of the radiator cell in the phi direction
    */
   const double m_DeltaPhi;
+  /**
+   * Radiator cell number
+   * For a single central cell, it is assigned number 0
+   * For an array of radiator cells, numbering starts from 1 from the middle to the right and -1 to the left
+   */
+  const int m_CellNumber;
+  /**
+   * Helper function to get cell position based on cell number
+   */
+  Vector GetCellPosition(int CellNumber) const;
 };
 
 #endif

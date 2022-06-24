@@ -13,7 +13,7 @@
 #include"Math/DisplacementVector3D.h"
 #include"Photon.h"
 #include"TrackingVolume.h"
-#include"RadiatorCell.h"
+#include"RadiatorArray.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -38,7 +38,7 @@ class ParticleTrack {
   /**
    * Convert to local radiator coordinates
    */
-  void ConvertToRadiatorCoordinates(const RadiatorCell &Cell);
+  void ConvertToRadiatorCoordinates(RadiatorArray &Cell);
   /**
    * Track particle through radiator cell
    */
@@ -90,6 +90,10 @@ class ParticleTrack {
    * Draw particle track
    */
   std::unique_ptr<TLine> DrawParticleTrack() const;
+  /**
+   * Get photon hits in SiPM
+   */
+  const std::vector<PhotonHit>& GetPhotonHits() const;
  private:
   /**
    * Particle momentum, in GeV
@@ -110,7 +114,7 @@ class ParticleTrack {
   /**
    * Pointer to the radiator cell that track enters
    */
-  const RadiatorCell *m_RadiatorCell;
+  RadiatorCell *m_RadiatorCell;
   /**
    * Flag that is true when track has been traced through inner tracker detector
    */
