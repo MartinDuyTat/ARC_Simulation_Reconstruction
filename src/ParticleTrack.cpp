@@ -73,19 +73,62 @@ void ParticleTrack::TrackThroughRadiatorCell() {
   m_Position += m_Momentum.Unit()*Slope*m_RadiatorCell->GetAerogelThickness();
   m_AerogelExit = m_Position;
   m_GasEntry = m_AerogelExit;
-  // Solve quadratic s^2 - 2sb + c = 0 to find interserction of particle track and mirror
-  auto MirrorCentre = m_RadiatorCell->GetMirrorCentre();
-  const double MirrorRadius = m_RadiatorCell->GetMirrorCurvature();
-  const auto Direction = m_Momentum.Unit();
-  const double b = (MirrorCentre - m_Position).Dot(Direction);
-  const double c = MirrorCentre.Mag2() + m_Position.Mag2() - MirrorRadius*MirrorRadius - 2*m_Position.Dot(MirrorCentre);
-  const double s1 = b + TMath::Sqrt(b*b - c);
-  const double s2 = b - TMath::Sqrt(b*b - c);
-  // Pick forwards moving particle solution
-  const double s = std::max(s1, s2);
-  m_Position += Direction*s;
-  m_GasExit = m_Position;
-  m_TrackedThroughRadiator = true;
+  TrackThroughGasToMirror();
+}
+
+void ParticleTrack::TrackThroughGasToMirror() {
+  do {
+    // Solve quadratic s^2 - 2sb + c = 0 to find interserction of particle track and mirror
+    auto MirrorCentre = m_RadiatorCell->GetMirrorCentre();
+    const double MirrorRadius = m_RadiatorCell->GetMirrorCurvature();
+    const auto Direction = m_Momentum.Unit();
+    const double b = (MirrorCentre - m_Position).Dot(Direction);
+    const double c = MirrorCentre.Mag2() + m_Position.Mag2() - MirrorRadius*MirrorRadius - 2*m_Position.Dot(MirrorCentre);
+    const double s1 = b + TMath::Sqrt(b*b - c);
+    const double s2 = b - TMath::Sqrt(b*b - c);
+    // Pick forwards moving particle solution
+    const double s = std::max(s1, s2);
+    m_Position += Direction*s;
+    m_GasExit = m_Position;
+    m_TrackedThroughRadiator = m_RadiatorCell->IsInsideThetaBoundary(m_Position);
+    if(!m_TrackedThroughRadiator) {
+      if(!SwapRadiatorCell()) {
+	m_TrackedThroughRadiator = true;
+	break;
+      }
+    }
+  } while(!m_TrackedThroughRadiator);
+}
+
+bool ParticleTrack::SwapRadiatorCell() {
+  if(m_RadiatorCell->IsInsideThetaBoundary(m_Position)) {
+    return true;
+  }
+  auto CurrentRadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
+  if(m_Position.X() > m_RadiatorCell->GetThetaLength()/2.0) {
+    if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::Last) {
+      return false;
+    }
+    m_RadiatorCell++;
+  } else if(m_Position.X() < -m_RadiatorCell->GetThetaLength()/2.0) {
+    if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::First) {
+      return false;
+    }
+    m_RadiatorCell--;
+  } else {
+    throw std::runtime_error("SwapRadiatorCell cannot figure out where particle track is");
+  }
+  auto NewRadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
+  ChangeCoordinateOrigin(NewRadiatorPosition - CurrentRadiatorPosition);
+  return true;
+}
+
+void ParticleTrack::ChangeCoordinateOrigin(const Vector &Shift) {
+  m_Position -= Shift;
+  m_AerogelEntry -= Shift;
+  m_AerogelExit -= Shift;
+  m_GasEntry -= Shift;
+  m_GasExit -= Shift;
 }
 
 Photon ParticleTrack::GeneratePhotonFromAerogel() const {
@@ -163,7 +206,7 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry, const Vector &Exit, Ph
   Direction = RotateY(Direction);
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
-  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta), Radiator, m_RadiatorCell};
+  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta), Radiator, &(*m_RadiatorCell)};
 }
 
 double ParticleTrack::Beta() const {

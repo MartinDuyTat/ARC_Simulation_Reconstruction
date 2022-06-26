@@ -15,8 +15,8 @@ SiPM::SiPM(): m_DetectorSizeX(0.05),
 	      m_DetectorPositionX(0.0),
 	      m_DetectorPositionY(0.0),
 	      m_MaxPDE(0.60),
-	      m_Interpolator(15, ROOT::Math::Interpolation::Type::kAKIMA) {
-  m_Interpolator.SetData(15, GetPDEWavelengths().data(), GetMeasuredPDE().data());
+	      m_Interpolator(std::make_unique<Interpolator>(15, InterpolationType::kAKIMA)) {
+  m_Interpolator->SetData(15, GetPDEWavelengths().data(), GetMeasuredPDE().data());
 }
 
 bool SiPM::AddPhotonHit(const Photon &photon) {
@@ -26,7 +26,7 @@ bool SiPM::AddPhotonHit(const Photon &photon) {
     return false;
   }
   const double RandomNumber = gRandom->Uniform(0.0, m_MaxPDE);
-  const double Efficiency = m_Interpolator.Eval(PhotonLambda);
+  const double Efficiency = m_Interpolator->Eval(PhotonLambda);
   m_PhotonHits.emplace_back(photon.m_Position.X(), photon.m_Position.Y(), &photon);
   if(RandomNumber <= Efficiency) {
     return true;

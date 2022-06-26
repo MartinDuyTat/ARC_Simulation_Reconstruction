@@ -12,6 +12,9 @@
 #include"Math/Interpolator.h"
 #include"Photon.h"
 
+using ROOT::Math::Interpolator;
+namespace InterpolationType = ROOT::Math::Interpolation;
+
 struct PhotonHit {
   /**
    * Constructor saving the photon hits
@@ -70,7 +73,7 @@ class SiPM {
   /**
    * Interpolator for PDE
    */
-  ROOT::Math::Interpolator m_Interpolator;
+  std::unique_ptr<Interpolator> m_Interpolator;
   /**
    * Vector of photon hits
    */

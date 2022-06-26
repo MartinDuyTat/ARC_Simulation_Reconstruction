@@ -23,6 +23,14 @@ RadiatorCell::RadiatorCell(int CellNumber): m_ThetaLength(Settings::GetDouble("A
                                             m_DeltaPhi(2.0*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells")),
                                             m_CellNumber(CellNumber) {
   // TODO: Allow for off-axis mirror or mirror with different radius of curvature
+  const int NumberThetaCells = Settings::GetInt("ARCGeometry/ThetaCells");
+  if(m_CellNumber == -NumberThetaCells/2) {
+    m_FirstMiddleLast = FirstMiddleLast::First;
+  } else if(m_CellNumber == NumberThetaCells/2) {
+    m_FirstMiddleLast = FirstMiddleLast::Last;
+  } else {
+    m_FirstMiddleLast = FirstMiddleLast::Middle;
+  }
 }
 
 double RadiatorCell::GetRadiatorThickness() const {
@@ -130,4 +138,8 @@ double RadiatorCell::GetThetaLength() const {
 
 double RadiatorCell::GetCellNumber() const {
   return m_CellNumber;
+}
+
+RadiatorCell::FirstMiddleLast RadiatorCell::GetFirstMiddleLast() const {
+  return m_FirstMiddleLast;
 }

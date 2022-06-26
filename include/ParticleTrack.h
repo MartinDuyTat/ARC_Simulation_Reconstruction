@@ -104,7 +104,7 @@ class ParticleTrack {
    */
   Vector m_Position;
   /**
-   * Initial particle position, in m
+   * Initial particle position in the global coordinate system, in m
    */
   const Vector m_InitialPosition;
   /**
@@ -114,7 +114,7 @@ class ParticleTrack {
   /**
    * Pointer to the radiator cell that track enters
    */
-  RadiatorCell *m_RadiatorCell;
+  RadiatorIter m_RadiatorCell;
   /**
    * Flag that is true when track has been traced through inner tracker detector
    */
@@ -155,6 +155,19 @@ class ParticleTrack {
    * Helper function to rotate around y axis in coordinate transformation
    */
   void RotateY(Vector &Vec) const;
+  /**
+   * Helper function to track particle through gas until it hits the correct mirror
+   * If it ends up outside the cell in the theta direction, move to the next radiator cell
+   */
+  void TrackThroughGasToMirror();
+  /**
+   * Helper function to swap radiator cell if particle is outside in the theta direction
+   */
+  bool SwapRadiatorCell();
+  /**
+   * Helper function to change coordinate origin
+   */
+  void ChangeCoordinateOrigin(const Vector &Shift);
 };
 
 #endif

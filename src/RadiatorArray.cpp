@@ -18,17 +18,17 @@ RadiatorArray::RadiatorArray(): m_FullArray(Settings::GetBool("General/FullArray
       if(i == 0) {
 	continue;
       }
-      m_Cells.emplace_back(std::make_unique<RadiatorCell>(i));
+      m_Cells.emplace_back(i);
     }
   } else {
-    m_Cells.emplace_back(std::make_unique<RadiatorCell>(0));
+    m_Cells.emplace_back(0);
   }
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorArray::DrawRadiatorArray() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorArrayObjects;
   for(const auto &Cell : m_Cells) {
-    auto RadiatorObjects = Cell->DrawRadiatorGeometry();
+    auto RadiatorObjects = Cell.DrawRadiatorGeometry();
     RadiatorArrayObjects.insert(RadiatorArrayObjects.end(),
 				std::make_move_iterator(RadiatorObjects.begin()),
 				std::make_move_iterator(RadiatorObjects.end()));
@@ -36,7 +36,7 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorArray::Dra
   return RadiatorArrayObjects;
 }
 
-RadiatorCell& RadiatorArray::operator[](int i) {
+RadiatorIter RadiatorArray::operator[](int i) {
   if(i == 0 && m_FullArray) {
     throw std::invalid_argument("Radiator 0 does not exist");
   }
@@ -45,26 +45,26 @@ RadiatorCell& RadiatorArray::operator[](int i) {
   }
   if(m_FullArray) {
     if(i < 0) {
-      return *m_Cells[i + m_NumberCells/2];
+      return m_Cells.begin() + (i + m_NumberCells/2);
     } else {
-      return *m_Cells[i - 1 + m_NumberCells/2];
+      return m_Cells.begin() + (i - 1 + m_NumberCells/2);
     }
   } else {
-    return *m_Cells[0];
+    return m_Cells.begin();
   }
 }
 
-RadiatorCell* RadiatorArray::WhichRadiator(const Vector &Position) {
-  const double ThetaLength = m_Cells[0]->GetThetaLength();
+RadiatorIter RadiatorArray::WhichRadiator(const Vector &Position) {
+  const double ThetaLength = m_Cells[0].GetThetaLength();
   const double AbsPosition = TMath::Abs(Position.X());
   if(m_FullArray) {
     const int Sign = Position.X() >= 0.0 ? +1 : -1;
-    return &(*this)[Sign*(static_cast<int>(AbsPosition/ThetaLength) + 1)];
+    return (*this)[Sign*(static_cast<int>(AbsPosition/ThetaLength) + 1)];
   } else {
     if(AbsPosition > ThetaLength/2.0) {
       throw std::runtime_error("Particle outside of theta range");
     } else {
-      return &(*this)[0];
+      return m_Cells.begin();
     }
   }
 }

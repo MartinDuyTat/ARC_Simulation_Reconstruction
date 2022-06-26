@@ -18,9 +18,14 @@
 #include"Photon.h"
 
 using Vector = ROOT::Math::XYZVector;
+using RadiatorIter = std::vector<RadiatorCell>::iterator;
 
 class RadiatorCell {
  public:
+  /**
+   * enum class describing if the radiator cell is the first, middle or last cell
+   */
+  enum class FirstMiddleLast{First, Middle, Last};
   /**
    * Constructor that sets up the geometry
    * @param CellNumber Unique number that identifies the position of the cell
@@ -82,6 +87,10 @@ class RadiatorCell {
    * Get cell number
    */
   double GetCellNumber() const;
+  /**
+   * Get the radiator cell position to be first, middle or last
+   */
+  FirstMiddleLast GetFirstMiddleLast() const;
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
@@ -133,6 +142,10 @@ class RadiatorCell {
    * Helper function to get cell position based on cell number
    */
   Vector GetCellPosition(int CellNumber) const;
+  /**
+   * Label that describes if the radiator cell is the first, last or if it's one of the middle radiators
+   */
+  FirstMiddleLast m_FirstMiddleLast;
 };
 
 #endif

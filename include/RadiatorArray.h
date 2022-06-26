@@ -29,17 +29,17 @@ class RadiatorArray {
   /**
    * Operator overload to get the individual radiator cells
    */
-  RadiatorCell& operator[](int i);
+  RadiatorIter operator[](int i);
   /**
    * Check which radiator the particle goes through
    * It is assumed that the input vector is right at the bottom surface of the radiator plane
    */
-  RadiatorCell* WhichRadiator(const Vector &Position);
+  RadiatorIter WhichRadiator(const Vector &Position);
  private:
   /**
    * Vector containing all the radiator cells
    */
-  std::vector<std::unique_ptr<RadiatorCell>> m_Cells;
+  std::vector<RadiatorCell> m_Cells;
   /**
    * Flag that is true if the full geometry is included, otherwise a single cell in the middle is used
    */
