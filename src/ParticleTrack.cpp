@@ -271,3 +271,7 @@ std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
 const std::vector<PhotonHit>& ParticleTrack::GetPhotonHits() const {
   return m_RadiatorCell->m_Detector.GetPhotonHits();
 }
+
+const Vector& ParticleTrack::GetPosition() const {
+  return m_Position;
+}

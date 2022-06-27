@@ -7,10 +7,13 @@
 #define PHOTONRECONSTRUCTOR
 
 #include<array>
+#include"Math/DisplacementVector3D.h"
 #include"Photon.h"
 #include"ParticleTrack.h"
 #include"RadiatorCell.h"
 #include"ReconstructedPhoton.h"
+
+using Vector = ROOT::Math::XYZVector;
 
 namespace PhotonReconstructor {
 
@@ -44,6 +47,10 @@ namespace PhotonReconstructor {
      */
     std::array<double, 2> m_SinBeta;
     std::array<double, 2> m_CosBeta;
+    /**
+     * Flag that is true if there are more than 2 solutions
+     */
+    bool m_DegenerateSolution = false;
   };
   /**
    * Solve quartic equation to determine sine of angle between emission and reflection point, relative to the mirror centre
@@ -52,7 +59,16 @@ namespace PhotonReconstructor {
    * @param DetectionMirrorPerpDist Perpendicular component of distance between detection point and mirror centre
    */
   QuarticSolution SolveQuartic(double EmissionMirrorDist, double DetectionMirrorParaDist, double DetectionMirrorPerpDist);
-
+  /**
+   * Helper function to calculate the reflection point after solving the quartic equation
+   */
+  Vector GetReflectionPoint(const Vector &EmissionPoint,
+			    const Vector &DetectionPoint,
+			    double DetectionMirrorParaDist,
+			    double DetectionMirrorPerpDist,
+			    double EmissionMirrorDist,
+			    QuarticSolution quarticSolution,
+			    int SolutionNumber);
 }
 
 #endif

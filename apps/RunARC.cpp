@@ -75,13 +75,14 @@ int main(int argc, char *argv[]) {
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
     TTree CherenkovTree("CherenkovTree", "");
     double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco, CherenkovAngle_True, PhotonEnergy;
-    int DetectorHit, RadiatorNumber;
+    int DetectorHit, RadiatorNumber, TrackNumber;
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint", &CherenkovAngle_Reco_TrueEmissionPoint);
     CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
     CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy);
     CherenkovTree.Branch("DetectorHit", &DetectorHit);
     CherenkovTree.Branch("RadiatorNumber", &RadiatorNumber);
+    CherenkovTree.Branch("TrackNumber", &TrackNumber);
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
     const bool DrawThetaMiss = Settings::GetBool("General/DrawThetaMiss");
@@ -118,6 +119,7 @@ int main(int argc, char *argv[]) {
 	PhotonEnergy = Photon.m_Energy;
 	DetectorHit = Photon.m_Status == Photon::Status::DetectorHit ? 1 : 0;
 	RadiatorNumber = Photon.m_RadiatorCell->GetCellNumber();
+	TrackNumber = i;
 	CherenkovAngle_Reco_TrueEmissionPoint = reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
 	CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;
 	CherenkovTree.Fill();

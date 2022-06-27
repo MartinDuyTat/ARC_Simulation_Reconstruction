@@ -94,6 +94,10 @@ class ParticleTrack {
    * Get photon hits in SiPM
    */
   const std::vector<PhotonHit>& GetPhotonHits() const;
+  /**
+   * Get particle position
+   */
+  const Vector& GetPosition() const;
  private:
   /**
    * Particle momentum, in GeV
