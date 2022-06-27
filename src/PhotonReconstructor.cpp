@@ -26,7 +26,6 @@ namespace PhotonReconstructor {
       if(TrueEmissionPoint) {
 	return photonHit.m_Photon->m_EmissionPoint;
       } else {
-	// TODO: Tidy up this line
 	return (Particle.GetExitPoint(Radiator) + Particle.GetEntryPoint(Radiator))*0.5;
       }
     };

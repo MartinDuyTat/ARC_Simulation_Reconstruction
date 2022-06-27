@@ -17,9 +17,9 @@ RadiatorCell::RadiatorCell(int CellNumber): m_ThetaLength(Settings::GetDouble("A
 					    m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
 					    m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
 					    m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
-					    m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
-					    m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
 					    m_Position(GetCellPosition(CellNumber)),
+					    m_MirrorCurvature(DetermineMirrorCurvature()),
+					    m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
                                             m_DeltaPhi(2.0*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells")),
                                             m_CellNumber(CellNumber) {
   // TODO: Allow for off-axis mirror or mirror with different radius of curvature
@@ -80,16 +80,30 @@ bool RadiatorCell::IsInsidePhiBoundary(const Photon &photon) const {
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorCell::DrawRadiatorGeometry() const {
+  // First find the mirror intersections with the walls in local coordinates by solving a quadratic
+  const double b = m_MirrorCentre.Z();
+  const double c_left = TMath::Power(m_ThetaLength/2.0, 2)
+                      + m_MirrorCentre.Mag2()
+                      - m_MirrorCurvature*m_MirrorCurvature
+                      - m_MirrorCentre.X()*m_ThetaLength;
+  const double c_right = TMath::Power(m_ThetaLength/2.0, 2)
+                       + m_MirrorCentre.Mag2()
+                       - m_MirrorCurvature*m_MirrorCurvature
+                       + m_MirrorCentre.X()*m_ThetaLength;
+  const double s_left = TMath::Sqrt(b*b - c_left);
+  const double s_right = TMath::Sqrt(b*b - c_right);
   const auto MirrorCentreGlobal = m_Position + m_MirrorCentre;
-  const double ArcAngle = TMath::ASin(0.5*m_ThetaLength/m_MirrorCurvature)*180.0/TMath::Pi();
+  //const double ArcAngle = TMath::ASin(0.5*m_ThetaLength/m_MirrorCurvature)*180.0/TMath::Pi();
   TArc MirrorArc(MirrorCentreGlobal.X(),
 		 MirrorCentreGlobal.Z(),
 		 m_MirrorCurvature,
-		 90.0 - ArcAngle, 90.0 + ArcAngle);
+		 TMath::ASin(s_right/m_MirrorCurvature)*180.0/TMath::Pi(),
+		 180.0 - TMath::ASin(s_left/m_MirrorCurvature)*180.0/TMath::Pi());
   MirrorArc.SetLineColor(kBlack);
   MirrorArc.SetLineWidth(2);
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Objects;
   Objects.push_back(std::make_pair(std::make_unique<TArc>(MirrorArc), "ONLY"));
+  // Draw the walls
   TLine LeftLine(-m_ThetaLength/2.0 + m_Position.X(),
 		 Settings::GetDouble("ARCGeometry/Radius"),
 		 -m_ThetaLength/2.0 + m_Position.X(),
@@ -102,12 +116,14 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorCell::Draw
 		  Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
   RightLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(RightLine), ""));
+  // Draw the detector plane
   TLine DetectorLine(-m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness,
 		     m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness);
   DetectorLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(DetectorLine), ""));
+  // Draw the aerogel plane
   TLine AerogelLine(-m_ThetaLength/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness,
 		     m_ThetaLength/2.0 + m_Position.X(),
@@ -142,4 +158,15 @@ double RadiatorCell::GetCellNumber() const {
 
 RadiatorCell::FirstMiddleLast RadiatorCell::GetFirstMiddleLast() const {
   return m_FirstMiddleLast;
+}
+
+double RadiatorCell::DetermineMirrorCurvature() const {
+  const double NominalCurvature = Settings::GetDouble("RadiatorCell/MirrorCurvature");
+  if(Settings::GetBool("General/VariableMirrorCurvature")) {
+    const double Radius = Settings::GetDouble("ARCGeometry/Radius");
+    const double Theta = TMath::ATan2(m_Position.X(), Radius + m_RadiatorThickness - m_VesselThickness);
+    return NominalCurvature/TMath::Abs(TMath::Cos(Theta));
+  } else {
+    return NominalCurvature;
+  }
 }

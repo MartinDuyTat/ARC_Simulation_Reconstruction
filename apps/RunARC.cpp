@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < NumberTracks; i++) {
       const bool DrawThisTrack = std::find(TracksToDraw.begin(), TracksToDraw.end(), i) != TracksToDraw.end();
       const double Phi = gRandom->Uniform(-TMath::Pi(), TMath::Pi());
-      const double Theta = gRandom->Uniform(Settings::GetDouble("Particle/Theta_min"), Settings::GetDouble("Particle/Theta_max"));;
+      const double Theta = gRandom->Uniform(Settings::GetDouble("Particle/Theta_min"), Settings::GetDouble("Particle/Theta_max"));
       const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"), Theta, Phi);
       const int ParticleID = Settings::GetInt("Particle/ID");;
       ParticleTrack particleTrack(Momentum, ParticleID);

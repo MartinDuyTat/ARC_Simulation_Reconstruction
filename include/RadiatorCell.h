@@ -117,6 +117,10 @@ class RadiatorCell {
    */
   const double m_AerogelThickness;
   /**
+   * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
+   */
+  const Vector m_Position;
+  /**
    * Radius of curvature of the spherical mirror
    */
   const double m_MirrorCurvature;
@@ -124,10 +128,6 @@ class RadiatorCell {
    * Centre of curvature of the mirror
    */
   const Vector m_MirrorCentre;
-  /**
-   * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
-   */
-  const Vector m_Position;
   /**
    * Angular size of the radiator cell in the phi direction
    */
@@ -146,6 +146,10 @@ class RadiatorCell {
    * Label that describes if the radiator cell is the first, last or if it's one of the middle radiators
    */
   FirstMiddleLast m_FirstMiddleLast;
+  /**
+   * Helper function to determine the mirror curvature
+   */
+  double DetermineMirrorCurvature() const;
 };
 
 #endif
