@@ -9,9 +9,13 @@
 
 #include<vector>
 #include<string>
+#include<memory>
+#include"TObject.h"
 #include"Math/Interpolator.h"
+#include"Math/Vector3Dfwd.h"
 #include"Photon.h"
 
+using Vector = ROOT::Math::XYZVector;
 using ROOT::Math::Interpolator;
 namespace InterpolationType = ROOT::Math::Interpolation;
 
@@ -35,8 +39,10 @@ class SiPM {
  public:
   /**
    * Constructor setting up the detector coordinates and detector size
+   * @param xPosition Position in the x direction
+   * @param yPosition Position in the y direction
    */
-  SiPM();
+  SiPM(double xPosition, double yPosition);
   /**
    * Add a photon hit
    */
@@ -49,6 +55,14 @@ class SiPM {
    * Get photon hits in SiPM
    */
   const std::vector<PhotonHit>& GetPhotonHits() const;
+  /**
+   * Draw SiPM
+   */
+  std::unique_ptr<TObject> DrawSiPM(const Vector &RadiatorPosition) const;
+  /**
+   * Check if photon hit the detector
+   */
+  bool IsDetectorHit(const Photon &photon) const;
  private:
   /**
    * Size of detector in x direction

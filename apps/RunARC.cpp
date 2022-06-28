@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     for(auto &photon : PhotonsGas) {
       PhotonMapper::TracePhoton(photon);
     }
-    radiatorArray[0]->m_Detector.PlotHits("PhotonHits.png");
+    radiatorArray[0]->GetDetector().PlotHits("PhotonHits.pdf");
   } else if(RunMode == "CherenkovAngleResolution") {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");

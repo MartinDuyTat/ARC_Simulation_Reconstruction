@@ -104,6 +104,9 @@ bool ParticleTrack::SwapRadiatorCell() {
   if(m_RadiatorCell->IsInsideThetaBoundary(m_Position)) {
     return true;
   }
+  if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::Single) {
+    return false;
+  }
   auto CurrentRadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
   if(m_Position.X() > m_RadiatorCell->GetThetaLength()/2.0) {
     if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::Last) {
@@ -269,7 +272,7 @@ std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
 }
 
 const std::vector<PhotonHit>& ParticleTrack::GetPhotonHits() const {
-  return m_RadiatorCell->m_Detector.GetPhotonHits();
+  return m_RadiatorCell->GetDetector().GetPhotonHits();
 }
 
 const Vector& ParticleTrack::GetPosition() const {

@@ -18,18 +18,24 @@ RadiatorCell::RadiatorCell(int CellNumber): m_ThetaLength(Settings::GetDouble("A
 					    m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
 					    m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
 					    m_Position(GetCellPosition(CellNumber)),
+					    m_Detector(DetermineSiPMPositionX(), 0.0),
 					    m_MirrorCurvature(DetermineMirrorCurvature()),
 					    m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
                                             m_DeltaPhi(2.0*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells")),
                                             m_CellNumber(CellNumber) {
   // TODO: Allow for off-axis mirror or mirror with different radius of curvature
-  const int NumberThetaCells = Settings::GetInt("ARCGeometry/ThetaCells");
-  if(m_CellNumber == -NumberThetaCells/2) {
-    m_FirstMiddleLast = FirstMiddleLast::First;
-  } else if(m_CellNumber == NumberThetaCells/2) {
-    m_FirstMiddleLast = FirstMiddleLast::Last;
+  // Check if this cell is at the edge
+  if(Settings::GetBool("General/FullArray")) {
+    const int NumberThetaCells = Settings::GetInt("ARCGeometry/ThetaCells");
+    if(m_CellNumber == -NumberThetaCells/2) {
+      m_FirstMiddleLast = FirstMiddleLast::First;
+    } else if(m_CellNumber == NumberThetaCells/2) {
+      m_FirstMiddleLast = FirstMiddleLast::Last;
+    } else {
+      m_FirstMiddleLast = FirstMiddleLast::Middle;
+    }
   } else {
-    m_FirstMiddleLast = FirstMiddleLast::Middle;
+    m_FirstMiddleLast = FirstMiddleLast::Single;
   }
 }
 
@@ -130,6 +136,8 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorCell::Draw
 		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness);
   AerogelLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(AerogelLine), ""));
+  // Draw SiPM
+  Objects.push_back(std::make_pair(m_Detector.DrawSiPM(GetRadiatorPosition()), ""));
   return Objects;
 }
 
@@ -169,4 +177,18 @@ double RadiatorCell::DetermineMirrorCurvature() const {
   } else {
     return NominalCurvature;
   }
+}
+
+double RadiatorCell::DetermineSiPMPositionX() const {
+  if(Settings::GetBool("General/VariableMirrorCurvature")) {
+    const double TanTheta = GetRadiatorPosition().X()/GetRadiatorPosition().Z();
+    const double SiPM_xPosition = 2*(m_RadiatorThickness - 2*m_VesselThickness - m_CoolingThickness)*TanTheta;
+    return SiPM_xPosition;
+  } else {
+    return 0.0;
+  }
+}
+
+SiPM& RadiatorCell::GetDetector() {
+  return m_Detector;
 }

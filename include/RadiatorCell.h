@@ -25,7 +25,7 @@ class RadiatorCell {
   /**
    * enum class describing if the radiator cell is the first, middle or last cell
    */
-  enum class FirstMiddleLast{First, Middle, Last};
+  enum class FirstMiddleLast{First, Middle, Last, Single};
   /**
    * Constructor that sets up the geometry
    * @param CellNumber Unique number that identifies the position of the cell
@@ -55,10 +55,6 @@ class RadiatorCell {
    * Get the mirror curvature
    */
   double GetMirrorCurvature() const;
-  /**
-   * The SiPM in the radiator cell
-   */
-  SiPM m_Detector;
   /**
    * Get the radiator cell position in the global coordinates
    */
@@ -91,6 +87,10 @@ class RadiatorCell {
    * Get the radiator cell position to be first, middle or last
    */
   FirstMiddleLast GetFirstMiddleLast() const;
+  /**
+   * Get the detector
+   */
+  SiPM& GetDetector();
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
@@ -121,6 +121,10 @@ class RadiatorCell {
    */
   const Vector m_Position;
   /**
+   * The SiPM in the radiator cell
+   */
+  SiPM m_Detector;
+  /**
    * Radius of curvature of the spherical mirror
    */
   const double m_MirrorCurvature;
@@ -150,6 +154,10 @@ class RadiatorCell {
    * Helper function to determine the mirror curvature
    */
   double DetermineMirrorCurvature() const;
+  /**
+   * Helper function to figure out position of SiPM
+   */
+  double DetermineSiPMPositionX() const;
 };
 
 #endif

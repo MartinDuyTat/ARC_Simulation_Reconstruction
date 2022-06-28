@@ -38,7 +38,7 @@ namespace PhotonMapper {
 
   void TracePhotonToDetector(Photon &photon) {
     photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
-    photon.m_Status = photon.m_RadiatorCell->m_Detector.AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::DetectorMiss;
+    photon.m_Status = photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::DetectorMiss;
     if(!photon.m_RadiatorCell->IsInsideThetaBoundary(photon)) {
       photon.m_Status = Photon::Status::MissedDetectorPlane;
     }
