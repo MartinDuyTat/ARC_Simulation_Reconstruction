@@ -182,9 +182,12 @@ double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energ
       return 1.03;
     case Photon::Radiator::Gas:
       {
-	const double Lambda = 1239.8/Energy;
+	const double Lambda = 1239.841987427/Energy;
 	if(Settings::GetBool("General/ChromaticDispersion")) {
-	  return 1.0 + 0.0035 + 0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(Lambda*Lambda)));
+	  // Pressure at 3.5 bar
+	  // Sellmeier equation with coefficients from https://twiki.cern.ch/twiki/bin/view/LHCb/C4F10
+	  // They are similar to A. Filippas, et al. Nucl. Instr. and Meth. B, 196 (2002), p. 340 but now quite...?
+	  return 3.5*0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(Lambda*Lambda)));
 	} else {
 	  return 1.0049;
 	}
@@ -244,7 +247,7 @@ const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   // TODO: Move this to separate class
-  const double Efficiency = 0.60;
+  const double Efficiency = 0.432;
   const double DeltaE = 2.55;
   return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
 }

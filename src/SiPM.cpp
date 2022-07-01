@@ -13,12 +13,13 @@
 #include"Math/Interpolator.h"
 #include"SiPM.h"
 #include"Photon.h"
+#include"Settings.h"
 
 SiPM::SiPM(double xPosition, double yPosition): m_DetectorSizeX(0.10),
 						m_DetectorSizeY(0.10),
 						m_DetectorPositionX(xPosition),
 						m_DetectorPositionY(yPosition),
-						m_MaxPDE(0.60),
+						m_MaxPDE(0.432),
 						m_Interpolator(std::make_unique<Interpolator>(15, InterpolationType::kAKIMA)) {
   m_Interpolator->SetData(15, GetPDEWavelengths().data(), GetMeasuredPDE().data());
 }
@@ -73,8 +74,9 @@ void SiPM::PlotHits(const std::string &Filename) const {
   Graph_Aerogel.Draw("AP");
   Graph_Gas.Draw("P SAME");
   TLegend Legend(0.7, 0.8, 0.9, 0.9);
-  Legend.AddEntry(&Graph_Aerogel, "Aerogel 5 GeV", "P");
-  Legend.AddEntry(&Graph_Gas, "Gas 5 GeV", "P");
+  const int Momentum = Settings::GetInt("Particle/Momentum");
+  Legend.AddEntry(&Graph_Aerogel, ("Aerogel " + std::to_string(Momentum) + " GeV").c_str(), "P");
+  Legend.AddEntry(&Graph_Gas, ("Gas " + std::to_string(Momentum) + " GeV").c_str(), "P");
   Legend.Draw();
   c.Draw();
   c.SaveAs(Filename.c_str());
