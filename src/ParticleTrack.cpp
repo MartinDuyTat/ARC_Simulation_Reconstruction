@@ -187,7 +187,7 @@ double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energ
 	  // Pressure at 3.5 bar
 	  // Sellmeier equation with coefficients from https://twiki.cern.ch/twiki/bin/view/LHCb/C4F10
 	  // They are similar to A. Filippas, et al. Nucl. Instr. and Meth. B, 196 (2002), p. 340 but now quite...?
-	  return 3.5*0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(Lambda*Lambda)));
+	  return 1.0 + 3.5*0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(Lambda*Lambda)));
 	} else {
 	  return 1.0049;
 	}
