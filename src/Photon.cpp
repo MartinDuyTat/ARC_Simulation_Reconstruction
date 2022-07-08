@@ -42,7 +42,7 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Photon::DrawPhoton
     const auto MirrorHitPosition = *m_MirrorHitPosition + m_RadiatorCell->GetRadiatorPosition();
     TLine PhotonLine1(EmissionPoint.X(), EmissionPoint.Z(), MirrorHitPosition.X(), MirrorHitPosition.Z());
     TLine PhotonLine2(MirrorHitPosition.X(), MirrorHitPosition.Z(), Position.X(), Position.Z());
-    if(m_Status == Status::MissedDetectorPlane) {
+    if(m_Status != Status::DetectorHit) {
       PhotonLine1.SetLineColor(6);
       PhotonLine2.SetLineColor(6);
     } else {

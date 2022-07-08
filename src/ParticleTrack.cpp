@@ -14,17 +14,20 @@
 #include"SiPM.h"
 #include"RadiatorArray.h"
 
-ParticleTrack::ParticleTrack(const Vector &Momentum, int ParticleID): m_Momentum(Momentum),
-								      m_Position(0.0, 0.0, 0.0),
-								      m_InitialPosition(0.0, 0.0, 0.0),
-								      m_ParticleID(ParticleID),
-								      m_TrackedThroughTracker(false),
-								      m_TrackedThroughRadiator(false),
-								      m_AerogelEntry(0.0, 0.0, 0.0),
-								      m_AerogelExit(0.0, 0.0, 0.0),
-								      m_GasEntry(0.0, 0.0, 0.0),
-								      m_GasExit(0.0, 0.0, 0.0),
-								      m_CoordinateSystem(CoordinateSystem::GlobalDetector) {
+ParticleTrack::ParticleTrack(int ParticleID,
+			     const Vector &Momentum,
+			     const Vector &Position):
+                             m_Momentum(Momentum),
+			     m_Position(Position),
+			     m_InitialPosition(Position),
+			     m_ParticleID(ParticleID),
+			     m_TrackedThroughTracker(false),
+			     m_TrackedThroughRadiator(false),
+			     m_AerogelEntry(0.0, 0.0, 0.0),
+                             m_AerogelExit(0.0, 0.0, 0.0),
+			     m_GasEntry(0.0, 0.0, 0.0),
+                             m_GasExit(0.0, 0.0, 0.0),
+                             m_CoordinateSystem(CoordinateSystem::GlobalDetector) {
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -32,7 +35,14 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   if(m_TrackedThroughTracker) {
     throw std::runtime_error("Cannot track particle through inner tracker again");
   }
-  m_Position += m_Momentum.Unit()*InnerTracker.GetRadius()/TMath::Sin(m_Momentum.Theta());
+  // Solve quadratic to track particle to edge of tracking barrel
+  const double b = m_Position.X()*m_Momentum.Unit().X()
+                 + m_Position.Y()*m_Momentum.Unit().Y();
+  const double c = m_Position.X()*m_Position.X()
+                 + m_Position.Y()*m_Position.Y()
+                 - InnerTracker.GetRadius()*InnerTracker.GetRadius();
+  const double s = TMath::Sqrt(b*b - c) - b;
+  m_Position += s*m_Momentum.Unit();
   m_TrackedThroughTracker = true;
 }
 
@@ -42,9 +52,9 @@ void ParticleTrack::ConvertToRadiatorCoordinates(RadiatorArray &radiatorArray) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
   }
   // First rotate in azimuthal direction to map to cell near phi = 0
-  MapPhiBack(m_Position);
-  MapPhiBack(m_Momentum);
+  MapPhiBack();
   // Then rotate around y-axis so that z axis now points towards the high pT cell
+  RotateY(m_InitialPosition);
   RotateY(m_Position);
   RotateY(m_Momentum);
   // Figure out which radiator cell the track goes through
@@ -59,7 +69,6 @@ void ParticleTrack::ConvertToRadiatorCoordinates(RadiatorArray &radiatorArray) {
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {
-  // TODO: Allow particle to go through multiple cells
   if(m_TrackedThroughRadiator) {
     throw std::runtime_error("Cannot track particle through radiator cell again");
   }
@@ -247,18 +256,20 @@ const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   // TODO: Move this to separate class
-  const double Efficiency = 0.432;
+  const double Efficiency = 0.60*0.90*0.80;
   const double DeltaE = 2.55;
   return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
 }
 
-void ParticleTrack::MapPhiBack(Vector &Vec) const {
+void ParticleTrack::MapPhiBack() {
   const int PhiCells = Settings::GetInt("ARCGeometry/PhiCells");
   const double DeltaPhi = 2.0*TMath::Pi()/PhiCells;
-  const int Sign = Vec.Phi() > 0 ? 1 : -1;
-  const int PhiUnits = Sign*static_cast<int>((Sign*Vec.Phi() + 0.5*DeltaPhi)/DeltaPhi);
+  const int Sign = m_Position.Phi() > 0 ? 1 : -1;
+  const int PhiUnits = Sign*static_cast<int>((Sign*m_Position.Phi() + 0.5*DeltaPhi)/DeltaPhi);
   const ROOT::Math::RotationZ RotateZ(-PhiUnits*DeltaPhi);
-  Vec = RotateZ(Vec);
+  m_Position = RotateZ(m_Position);
+  m_InitialPosition = RotateZ(m_InitialPosition);
+  m_Momentum = RotateZ(m_Momentum);
 }
 
 void ParticleTrack::RotateY(Vector &Vec) const {

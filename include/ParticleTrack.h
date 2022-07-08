@@ -21,10 +21,13 @@ class ParticleTrack {
  public:
   /**
    * Construct a charged particle with momentum and ID at the interaction point
-   * @param Momentum Particle momentum, in GeV
    * @param ParticleID PDG particle ID convention
+   * @param Momentum Particle momentum, in GeV
+   * @param Position Particle initial position, by default it's the origin
    */
-  ParticleTrack(const Vector &Momentum, int ParticleID);
+  ParticleTrack(int ParticleID,
+		const Vector &Momentum,
+		const Vector &Position = Vector(0.0, 0.0, 0.0));
   /**
    * Enum with the two coordinate systems used
    * GlobalDetector: z along symmetry axis, x is up, y is out of the plane (only used to generate charged tracks)
@@ -110,7 +113,7 @@ class ParticleTrack {
   /**
    * Initial particle position in the global coordinate system, in m
    */
-  const Vector m_InitialPosition;
+  Vector m_InitialPosition;
   /**
    * Particle ID
    */
@@ -154,7 +157,7 @@ class ParticleTrack {
   /**
    * Helper function that maps the phi direction to the cell near phi = 0
    */
-  void MapPhiBack(Vector &Vec) const;
+  void MapPhiBack();
   /**
    * Helper function to rotate around y axis in coordinate transformation
    */

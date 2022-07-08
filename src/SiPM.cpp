@@ -31,11 +31,11 @@ bool SiPM::AddPhotonHit(const Photon &photon) {
     return false;
   }
   const double RandomNumber = gRandom->Uniform(0.0, m_MaxPDE);
-  const double Efficiency = m_Interpolator->Eval(PhotonLambda);
+  const double Efficiency = m_Interpolator->Eval(PhotonLambda)*0.90*0.80;
   m_PhotonHits.emplace_back(photon.m_Position.X(), photon.m_Position.Y(), &photon);
-  /*if(!IsDetectorHit(photon)) {
+  if(!IsDetectorHit(photon)) {
     return false;
-  }*/
+  }
   if(RandomNumber <= Efficiency) {
     return true;
   } else {

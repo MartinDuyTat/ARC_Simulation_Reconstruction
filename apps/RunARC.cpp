@@ -29,7 +29,8 @@
 
 using Vector = ROOT::Math::XYZVector;
 
-Vector VectorFromSpherical(double R, double Theta, double Phi);
+Vector VectorFromSpherical(double R, double CosTheta, double Phi);
+Vector GetInitialTrackPosition();
 
 int main(int argc, char *argv[]) {
   if(argc%2 != 0) {
@@ -57,7 +58,7 @@ int main(int argc, char *argv[]) {
 						Settings::GetDouble("Particle/Theta"),
 						Settings::GetDouble("Particle/Phi"));
     const int ParticleID = Settings::GetInt("Particle/ID");;
-    ParticleTrack particleTrack(Momentum, ParticleID);
+    ParticleTrack particleTrack(ParticleID, Momentum);
     particleTrack.TrackThroughTracker(InnerTracker);
     particleTrack.ConvertToRadiatorCoordinates(radiatorArray);
     particleTrack.TrackThroughRadiatorCell();
@@ -74,9 +75,11 @@ int main(int argc, char *argv[]) {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
     TTree CherenkovTree("CherenkovTree", "");
-    double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco, CherenkovAngle_True, PhotonEnergy;
+    double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco,
+           CherenkovAngle_True, PhotonEnergy;
     int DetectorHit, RadiatorNumber, TrackNumber;
-    CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint", &CherenkovAngle_Reco_TrueEmissionPoint);
+    CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint",
+			 &CherenkovAngle_Reco_TrueEmissionPoint);
     CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
     CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy);
@@ -88,12 +91,19 @@ int main(int argc, char *argv[]) {
     const bool DrawThetaMiss = Settings::GetBool("General/DrawThetaMiss");
     const bool DrawPhiMiss = Settings::GetBool("General/DrawPhiMiss");
     for(int i = 0; i < NumberTracks; i++) {
-      const bool DrawThisTrack = std::find(TracksToDraw.begin(), TracksToDraw.end(), i) != TracksToDraw.end();
-      const double Phi = gRandom->Uniform(-TMath::Pi(), TMath::Pi());
-      const double Theta = gRandom->Uniform(Settings::GetDouble("Particle/Theta_min"), Settings::GetDouble("Particle/Theta_max"));
-      const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"), Theta, Phi);
+      const bool DrawThisTrack = std::find(TracksToDraw.begin(),
+					   TracksToDraw.end(), i) != TracksToDraw.end();
+      const double Phi = Settings::GetBool("Particle/RandomPhi") ?
+	                 gRandom->Uniform(-TMath::Pi(), TMath::Pi()) : 
+	                 gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
+					  Settings::GetDouble("Particle/Phi_max"));
+      const double CosTheta = gRandom->Uniform(Settings::GetDouble("Particle/CosTheta_min"),
+					       Settings::GetDouble("Particle/CosTheta_max"));
+      const double MomentumMag = Settings::GetDouble("Particle/Momentum");
+      const Vector Momentum = VectorFromSpherical(MomentumMag, CosTheta, Phi);
+      const Vector Position = GetInitialTrackPosition();
       const int ParticleID = Settings::GetInt("Particle/ID");;
-      ParticleTrack particleTrack(Momentum, ParticleID);
+      ParticleTrack particleTrack(ParticleID, Momentum, Position);
       particleTrack.TrackThroughTracker(InnerTracker);
       particleTrack.ConvertToRadiatorCoordinates(radiatorArray);
       particleTrack.TrackThroughRadiatorCell();
@@ -132,10 +142,23 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-Vector VectorFromSpherical(double R, double Theta, double Phi) {
-  const double CosTheta = TMath::Cos(Theta);
+Vector VectorFromSpherical(double R, double CosTheta, double Phi) {
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
   const double CosPhi = TMath::Cos(Phi);
   const double SinPhi = TMath::Sqrt(1.0 - CosPhi*CosPhi);
   return Vector{R*CosPhi*SinTheta, R*SinPhi*SinTheta, R*CosTheta};
+}
+
+Vector GetInitialTrackPosition() {
+  if(Settings::GetBool("Particle/FromOrigin")) {
+    return Vector(0.0, 0.0, 0.0);
+  } else {
+    const double x = gRandom->Uniform(Settings::GetDouble("Particle/x_min"),
+				      Settings::GetDouble("Particle/x_max"));
+    const double y = gRandom->Uniform(Settings::GetDouble("Particle/y_min"),
+				      Settings::GetDouble("Particle/y_max"));
+    const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
+				      Settings::GetDouble("Particle/z_max"));
+    return Vector(x, y, z);
+  }
 }
