@@ -23,14 +23,12 @@ using RadiatorIter = std::vector<RadiatorCell>::iterator;
 class RadiatorCell {
  public:
   /**
-   * enum class describing if the radiator cell is the first, middle or last cell
-   */
-  enum class FirstMiddleLast{First, Middle, Last, Single};
-  /**
    * Constructor that sets up the geometry
-   * @param CellNumber Unique number that identifies the position of the cell
+   * @param CellRowNumber The row number of this cell
+   * @param CellColumnNumber The column number of this cell
+   * @param HexagonSize The length between two opposide edges (not points) of the hexagons
    */
-  RadiatorCell(int CellNumber);
+  RadiatorCell(int CellRowNumber, int CellColumnNumber, double HexagonSize);
   /**
    * Get total radiator cell thickness
    */
@@ -60,33 +58,25 @@ class RadiatorCell {
    */
   const Vector& GetRadiatorPosition() const;
   /**
-   * Function that checks if the position is inside the radiator in the theta direction
+   * Function that checks if the position is inside the radiator
    */
-  bool IsInsideThetaBoundary(const Vector &Position) const;
+  bool IsInsideCell(const Vector &Position) const;
   /**
-   * Function that checks if the photon is inside the radiator in the theta direction
+   * Function that checks if the photon is inside the radiator
    */
-  bool IsInsideThetaBoundary(const Photon &photon) const;
-  /**
-   * Function that checks if the photon is inside the radiator in the phi direction
-   */
-  bool IsInsidePhiBoundary(const Photon &photon) const;
+  bool IsInsideCell(const Photon &photon) const;
   /**
    * Draw radiator geometry
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorGeometry() const;
   /**
-   * Get length of cell in theta direction
+   * Get length between two edges of a hexagon cell
    */
-  double GetThetaLength() const;
+  double GetHexagonSize() const;
   /**
    * Get cell number
    */
-  double GetCellNumber() const;
-  /**
-   * Get the radiator cell position to be first, middle or last
-   */
-  FirstMiddleLast GetFirstMiddleLast() const;
+  std::pair<int, int> GetCellNumber() const;
   /**
    * Get the detector
    */
@@ -96,10 +86,6 @@ class RadiatorCell {
    * Get the centre of curvature of the mirror z coordinate in local coordinates
    */
   double GetMirrorCurvatureCentreZ() const;
-  /**
-   * Length of the radiator cell in the theta direction
-   */
-  const double m_ThetaLength;
   /**
    * The full thickness of the radiator cell
    */
@@ -117,6 +103,12 @@ class RadiatorCell {
    */
   const double m_AerogelThickness;
   /**
+   * Radiator cell row number (first) and column number (second)
+   * For a single central cell, it is assigned number (0, 0)
+   * For an array of radiator cells, numbering starts from (1, 0) from the middle of the main row
+   */
+  const std::pair<int, int> m_CellNumber;
+  /**
    * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
    */
   const Vector m_Position;
@@ -133,23 +125,13 @@ class RadiatorCell {
    */
   const Vector m_MirrorCentre;
   /**
-   * Angular size of the radiator cell in the phi direction
+   * The length between two edges of a hexagon
    */
-  const double m_DeltaPhi;
-  /**
-   * Radiator cell number
-   * For a single central cell, it is assigned number 0
-   * For an array of radiator cells, numbering starts from 1 from the middle to the right and -1 to the left
-   */
-  const int m_CellNumber;
+  const double m_HexagonSize;
   /**
    * Helper function to get cell position based on cell number
    */
-  Vector GetCellPosition(int CellNumber) const;
-  /**
-   * Label that describes if the radiator cell is the first, last or if it's one of the middle radiators
-   */
-  FirstMiddleLast m_FirstMiddleLast;
+  Vector GetCellPosition(int CellRowNumber, int CellColumnNumber) const;
   /**
    * Helper function to determine the mirror curvature
    */

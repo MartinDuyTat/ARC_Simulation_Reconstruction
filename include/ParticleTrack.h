@@ -157,7 +157,8 @@ class ParticleTrack {
   /**
    * Helper function that maps the phi direction to the cell near phi = 0
    */
-  void MapPhiBack();
+  // TODO: Implement this function correctly
+  //void MapPhiBack();
   /**
    * Helper function to rotate around y axis in coordinate transformation
    */
@@ -169,6 +170,7 @@ class ParticleTrack {
   void TrackThroughGasToMirror();
   /**
    * Helper function to swap radiator cell if particle is outside in the theta direction
+   * @return Returns true if swapping radiator cell was successful (no edges hit)
    */
   bool SwapRadiatorCell();
   /**

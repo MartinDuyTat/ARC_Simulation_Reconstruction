@@ -52,7 +52,8 @@ void ParticleTrack::ConvertToRadiatorCoordinates(RadiatorArray &radiatorArray) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
   }
   // First rotate in azimuthal direction to map to cell near phi = 0
-  MapPhiBack();
+  // TODO: Implement this function
+  //MapPhiBack();
   // Then rotate around y-axis so that z axis now points towards the high pT cell
   RotateY(m_InitialPosition);
   RotateY(m_Position);
@@ -63,7 +64,7 @@ void ParticleTrack::ConvertToRadiatorCoordinates(RadiatorArray &radiatorArray) {
   m_Position -= m_RadiatorCell->GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
   // Check if particle is within acceptance
-  if(!m_RadiatorCell->IsInsideThetaBoundary(m_Position)) {
+  if(!m_RadiatorCell->IsInsideCell(m_Position)) {
     throw std::runtime_error("Particle outside of radiator acceptance");
   }
 }
@@ -99,7 +100,7 @@ void ParticleTrack::TrackThroughGasToMirror() {
     const double s = std::max(s1, s2);
     m_Position += Direction*s;
     m_GasExit = m_Position;
-    m_TrackedThroughRadiator = m_RadiatorCell->IsInsideThetaBoundary(m_Position);
+    m_TrackedThroughRadiator = m_RadiatorCell->IsInsideCell(m_Position);
     if(!m_TrackedThroughRadiator) {
       if(!SwapRadiatorCell()) {
 	m_TrackedThroughRadiator = true;
@@ -110,20 +111,22 @@ void ParticleTrack::TrackThroughGasToMirror() {
 }
 
 bool ParticleTrack::SwapRadiatorCell() {
-  if(m_RadiatorCell->IsInsideThetaBoundary(m_Position)) {
+  if(m_RadiatorCell->IsInsideCell(m_Position)) {
     return true;
   }
-  if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::Single) {
+  const auto CellNumber = m_RadiatorCell->GetCellNumber();
+  if(CellNumber.first == 0 && CellNumber.second == 0) {
     return false;
   }
   auto CurrentRadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
-  if(m_Position.X() > m_RadiatorCell->GetThetaLength()/2.0) {
-    if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::Last) {
+  if(m_Position.X() > m_RadiatorCell->GetHexagonSize()/2.0) {
+    if(CellNumber.second > 9) {
       return false;
     }
     m_RadiatorCell++;
-  } else if(m_Position.X() < -m_RadiatorCell->GetThetaLength()/2.0) {
-    if(m_RadiatorCell->GetFirstMiddleLast() == RadiatorCell::FirstMiddleLast::First) {
+  } else if(m_Position.X() < -m_RadiatorCell->GetHexagonSize()/2.0) {
+    if((CellNumber.first == 1 && CellNumber.second == 0) ||
+       (CellNumber.first == 2 && CellNumber.second == 1)) {
       return false;
     }
     m_RadiatorCell--;
@@ -261,7 +264,7 @@ double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
 }
 
-void ParticleTrack::MapPhiBack() {
+/*void ParticleTrack::MapPhiBack() {
   const int PhiCells = Settings::GetInt("ARCGeometry/PhiCells");
   const double DeltaPhi = 2.0*TMath::Pi()/PhiCells;
   const int Sign = m_Position.Phi() > 0 ? 1 : -1;
@@ -270,7 +273,7 @@ void ParticleTrack::MapPhiBack() {
   m_Position = RotateZ(m_Position);
   m_InitialPosition = RotateZ(m_InitialPosition);
   m_Momentum = RotateZ(m_Momentum);
-}
+}*/
 
 void ParticleTrack::RotateY(Vector &Vec) const {
   const double Temp = Vec.X();

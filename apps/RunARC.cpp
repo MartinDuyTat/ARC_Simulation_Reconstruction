@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   if(RunMode == "SingleTrack") {
     std::cout << "Run mode: Single track\n";
     const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"),
-						Settings::GetDouble("Particle/Theta"),
+						Settings::GetDouble("Particle/CosTheta"),
 						Settings::GetDouble("Particle/Phi"));
     const int ParticleID = Settings::GetInt("Particle/ID");;
     ParticleTrack particleTrack(ParticleID, Momentum);
@@ -70,26 +70,26 @@ int main(int argc, char *argv[]) {
     for(auto &photon : PhotonsGas) {
       PhotonMapper::TracePhoton(photon);
     }
-    radiatorArray[0]->GetDetector().PlotHits("PhotonHits.pdf");
+    radiatorArray(0, 0)->GetDetector().PlotHits("PhotonHits.pdf");
   } else if(RunMode == "CherenkovAngleResolution") {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
     TTree CherenkovTree("CherenkovTree", "");
     double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco,
            CherenkovAngle_True, PhotonEnergy;
-    int DetectorHit, RadiatorNumber, TrackNumber;
+    int DetectorHit, RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint",
 			 &CherenkovAngle_Reco_TrueEmissionPoint);
     CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
     CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
     CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy);
     CherenkovTree.Branch("DetectorHit", &DetectorHit);
-    CherenkovTree.Branch("RadiatorNumber", &RadiatorNumber);
+    CherenkovTree.Branch("RadiatorRowNumber", &RadiatorRowNumber);
+    CherenkovTree.Branch("RadiatorColumnNumber", &RadiatorColumnNumber);
     CherenkovTree.Branch("TrackNumber", &TrackNumber);
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
-    const bool DrawThetaMiss = Settings::GetBool("General/DrawThetaMiss");
-    const bool DrawPhiMiss = Settings::GetBool("General/DrawPhiMiss");
+    const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
     for(int i = 0; i < NumberTracks; i++) {
       const bool DrawThisTrack = std::find(TracksToDraw.begin(),
 					   TracksToDraw.end(), i) != TracksToDraw.end();
@@ -118,9 +118,7 @@ int main(int argc, char *argv[]) {
 	  eventDisplay.AddObject(Photon.DrawPhotonPath());
 	}
 	if(!Photon.m_MirrorHitPosition) {
-	  if(DrawThetaMiss && Photon.m_Status == Photon::Status::MissedTheta) {
-	    eventDisplay.AddObject(Photon.DrawPhotonPath());
-	  } else if(DrawPhiMiss && Photon.m_Status == Photon::Status::MissedPhi) {
+	  if(DrawMissPhoton && Photon.m_Status == Photon::Status::OutsideAcceptance) {
 	    eventDisplay.AddObject(Photon.DrawPhotonPath());
 	  }
 	  continue;
@@ -128,7 +126,8 @@ int main(int argc, char *argv[]) {
 	auto reconstructedPhoton = PhotonReconstructor::ReconstructPhoton(particleTrack, particleTrack.GetPhotonHits().back(), Photon::Radiator::Gas);
 	PhotonEnergy = Photon.m_Energy;
 	DetectorHit = Photon.m_Status == Photon::Status::DetectorHit ? 1 : 0;
-	RadiatorNumber = Photon.m_RadiatorCell->GetCellNumber();
+	RadiatorRowNumber = Photon.m_RadiatorCell->GetCellNumber().first;
+	RadiatorColumnNumber = Photon.m_RadiatorCell->GetCellNumber().second;
 	TrackNumber = i;
 	CherenkovAngle_Reco_TrueEmissionPoint = reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
 	CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;

@@ -29,7 +29,7 @@ class RadiatorArray {
   /**
    * Operator overload to get the individual radiator cells
    */
-  RadiatorIter operator[](int i);
+  RadiatorIter operator()(int i, int j);
   /**
    * Check which radiator the particle goes through
    * It is assumed that the input vector is right at the bottom surface of the radiator plane
@@ -45,9 +45,17 @@ class RadiatorArray {
    */
   const bool m_FullArray;
   /**
-   * Number of cells in theta direction
+   * Number of cells in theta direction along the main row
    */
-  const int m_NumberCells;
+  const int m_NumberMainRowCells;
+  /**
+   * The horizontal distance between two hexagons
+   */
+  const double m_xHexDist;
+  /**
+   * The vertical distance between two hexagons
+   */
+  const double m_yHexDist;
 };
 
 #endif

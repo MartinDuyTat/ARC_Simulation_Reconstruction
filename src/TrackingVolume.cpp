@@ -11,8 +11,7 @@
 
 TrackingVolume::TrackingVolume(): m_Radius(Settings::GetDouble("ARCGeometry/Radius")),
 				  m_Length(Settings::GetDouble("ARCGeometry/Length")),
-				  m_ThetaCells(Settings::GetInt("ARCGeometry/ThetaCells")),
-				  m_PhiCells(Settings::GetInt("ARCGeometry/PhiCells")),
+				  m_CellsPerRow(Settings::GetInt("ARCGeometry/CellsPerRow")),
 				  m_FieldStrength(Settings::GetDouble("ARCGeometry/FieldStrength")) {
 }
 
@@ -26,9 +25,9 @@ double TrackingVolume::GetFieldStrength() const {
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>> TrackingVolume::DrawARCGeometry() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Lines;
-  const double ThetaLength = m_Length/m_ThetaCells;
+  const double ThetaLength = m_Length/m_CellsPerRow;
   if(Settings::GetBool("General/FullArray")) {
-    for(int i = -m_ThetaCells/2; i <= m_ThetaCells/2; i++) {
+    for(int i = 0; i <= m_CellsPerRow; i++) {
       TLine Line1(0.0, 0.0, ThetaLength*i, m_Radius);
       Line1.SetLineStyle(kDotted);
       Line1.SetLineWidth(1);

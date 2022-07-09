@@ -26,10 +26,8 @@ namespace PhotonMapper {
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
-    if(!photon.m_RadiatorCell->IsInsideThetaBoundary(photon)) {
-      photon.m_Status = Photon::Status::MissedTheta;
-    } else if(!photon.m_RadiatorCell->IsInsidePhiBoundary(photon)) {
-      photon.m_Status = Photon::Status::MissedPhi;
+    if(!photon.m_RadiatorCell->IsInsideCell(photon)) {
+      photon.m_Status = Photon::Status::OutsideAcceptance;
     } else {
       photon.m_Status = Photon::Status::MirrorHit;
       photon.m_MirrorHitPosition = std::make_unique<Vector>(photon.m_Position);
@@ -38,8 +36,8 @@ namespace PhotonMapper {
 
   void TracePhotonToDetector(Photon &photon) {
     photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
-    photon.m_Status = photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::DetectorMiss;
-    if(!photon.m_RadiatorCell->IsInsideThetaBoundary(photon)) {
+    photon.m_Status = photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::EfficiencyMiss;
+    if(!photon.m_RadiatorCell->IsInsideCell(photon)) {
       photon.m_Status = Photon::Status::MissedDetectorPlane;
     }
   }
