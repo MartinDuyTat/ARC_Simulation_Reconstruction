@@ -46,7 +46,7 @@ class SiPM {
   /**
    * Add a photon hit
    */
-  bool AddPhotonHit(const Photon &photon);
+  void AddPhotonHit(Photon &photon);
   /**
    * Plot photon hits
    */
@@ -95,11 +95,11 @@ class SiPM {
   /**
    * Get the wavelengths used to measure PDE in SiPM, in nm
    */
-  constexpr std::array<double, 15> GetPDEWavelengths() const;
+  constexpr std::array<double, 16> GetPDEWavelengths() const;
   /**
    * Get the measured PDE
    */
-  constexpr std::array<double, 15> GetMeasuredPDE() const;
+  constexpr std::array<double, 16> GetMeasuredPDE() const;
 };
 
 #endif

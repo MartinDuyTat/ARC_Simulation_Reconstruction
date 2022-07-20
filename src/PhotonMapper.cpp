@@ -2,6 +2,7 @@
 
 #include<algorithm>
 #include"TMath.h"
+#include"TRandom.h"
 #include"PhotonMapper.h"
 #include"Photon.h"
 #include"Settings.h"
@@ -22,24 +23,32 @@ namespace PhotonMapper {
   void TracePhotonToMirror(Photon &photon) {
     const double s = PhotonMirrorDistance(photon);
     const Vector Mirror = photon.m_Position + s*photon.m_Direction;
-    const Vector Normal = (Mirror - photon.m_RadiatorCell->GetMirrorCentre())/photon.m_RadiatorCell->GetMirrorCurvature();
+    const auto Curvature = photon.m_RadiatorCell->GetMirrorCurvature();
+    const Vector Normal = (Mirror - photon.m_RadiatorCell->GetMirrorCentre())/Curvature;
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
-    if(!photon.m_RadiatorCell->IsInsideCell(photon)) {
-      photon.m_Status = Photon::Status::OutsideAcceptance;
-    } else {
+    if(photon.m_RadiatorCell->IsInsideCell(photon)) {
       photon.m_Status = Photon::Status::MirrorHit;
       photon.m_MirrorHitPosition = std::make_unique<Vector>(photon.m_Position);
+    } else {
+      photon.m_Status = Photon::Status::MirrorMiss;
     }
   }
 
   void TracePhotonToDetector(Photon &photon) {
-    photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/TMath::Abs(photon.m_Direction.Z()))*photon.m_Direction;
-    photon.m_Status = photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon) ? Photon::Status::DetectorHit : Photon::Status::EfficiencyMiss;
-    if(!photon.m_RadiatorCell->IsInsideCell(photon)) {
-      photon.m_Status = Photon::Status::MissedDetectorPlane;
+    const double Slope = TMath::Abs(photon.m_Direction.Z());
+    // TODO: Account for photons generated in aerogel
+    const double AerogelThickness = photon.m_RadiatorCell->GetAerogelThickness();
+    constexpr double T0 = 0.9679;
+    constexpr double Clarity = 5.087e10;
+    const double Lambda = 1239.8/photon.m_Energy;
+    const double Transmission = T0*TMath::Exp(-Clarity*(AerogelThickness/Slope)/TMath::Power(Lambda, 4));
+    if(gRandom->Uniform(0.0, 1.0) > Transmission) {
+      photon.m_Status = Photon::Status::AerogelScattered;
     }
+    photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/Slope)*photon.m_Direction;
+    photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon);
   }
 
   void TracePhoton(Photon &photon) {

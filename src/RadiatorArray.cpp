@@ -10,7 +10,7 @@
 
 RadiatorArray::RadiatorArray(): m_FullArray(Settings::GetBool("General/FullArray")),
                                 m_NumberMainRowCells(Settings::GetInt("ARCGeometry/CellsPerRow")),
-				m_xHexDist(Settings::GetDouble("ARCGeometry/Length")/(2*m_NumberMainRowCells + 1)),
+				m_xHexDist(Settings::GetDouble("ARCGeometry/Length")/(2*m_NumberMainRowCells - 1)),
 				m_yHexDist(m_xHexDist/TMath::Sqrt(3)) {
   if(m_FullArray) {
     m_Cells.reserve(2*m_NumberMainRowCells);

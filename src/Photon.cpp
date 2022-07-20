@@ -32,7 +32,7 @@ Photon::DrawPhotonPath() const {
   const auto Position = m_Position + m_RadiatorCell->GetRadiatorPosition();
   if(!m_MirrorHitPosition) {
     TLine PhotonLine1(EmissionPoint.X(), EmissionPoint.Z(), Position.X(), Position.Z());
-    if(m_Status == Status::OutsideAcceptance) {
+    if(m_Status == Status::MirrorMiss) {
       PhotonLine1.SetLineColor(7);
     } else {
       PhotonLine1.SetLineColor(kGreen);

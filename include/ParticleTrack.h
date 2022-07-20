@@ -35,6 +35,24 @@ class ParticleTrack {
    */
   enum class CoordinateSystem{GlobalDetector, LocalRadiator};
   /**
+   * Enum class with the location of the particle
+   * TrackerVolume: Inside the tracker volume, where the IP is
+   * EntranceWindow: Particle is at the entrance window to the radiator cell
+   * MissedEntranceWindow: Particle didn't hit this radiator entrance window
+   * MissedRadiator: Particle did not enter any radiator cells
+   * Radiator: Inside the radiatorCell
+   * Mirror: The particle has reached the mirror
+   * MissedMirror: The particle missed the mirror
+   */
+  enum class Location{
+    TrackerVolume,
+    EntranceWindow,
+    MissedEntranceWindow,
+    MissedRadiator,
+    Radiator,
+    Mirror,
+    MissedMirror};
+  /**
    * Track particle through inner tracker with magnetic field
    */
   void TrackThroughTracker(const TrackingVolume &InnerTracker);
@@ -101,6 +119,14 @@ class ParticleTrack {
    * Get particle position
    */
   const Vector& GetPosition() const;
+  /**
+   * Get particle location
+   */
+  Location GetParticleLocation() const;
+  /**
+   * Get the position of the entrance window
+   */
+  const Vector GetEntranceWindowPosition() const;
  private:
   /**
    * Particle momentum, in GeV
@@ -123,13 +149,9 @@ class ParticleTrack {
    */
   RadiatorIter m_RadiatorCell;
   /**
-   * Flag that is true when track has been traced through inner tracker detector
+   * Flag that keeps track of where the particle is
    */
-  bool m_TrackedThroughTracker;
-  /**
-   * Flag that is true when track has been traced through radiator cell
-   */
-  bool m_TrackedThroughRadiator;
+  Location m_Location;
   /**
    * Entry point of aerogel
    */
@@ -146,6 +168,10 @@ class ParticleTrack {
    * Exit point of gas
    */
   Vector m_GasExit;
+  /**
+   * Entrance window position
+   */
+  Vector m_EntranceWindowPosition;
   /**
    * Which coordinate system the momentum and position is given in
    */

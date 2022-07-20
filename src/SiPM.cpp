@@ -15,31 +15,34 @@
 #include"Photon.h"
 #include"Settings.h"
 
-SiPM::SiPM(double xPosition, double yPosition): m_DetectorSizeX(0.10),
-						m_DetectorSizeY(0.10),
+SiPM::SiPM(double xPosition, double yPosition): m_DetectorSizeX(0.08),
+						m_DetectorSizeY(0.08),
 						m_DetectorPositionX(xPosition),
 						m_DetectorPositionY(yPosition),
 						m_MaxPDE(0.432),
-						m_Interpolator(std::make_unique<Interpolator>(15, InterpolationType::kAKIMA)) {
-  m_Interpolator->SetData(15, GetPDEWavelengths().data(), GetMeasuredPDE().data());
+						m_Interpolator(std::make_unique<Interpolator>(16, InterpolationType::kAKIMA)) {
+  m_Interpolator->SetData(16, GetPDEWavelengths().data(), GetMeasuredPDE().data());
 }
 
-bool SiPM::AddPhotonHit(const Photon &photon) {
+void SiPM::AddPhotonHit(Photon &photon) {
+  m_PhotonHits.emplace_back(photon.m_Position.X(), photon.m_Position.Y(), &photon);
+  if(photon.m_Status == Photon::Status::AerogelScattered) {
+    return;
+  }
   const double PhotonLambda = 1239.8/photon.m_Energy;
   if(PhotonLambda < GetPDEWavelengths()[0] || PhotonLambda > GetPDEWavelengths().back()) {
     std::cout << "Warning! Generated photon outside energy range of SiPM!\n";
-    return false;
+  }
+  if(!IsDetectorHit(photon)) {
+    photon.m_Status = Photon::Status::DetectorMiss;
+    return;
   }
   const double RandomNumber = gRandom->Uniform(0.0, m_MaxPDE);
   const double Efficiency = m_Interpolator->Eval(PhotonLambda)*0.90*0.80;
-  m_PhotonHits.emplace_back(photon.m_Position.X(), photon.m_Position.Y(), &photon);
-  if(!IsDetectorHit(photon)) {
-    return false;
-  }
   if(RandomNumber <= Efficiency) {
-    return true;
+    photon.m_Status = Photon::Status::DetectorHit;
   } else {
-    return false;
+    photon.m_Status = Photon::Status::EfficiencyMiss;
   }
 }
 
@@ -104,12 +107,14 @@ const std::vector<PhotonHit>& SiPM::GetPhotonHits() const {
   return m_PhotonHits;
 }
 
-constexpr std::array<double, 15> SiPM::GetPDEWavelengths() const {
-  std::array<double, 15> Lambda{287.0, 299.0, 322.0, 340.0, 367.0, 392.0, 402.0, 413.0, 422.0, 437.0, 452.0, 467.0, 503.0, 590.0, 700.0};
+constexpr std::array<double, 16> SiPM::GetPDEWavelengths() const {
+  constexpr std::array<double, 16> Lambda{287.0, 299.0, 322.0, 340.0, 367.0, 392.0, 402.0, 413.0,
+                                          422.0, 437.0, 452.0, 467.0, 503.0, 590.0, 700.0, 800.0};
   return Lambda;
 }
 
-constexpr std::array<double, 15> SiPM::GetMeasuredPDE() const {
-  std::array<double, 15> PDE{0.20, 0.41, 0.46, 0.47, 0.52, 0.59, 0.60, 0.60, 0.59, 0.57, 0.56, 0.53, 0.51, 0.40, 0.26};
+constexpr std::array<double, 16> SiPM::GetMeasuredPDE() const {
+  constexpr std::array<double, 16> PDE{0.20, 0.41, 0.46, 0.47, 0.52, 0.59, 0.60, 0.60,
+                                       0.59, 0.57, 0.56, 0.53, 0.51, 0.40, 0.26, 0.13};
   return PDE;
 }

@@ -68,7 +68,7 @@ bool RadiatorCell::IsInsideCell(const Vector &Position) const {
   const double x = TMath::Abs(Position.X());
   const double y = TMath::Abs(Position.Y());
   // First part is checking the sloped part, the other is the vertical part
-  return x < std::min((m_HexagonSize/TMath::Sqrt(3.0)) - y, m_HexagonSize/2.0);
+  return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
 }
 
 bool RadiatorCell::IsInsideCell(const Photon &photon) const {
@@ -137,7 +137,7 @@ Vector RadiatorCell::GetCellPosition(int CellRowNumber, int CellColumnNumber) co
   if(CellColumnNumber > 9 || CellColumnNumber < 0) {
     throw std::invalid_argument("Invalid cell column number: " + std::to_string(CellColumnNumber));
   }
-  const double ZPosition = Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness;
+  const double ZPosition = Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness;
   if(CellRowNumber == 0) {
     if(CellColumnNumber == 0) {
       return Vector(0.0, 0.0, ZPosition);

@@ -25,8 +25,23 @@ struct Photon {
   enum class Radiator{Aerogel, Gas};
   /**
    * Enum class classifying whether the photon has been tracked or if it missed the mirror
+   * Emitted: Photon just got emitted inside radiator
+   * MirrorHit: Photon is at the mirror
+   * MirrorMiss: Photon missed the mirror and ended up outside radiator
+   * EfficiencyMiss: Photon lost in mirror reflectivity, detector dead space or PDE
+   * DetectorHit: Photon hit the detector
+   * DetectorMiss: Photon missed the detector
+   * AerogelScattered: Scattered by the aerogel
    */
-  enum class Status{Emitted, MirrorHit, DetectorHit, EfficiencyMiss, OutsideAcceptance, MissedDetectorPlane};
+  enum class Status {
+    Emitted,
+    MirrorHit,
+    MirrorMiss,
+    EfficiencyMiss,
+    DetectorHit,
+    DetectorMiss,
+    AerogelScattered
+  };
   /**
    * Construct a photon with position, direction and energy
    * @param Position Position vector

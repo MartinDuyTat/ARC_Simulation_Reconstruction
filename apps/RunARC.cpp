@@ -30,7 +30,6 @@
 using Vector = ROOT::Math::XYZVector;
 
 Vector VectorFromSpherical(double R, double CosTheta, double Phi);
-Vector GetInitialTrackPosition();
 
 int main(int argc, char *argv[]) {
   if(argc%2 != 0) {
@@ -75,64 +74,105 @@ int main(int argc, char *argv[]) {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
     TTree CherenkovTree("CherenkovTree", "");
-    double CherenkovAngle_Reco_TrueEmissionPoint, CherenkovAngle_Reco,
-           CherenkovAngle_True, PhotonEnergy;
-    int DetectorHit, RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
+    double CherenkovAngle_Reco_TrueEmissionPoint[200], CherenkovAngle_Reco[200],
+           CherenkovAngle_True[200], PhotonEnergy[200];
+    double Entrance_x, Entrance_y, Entrance_z;
+    int NumberPhotons = 0;
+    int RadiatorRowNumber[200], RadiatorColumnNumber[200], TrackNumber;
+    ParticleTrack::Location ParticleLocation;
+    Photon::Status PhotonStatus[200];
+    CherenkovTree.Branch("NumberPhotons", &NumberPhotons);
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint",
-			 &CherenkovAngle_Reco_TrueEmissionPoint);
-    CherenkovTree.Branch("CherenkovAngle_Reco", &CherenkovAngle_Reco);
-    CherenkovTree.Branch("CherenkovAngle_True", &CherenkovAngle_True);
-    CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy);
-    CherenkovTree.Branch("DetectorHit", &DetectorHit);
-    CherenkovTree.Branch("RadiatorRowNumber", &RadiatorRowNumber);
-    CherenkovTree.Branch("RadiatorColumnNumber", &RadiatorColumnNumber);
+			 &CherenkovAngle_Reco_TrueEmissionPoint,
+			 "CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons]/D");
+    CherenkovTree.Branch("CherenkovAngle_Reco",
+			 &CherenkovAngle_Reco,
+			 "CherenkovAngle_Reco[NumberPhotons]/D");
+    CherenkovTree.Branch("CherenkovAngle_True",
+			 &CherenkovAngle_True,
+			 "CherenkovAngle_True[NumberPhotons]/D");
+    CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy, "PhotonEnergy[NumberPhotons]/D");
+    CherenkovTree.Branch("RadiatorRowNumber",
+			 &RadiatorRowNumber,
+			 "RadiatorRowNumber[NumberPhotons]/D");
+    CherenkovTree.Branch("RadiatorColumnNumber",
+			 &RadiatorColumnNumber,
+			 "RadiatorColumnNumber[NumberPhotons]/D");
     CherenkovTree.Branch("TrackNumber", &TrackNumber);
+    CherenkovTree.Branch("ParticleLocation", &ParticleLocation, "ParticleLocation/I");
+    CherenkovTree.Branch("PhotonStatus", &PhotonStatus, "PhotonStatus[NumberPhotons]/I");
+    CherenkovTree.Branch("Entrance_x", &Entrance_x);
+    CherenkovTree.Branch("Entrance_y", &Entrance_y);
+    CherenkovTree.Branch("Entrance_z", &Entrance_z);
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
     const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
     for(int i = 0; i < NumberTracks; i++) {
+      NumberPhotons = 0;
+      TrackNumber = i;
       const bool DrawThisTrack = std::find(TracksToDraw.begin(),
 					   TracksToDraw.end(), i) != TracksToDraw.end();
+      const double Radius = Settings::GetDouble("ARCGeometry/Radius");
+      const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
+					Settings::GetDouble("Particle/z_max"));
+      const double CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
       const double Phi = Settings::GetBool("Particle/RandomPhi") ?
 	                 gRandom->Uniform(-TMath::Pi(), TMath::Pi()) : 
 	                 gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
 					  Settings::GetDouble("Particle/Phi_max"));
-      const double CosTheta = gRandom->Uniform(Settings::GetDouble("Particle/CosTheta_min"),
-					       Settings::GetDouble("Particle/CosTheta_max"));
       const double MomentumMag = Settings::GetDouble("Particle/Momentum");
       const Vector Momentum = VectorFromSpherical(MomentumMag, CosTheta, Phi);
-      const Vector Position = GetInitialTrackPosition();
+      const Vector Position(0.0, 0.0, 0.0);
       const int ParticleID = Settings::GetInt("Particle/ID");;
       ParticleTrack particleTrack(ParticleID, Momentum, Position);
       particleTrack.TrackThroughTracker(InnerTracker);
       particleTrack.ConvertToRadiatorCoordinates(radiatorArray);
+      auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
+      Entrance_x = EntranceWindowPosition.X();
+      Entrance_y = EntranceWindowPosition.Y();
+      Entrance_z = EntranceWindowPosition.Z();
+      if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
+	ParticleLocation = particleTrack.GetParticleLocation();
+	CherenkovTree.Fill();
+	continue;
+      }
       particleTrack.TrackThroughRadiatorCell();
+      if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+	ParticleLocation = particleTrack.GetParticleLocation();
+	CherenkovTree.Fill();
+	continue;
+      }
+      ParticleLocation = particleTrack.GetParticleLocation();
       if(DrawThisTrack) {
 	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
       }
       auto Photons = particleTrack.GeneratePhotonsFromGas();
       for(auto &Photon : Photons) {
-	CherenkovAngle_True = Photon.m_CherenkovAngle;
+	CherenkovAngle_True[NumberPhotons] = Photon.m_CherenkovAngle;
 	PhotonMapper::TracePhoton(Photon);
 	if(DrawThisTrack) {
 	  eventDisplay.AddObject(Photon.DrawPhotonPath());
 	}
 	if(!Photon.m_MirrorHitPosition) {
-	  if(DrawMissPhoton && Photon.m_Status == Photon::Status::OutsideAcceptance) {
+	  if(DrawMissPhoton && Photon.m_Status == Photon::Status::MirrorMiss) {
 	    eventDisplay.AddObject(Photon.DrawPhotonPath());
 	  }
 	  continue;
 	}
-	auto reconstructedPhoton = PhotonReconstructor::ReconstructPhoton(particleTrack, particleTrack.GetPhotonHits().back(), Photon::Radiator::Gas);
-	PhotonEnergy = Photon.m_Energy;
-	DetectorHit = Photon.m_Status == Photon::Status::DetectorHit ? 1 : 0;
-	RadiatorRowNumber = Photon.m_RadiatorCell->GetCellNumber().first;
-	RadiatorColumnNumber = Photon.m_RadiatorCell->GetCellNumber().second;
-	TrackNumber = i;
-	CherenkovAngle_Reco_TrueEmissionPoint = reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
-	CherenkovAngle_Reco = reconstructedPhoton.m_CherenkovAngle;
-	CherenkovTree.Fill();
+	auto reconstructedPhoton =
+	  PhotonReconstructor::ReconstructPhoton(particleTrack,
+						 particleTrack.GetPhotonHits().back(),
+						 Photon::Radiator::Gas);
+	PhotonEnergy[NumberPhotons] = Photon.m_Energy;
+	PhotonStatus[NumberPhotons] = Photon.m_Status;
+	RadiatorRowNumber[NumberPhotons] = Photon.m_RadiatorCell->GetCellNumber().first;
+	RadiatorColumnNumber[NumberPhotons] = Photon.m_RadiatorCell->GetCellNumber().second;
+	CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
+	  reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
+	CherenkovAngle_Reco[NumberPhotons] = reconstructedPhoton.m_CherenkovAngle;
+	NumberPhotons++;
       }
+      CherenkovTree.Fill();
     }
     eventDisplay.DrawEventDisplay("EventDisplay.pdf");
     CherenkovTree.Write();
@@ -144,20 +184,6 @@ int main(int argc, char *argv[]) {
 Vector VectorFromSpherical(double R, double CosTheta, double Phi) {
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
   const double CosPhi = TMath::Cos(Phi);
-  const double SinPhi = TMath::Sqrt(1.0 - CosPhi*CosPhi);
+  const double SinPhi = TMath::Sin(Phi);
   return Vector{R*CosPhi*SinTheta, R*SinPhi*SinTheta, R*CosTheta};
-}
-
-Vector GetInitialTrackPosition() {
-  if(Settings::GetBool("Particle/FromOrigin")) {
-    return Vector(0.0, 0.0, 0.0);
-  } else {
-    const double x = gRandom->Uniform(Settings::GetDouble("Particle/x_min"),
-				      Settings::GetDouble("Particle/x_max"));
-    const double y = gRandom->Uniform(Settings::GetDouble("Particle/y_min"),
-				      Settings::GetDouble("Particle/y_max"));
-    const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
-				      Settings::GetDouble("Particle/z_max"));
-    return Vector(x, y, z);
-  }
 }
