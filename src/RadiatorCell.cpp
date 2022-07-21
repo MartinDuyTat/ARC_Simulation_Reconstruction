@@ -106,31 +106,42 @@ RadiatorCell::DrawRadiatorGeometry() const {
   Objects.push_back(std::make_pair(std::make_unique<TArc>(MirrorArc), "ONLY"));
   // Draw the walls
   TLine LeftLine(-m_HexagonSize/2.0 + m_Position.X(),
-		 Settings::GetDouble("ARCGeometry/Radius"),
+		 Settings::GetDouble("ARCGeometry/Radius") - m_VesselThickness,
 		 -m_HexagonSize/2.0 + m_Position.X(),
-		 Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
+		 Settings::GetDouble("ARCGeometry/Radius")
+		 + m_RadiatorThickness - m_VesselThickness);
   LeftLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(LeftLine), ""));
   TLine RightLine(m_HexagonSize/2.0 + m_Position.X(),
-		  Settings::GetDouble("ARCGeometry/Radius"),
+		  Settings::GetDouble("ARCGeometry/Radius") - m_VesselThickness,
 		  m_HexagonSize/2.0 + m_Position.X(),
-		  Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
+		  Settings::GetDouble("ARCGeometry/Radius")
+		  + m_RadiatorThickness - m_VesselThickness);
   RightLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(RightLine), ""));
   // Draw the detector plane
   TLine DetectorLine(-m_HexagonSize/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness,
+		     Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness,
 		     m_HexagonSize/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness);
+		     Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness);
   DetectorLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(DetectorLine), ""));
   // Draw the aerogel plane
   TLine AerogelLine(-m_HexagonSize/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness,
-		     m_HexagonSize/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness);
+		    Settings::GetDouble("ARCGeometry/Radius")
+		    + m_CoolingThickness + m_AerogelThickness,
+		    m_HexagonSize/2.0 + m_Position.X(),
+		    Settings::GetDouble("ARCGeometry/Radius")
+		    + m_CoolingThickness + m_AerogelThickness);
   AerogelLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(AerogelLine), ""));
+  // Draw the bottom cooling plane
+  TLine CoolingLine(-m_HexagonSize/2.0 + m_Position.X(),
+		    Settings::GetDouble("ARCGeometry/Radius"),
+		    m_HexagonSize/2.0 + m_Position.X(),
+		    Settings::GetDouble("ARCGeometry/Radius"));
+  CoolingLine.SetLineColor(kBlack);
+  Objects.push_back(std::make_pair(std::make_unique<TLine>(CoolingLine), ""));
   // Draw SiPM
   Objects.push_back(std::make_pair(m_Detector.DrawSiPM(GetRadiatorPosition()), ""));
   return Objects;

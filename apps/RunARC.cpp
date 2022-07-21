@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
     double CherenkovAngle_Reco_TrueEmissionPoint[200], CherenkovAngle_Reco[200],
            CherenkovAngle_True[200], PhotonEnergy[200];
     double Entrance_x, Entrance_y, Entrance_z;
+    double CosTheta, Phi;
     int NumberPhotons = 0;
     int RadiatorRowNumber[200], RadiatorColumnNumber[200], TrackNumber;
     ParticleTrack::Location ParticleLocation;
@@ -104,6 +105,8 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("Entrance_x", &Entrance_x);
     CherenkovTree.Branch("Entrance_y", &Entrance_y);
     CherenkovTree.Branch("Entrance_z", &Entrance_z);
+    CherenkovTree.Branch("CosTheta", &CosTheta);
+    CherenkovTree.Branch("Phi", &Phi);
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
     const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
@@ -115,11 +118,11 @@ int main(int argc, char *argv[]) {
       const double Radius = Settings::GetDouble("ARCGeometry/Radius");
       const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
 					Settings::GetDouble("Particle/z_max"));
-      const double CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
-      const double Phi = Settings::GetBool("Particle/RandomPhi") ?
-	                 gRandom->Uniform(-TMath::Pi(), TMath::Pi()) : 
-	                 gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
-					  Settings::GetDouble("Particle/Phi_max"));
+      CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
+      Phi = Settings::GetBool("Particle/RandomPhi")
+	  ? gRandom->Uniform(-TMath::Pi(), TMath::Pi())
+	  : gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
+	                     Settings::GetDouble("Particle/Phi_max"));
       const double MomentumMag = Settings::GetDouble("Particle/Momentum");
       const Vector Momentum = VectorFromSpherical(MomentumMag, CosTheta, Phi);
       const Vector Position(0.0, 0.0, 0.0);

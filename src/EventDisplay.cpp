@@ -11,19 +11,28 @@
 
 void EventDisplay::DrawEventDisplay(const std::string &Filename) {
   gStyle->SetLineScalePS(0.01);
-  TCanvas c("c", "", Settings::GetInt("EventDisplay/CanvasWidth"), Settings::GetInt("EventDisplay/CanvasHeight"));
+  TCanvas c("c", "", Settings::GetInt("EventDisplay/CanvasWidth"),
+	             Settings::GetInt("EventDisplay/CanvasHeight"));
   gPad->DrawFrame(-Settings::GetDouble("ARCGeometry/Length")/2.0,
 		  0.0,
 		  Settings::GetDouble("ARCGeometry/Length")/2.0,
-		  Settings::GetDouble("ARCGeometry/Radius") + Settings::GetDouble("RadiatorCell/RadiatorThickness"));
+		  Settings::GetDouble("ARCGeometry/Radius")
+		  + Settings::GetDouble("RadiatorCell/RadiatorThickness")
+		  - Settings::GetDouble("RadiatorCell/VesselThickness"));
   TLine InnerARC(-Settings::GetDouble("ARCGeometry/Length")/2.0,
-		 Settings::GetDouble("ARCGeometry/Radius"),
+		 Settings::GetDouble("ARCGeometry/Radius")
+		 - Settings::GetDouble("RadiatorCell/VesselThickness"),
 		 Settings::GetDouble("ARCGeometry/Length")/2.0,
-		 Settings::GetDouble("ARCGeometry/Radius"));
+		 Settings::GetDouble("ARCGeometry/Radius")
+		 - Settings::GetDouble("RadiatorCell/VesselThickness"));
   TLine OuterARC(-Settings::GetDouble("ARCGeometry/Length")/2.0,
-		 Settings::GetDouble("ARCGeometry/Radius") + Settings::GetDouble("RadiatorCell/RadiatorThickness"),
+		 Settings::GetDouble("ARCGeometry/Radius")
+		 + Settings::GetDouble("RadiatorCell/RadiatorThickness")
+		 - Settings::GetDouble("RadiatorCell/VesselThickness"),
 		 Settings::GetDouble("ARCGeometry/Length")/2.0,
-		 Settings::GetDouble("ARCGeometry/Radius") + Settings::GetDouble("RadiatorCell/RadiatorThickness"));
+		 Settings::GetDouble("ARCGeometry/Radius")
+		 + Settings::GetDouble("RadiatorCell/RadiatorThickness")
+		 - Settings::GetDouble("RadiatorCell/VesselThickness"));
   InnerARC.SetLineColor(kBlack);
   OuterARC.SetLineColor(kBlack);
   m_EventObjects.push_back(std::make_pair(std::make_unique<TLine>(InnerARC), ""));
@@ -39,7 +48,8 @@ void EventDisplay::AddObject(std::unique_ptr<TObject> Object, const std::string 
   m_EventObjects.push_back(std::make_pair(std::move(Object), Option));
 }
 
-void EventDisplay::AddObject(std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Objects) {
+void EventDisplay::AddObject(std::vector<std::pair<std::unique_ptr<TObject>,
+			     std::string>> Objects) {
   for(auto &Object : Objects) {
     AddObject(std::move(Object.first), Object.second);
   }

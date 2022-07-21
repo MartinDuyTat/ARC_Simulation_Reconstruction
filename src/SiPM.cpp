@@ -88,8 +88,10 @@ void SiPM::PlotHits(const std::string &Filename) const {
 std::unique_ptr<TObject> SiPM::DrawSiPM(const Vector &RadiatorPosition) const {
   const double RadiatorZ = RadiatorPosition.Z();
   const double DetectorPositionX = m_DetectorPositionX + RadiatorPosition.X();
-  TBox Box(DetectorPositionX - m_DetectorSizeX/2.0, RadiatorZ, DetectorPositionX + m_DetectorSizeX/2.0, RadiatorZ + 0.001);
+  TBox Box(DetectorPositionX - m_DetectorSizeX/2.0, RadiatorZ - 0.002,
+	   DetectorPositionX + m_DetectorSizeX/2.0, RadiatorZ - 0.001);
   Box.SetFillColor(kBlack);
+  Box.Print();
   return std::make_unique<TBox>(Box);
 }
 
