@@ -66,7 +66,10 @@ bool RadiatorCell::IsInsideCell(const Vector &Position) const {
   // TODO: Account for vertical position as well (both in boundary and in the change in phi size)
   // Get x and y coordinates after mapping everything to first quadrant
   const double x = TMath::Abs(Position.X());
-  const double y = TMath::Abs(Position.Y());
+  // Need a stretching factor in y direction because of the curvature
+  const double Radius = Settings::GetDouble("ARCGeometry/Radius");
+  const double Stretch = 1 + (Position.Z() + m_CoolingThickness)/Radius;
+  const double y = TMath::Abs(Position.Y())/Stretch;
   // First part is checking the sloped part, the other is the vertical part
   return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
 }
