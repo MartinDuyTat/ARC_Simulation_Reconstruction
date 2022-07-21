@@ -43,20 +43,19 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   m_Location = Location::EntranceWindow;
 }
 
-void ParticleTrack::ConvertToRadiatorCoordinates(RadiatorArray &radiatorArray) {
+void ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
+  m_RadiatorCell = radiatorArray.FindRadiator(*this);
+}
+
+void ParticleTrack::ConvertToRadiatorCoordinates() {
   // Check if coordinate system if correct
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
   }
-  // First rotate in azimuthal direction to map to cell near phi = 0
-  // TODO: Implement this function
-  //MapPhiBack();
   // Then rotate around y-axis so that z axis now points towards the high pT cell
-  RotateY(m_InitialPosition);
-  RotateY(m_Position);
-  RotateY(m_Momentum);
-  // Figure out which radiator cell the track goes through
-  m_RadiatorCell = radiatorArray.WhichRadiator(m_Position);
+  SwapXZ(m_InitialPosition);
+  SwapXZ(m_Position);
+  SwapXZ(m_Momentum);
   // Finally shift coordinates so that the origin is the detector plane of the radiator cell
   m_Position -= m_RadiatorCell->GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
@@ -190,6 +189,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
 double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energy) const {
   switch(Radiator) {
     case Photon::Radiator::Aerogel:
+      // TODO: Add aerogel dispersion
       return 1.03;
     case Photon::Radiator::Gas:
       {
@@ -214,7 +214,6 @@ double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energ
 Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
 				     const Vector &Exit,
 				     Photon::Radiator Radiator) const {
-  // TODO: Account for dispersion
   const double Energy = gRandom->Uniform(1.55, 4.31);
   const double n_phase = GetIndexRefraction(Radiator, Energy);
   const double RandomFraction = Settings::GetBool("General/RandomEmissionPoint")
@@ -269,20 +268,22 @@ double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
 }
 
-/*void ParticleTrack::MapPhiBack() {
-  const int PhiCells = Settings::GetInt("ARCGeometry/PhiCells");
-  const double DeltaPhi = 2.0*TMath::Pi()/PhiCells;
-  const int Sign = m_Position.Phi() > 0 ? 1 : -1;
-  const int PhiUnits = Sign*static_cast<int>((Sign*m_Position.Phi() + 0.5*DeltaPhi)/DeltaPhi);
-  const ROOT::Math::RotationZ RotateZ(-PhiUnits*DeltaPhi);
+void ParticleTrack::MapPhi(double DeltaPhi) {
+  const ROOT::Math::RotationZ RotateZ(DeltaPhi);
   m_Position = RotateZ(m_Position);
   m_InitialPosition = RotateZ(m_InitialPosition);
   m_Momentum = RotateZ(m_Momentum);
-}*/
+}
 
-void ParticleTrack::RotateY(Vector &Vec) const {
+void ParticleTrack::ReflectZ() {
+  m_Position.SetZ(-m_Position.Z());
+  m_InitialPosition.SetZ(-m_InitialPosition.Z());
+  m_Momentum.SetZ(-m_Momentum.Z());
+}
+
+void ParticleTrack::SwapXZ(Vector &Vec) const {
   const double Temp = Vec.X();
-  Vec.SetX(-Vec.Z());
+  Vec.SetX(Vec.Z());
   Vec.SetZ(Temp);
 }
 
@@ -307,4 +308,12 @@ ParticleTrack::Location ParticleTrack::GetParticleLocation() const {
 
 const Vector ParticleTrack::GetEntranceWindowPosition() const {
   return m_EntranceWindowPosition;
+}
+
+double ParticleTrack::GetRadiatorColumnNumber() const {
+  return m_RadiatorCell->GetCellNumber().first;
+}
+
+double ParticleTrack::GetRadiatorRowNumber() const {
+  return m_RadiatorCell->GetCellNumber().second;
 }

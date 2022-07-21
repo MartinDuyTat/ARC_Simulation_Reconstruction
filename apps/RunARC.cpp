@@ -59,7 +59,8 @@ int main(int argc, char *argv[]) {
     const int ParticleID = Settings::GetInt("Particle/ID");;
     ParticleTrack particleTrack(ParticleID, Momentum);
     particleTrack.TrackThroughTracker(InnerTracker);
-    particleTrack.ConvertToRadiatorCoordinates(radiatorArray);
+    particleTrack.FindRadiator(radiatorArray);
+    particleTrack.ConvertToRadiatorCoordinates();
     particleTrack.TrackThroughRadiatorCell();
     auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
     auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
     double Entrance_x, Entrance_y, Entrance_z;
     double CosTheta, Phi;
     int NumberPhotons = 0;
-    int RadiatorRowNumber[200], RadiatorColumnNumber[200], TrackNumber;
+    int RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
     ParticleTrack::Location ParticleLocation;
     Photon::Status PhotonStatus[200];
     CherenkovTree.Branch("NumberPhotons", &NumberPhotons);
@@ -93,12 +94,8 @@ int main(int argc, char *argv[]) {
 			 &CherenkovAngle_True,
 			 "CherenkovAngle_True[NumberPhotons]/D");
     CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy, "PhotonEnergy[NumberPhotons]/D");
-    CherenkovTree.Branch("RadiatorRowNumber",
-			 &RadiatorRowNumber,
-			 "RadiatorRowNumber[NumberPhotons]/D");
-    CherenkovTree.Branch("RadiatorColumnNumber",
-			 &RadiatorColumnNumber,
-			 "RadiatorColumnNumber[NumberPhotons]/D");
+    CherenkovTree.Branch("RadiatorRowNumber",&RadiatorRowNumber);
+    CherenkovTree.Branch("RadiatorColumnNumber", &RadiatorColumnNumber);
     CherenkovTree.Branch("TrackNumber", &TrackNumber);
     CherenkovTree.Branch("ParticleLocation", &ParticleLocation, "ParticleLocation/I");
     CherenkovTree.Branch("PhotonStatus", &PhotonStatus, "PhotonStatus[NumberPhotons]/I");
@@ -113,8 +110,8 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < NumberTracks; i++) {
       NumberPhotons = 0;
       TrackNumber = i;
-      const bool DrawThisTrack = std::find(TracksToDraw.begin(),
-					   TracksToDraw.end(), i) != TracksToDraw.end();
+      RadiatorRowNumber = -1;
+      RadiatorColumnNumber = -1;
       const double Radius = Settings::GetDouble("ARCGeometry/Radius");
       const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
 					Settings::GetDouble("Particle/z_max"));
@@ -129,7 +126,14 @@ int main(int argc, char *argv[]) {
       const int ParticleID = Settings::GetInt("Particle/ID");;
       ParticleTrack particleTrack(ParticleID, Momentum, Position);
       particleTrack.TrackThroughTracker(InnerTracker);
-      particleTrack.ConvertToRadiatorCoordinates(radiatorArray);
+      particleTrack.FindRadiator(radiatorArray);
+      Phi = particleTrack.GetPosition().Phi();
+      RadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
+      RadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
+      const bool DrawThisTrack = std::find(TracksToDraw.begin(),
+					   TracksToDraw.end(), i) != TracksToDraw.end() &&
+	                         RadiatorRowNumber == Settings::GetInt("EventDisplay/RowToDraw");
+      particleTrack.ConvertToRadiatorCoordinates();
       auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
       Entrance_x = EntranceWindowPosition.X();
       Entrance_y = EntranceWindowPosition.Y();
@@ -168,8 +172,6 @@ int main(int argc, char *argv[]) {
 						 Photon::Radiator::Gas);
 	PhotonEnergy[NumberPhotons] = Photon.m_Energy;
 	PhotonStatus[NumberPhotons] = Photon.m_Status;
-	RadiatorRowNumber[NumberPhotons] = Photon.m_RadiatorCell->GetCellNumber().first;
-	RadiatorColumnNumber[NumberPhotons] = Photon.m_RadiatorCell->GetCellNumber().second;
 	CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
 	  reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
 	CherenkovAngle_Reco[NumberPhotons] = reconstructedPhoton.m_CherenkovAngle;

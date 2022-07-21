@@ -16,6 +16,8 @@
 
 using Vector = ROOT::Math::XYZVector;
 
+class ParticleTrack;
+
 class RadiatorArray {
  public:
   /**
@@ -32,9 +34,27 @@ class RadiatorArray {
   RadiatorIter operator()(int i, int j);
   /**
    * Check which radiator the particle goes through
-   * It is assumed that the input vector is right at the bottom surface of the radiator plane
+   * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  RadiatorIter WhichRadiator(const Vector &Position);
+  RadiatorIter FindRadiator(ParticleTrack &particleTrack);
+  /**
+   * Check if particle track hits below the main row
+   * @param x Position along the z direction of the barrel, or x in local coordinates
+   * @param y Position along the curved direction, or y in location coordinates
+   */
+  bool IsBelowMainRow(double x, double y) const;
+  /**
+   * Check if particle track hits above the upper row
+   * @param x Position along the z direction of the barrel, or x in local coordinates
+   * @param y Position along the curved direction, or y in location coordinates
+   */
+  bool IsAboveUpperRow(double x, double y) const;
+  /**
+   * Check if particle track hits above the main row
+   * @param x Position along the z direction of the barrel, or x in local coordinates
+   * @param y Position along the curved direction, or y in location coordinates
+   */
+  bool IsAboveMainRow(double x, double y) const;
  private:
   /**
    * Vector containing all the radiator cells

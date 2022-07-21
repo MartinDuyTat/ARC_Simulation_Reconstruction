@@ -13,19 +13,19 @@
 #include"Settings.h"
 #include"Photon.h"
 
-RadiatorCell::RadiatorCell(int CellRowNumber,
-			   int CellColumnNumber,
+RadiatorCell::RadiatorCell(int CellColumnNumber,
+			   int CellRowNumber,
 			   double HexagonSize):
 			   m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
 			   m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
 			   m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
 			   m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
-			   m_CellNumber(std::make_pair(CellRowNumber, CellColumnNumber)),
-			   m_Position(GetCellPosition(CellRowNumber, CellColumnNumber)),
+			   m_HexagonSize(HexagonSize),
+			   m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
+			   m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)),
 			   m_Detector(DetermineSiPMPositionX(), 0.0),
 			   m_MirrorCurvature(DetermineMirrorCurvature()),
-			   m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
-                           m_HexagonSize(HexagonSize) {
+			   m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()) {
   // TODO: Allow for off-axis mirror or mirror with different radius of curvature
 }
 
@@ -63,12 +63,13 @@ const Vector& RadiatorCell::GetRadiatorPosition() const {
 }
 
 bool RadiatorCell::IsInsideCell(const Vector &Position) const {
-  // TODO: Account for vertical position as well (both in boundary and in the change in phi size)
   // Get x and y coordinates after mapping everything to first quadrant
   const double x = TMath::Abs(Position.X());
   // Need a stretching factor in y direction because of the curvature
   const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-  const double Stretch = 1 + (Position.Z() + m_CoolingThickness)/Radius;
+  const double TanTheta = Position.Y()/(Radius + m_CoolingThickness);
+  const double SecTheta = TMath::Sqrt(1 + TanTheta*TanTheta);
+  const double Stretch = SecTheta*(1 + m_CoolingThickness/Radius);
   const double y = TMath::Abs(Position.Y())/Stretch;
   // First part is checking the sloped part, the other is the vertical part
   return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
@@ -147,20 +148,19 @@ RadiatorCell::DrawRadiatorGeometry() const {
   return Objects;
 }
 
-Vector RadiatorCell::GetCellPosition(int CellRowNumber, int CellColumnNumber) const {
+Vector RadiatorCell::GetCellPosition(int CellColumnNumber, int CellRowNumber) const {
   if(CellColumnNumber > 9 || CellColumnNumber < 0) {
     throw std::invalid_argument("Invalid cell column number: " + std::to_string(CellColumnNumber));
   }
   const double ZPosition = Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness;
-  if(CellRowNumber == 0) {
-    if(CellColumnNumber == 0) {
-      return Vector(0.0, 0.0, ZPosition);
-    } else {
-      const double XPosition = m_HexagonSize*CellColumnNumber;
-      return Vector(XPosition, 0.0, ZPosition);
-    }
-  } else if(CellRowNumber == 1) {
-    const double XPosition = m_HexagonSize*(CellColumnNumber + 0.5);
+  if(CellRowNumber == 0 && CellColumnNumber == 0) {
+    return Vector(0.0, 0.0, ZPosition);
+  }
+  if(CellRowNumber == 1) {
+    const double XPosition = m_HexagonSize*CellColumnNumber;
+    return Vector(XPosition, 0.0, ZPosition);
+  } else if(CellRowNumber == 2) {
+    const double XPosition = m_HexagonSize*(CellColumnNumber - 0.5);
     return Vector(XPosition, 0.0, ZPosition);
   } else {
     throw std::invalid_argument("Invalid cell row number: " + std::to_string(CellRowNumber));

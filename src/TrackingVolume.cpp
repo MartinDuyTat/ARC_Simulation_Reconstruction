@@ -29,7 +29,7 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>> TrackingVolume::Dr
   const double VesselThickness = Settings::GetDouble("RadiatorCell/VesselThickness");
   if(Settings::GetBool("General/FullArray")) {
     for(int i = 0; i <= m_CellsPerRow; i++) {
-      TLine Line1(0.0, 0.0, ThetaLength*i, m_Radius - VesselThickness);
+      TLine Line1(0.0, 0.0, ThetaLength*(i - 0.5), m_Radius - VesselThickness);
       Line1.SetLineStyle(kDotted);
       Line1.SetLineWidth(1);
       Line1.SetLineColor(kBlack);

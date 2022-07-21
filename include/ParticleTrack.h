@@ -57,9 +57,13 @@ class ParticleTrack {
    */
   void TrackThroughTracker(const TrackingVolume &InnerTracker);
   /**
+   * Find the correct radiator that the particle goes through
+   */
+  void FindRadiator(RadiatorArray &radiatorArray);
+  /**
    * Convert to local radiator coordinates
    */
-  void ConvertToRadiatorCoordinates(RadiatorArray &Cell);
+  void ConvertToRadiatorCoordinates();
   /**
    * Track particle through radiator cell
    */
@@ -127,6 +131,23 @@ class ParticleTrack {
    * Get the position of the entrance window
    */
   const Vector GetEntranceWindowPosition() const;
+  /**
+   * Rotate around the phi direction to map particle to a valid radiator cell
+   * @param DeltaPhi Angle that is rotated in phi
+   */
+  void MapPhi(double DeltaPhi);
+  /**
+   * Reflect everything in the z-direction since radiator cells are symmetric
+   */
+  void ReflectZ();
+  /**
+   * Get the column number of the radiator
+   */
+  double GetRadiatorColumnNumber() const;
+  /**
+   * Get the row number of the radiator
+   */
+  double GetRadiatorRowNumber() const;
  private:
   /**
    * Particle momentum, in GeV
@@ -181,14 +202,9 @@ class ParticleTrack {
    */
   double GetPhotonYield(double x, double Beta, double n) const;
   /**
-   * Helper function that maps the phi direction to the cell near phi = 0
+   * Helper function to swap x and z directions (so that z points up in the dell
    */
-  // TODO: Implement this function correctly
-  //void MapPhiBack();
-  /**
-   * Helper function to rotate around y axis in coordinate transformation
-   */
-  void RotateY(Vector &Vec) const;
+  void SwapXZ(Vector &Vec) const;
   /**
    * Helper function to track particle through gas until it hits the correct mirror
    * If it ends up outside the cell in the theta direction, move to the next radiator cell

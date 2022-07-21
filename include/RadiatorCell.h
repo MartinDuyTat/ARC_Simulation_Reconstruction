@@ -24,11 +24,11 @@ class RadiatorCell {
  public:
   /**
    * Constructor that sets up the geometry
-   * @param CellRowNumber The row number of this cell
    * @param CellColumnNumber The column number of this cell
+   * @param CellRowNumber The row number of this cell
    * @param HexagonSize The length between two opposide edges (not points) of the hexagons
    */
-  RadiatorCell(int CellRowNumber, int CellColumnNumber, double HexagonSize);
+  RadiatorCell(int CellColumnNumber, int CellRowNumber, double HexagonSize);
   /**
    * Get total radiator cell thickness
    */
@@ -103,6 +103,10 @@ class RadiatorCell {
    */
   const double m_AerogelThickness;
   /**
+   * The length between two edges of a hexagon
+   */
+  const double m_HexagonSize;
+  /**
    * Radiator cell row number (first) and column number (second)
    * For a single central cell, it is assigned number (0, 0)
    * For an array of radiator cells, numbering starts from (1, 0) from the middle of the main row
@@ -125,13 +129,9 @@ class RadiatorCell {
    */
   const Vector m_MirrorCentre;
   /**
-   * The length between two edges of a hexagon
-   */
-  const double m_HexagonSize;
-  /**
    * Helper function to get cell position based on cell number
    */
-  Vector GetCellPosition(int CellRowNumber, int CellColumnNumber) const;
+  Vector GetCellPosition(int CellColumnNumber, int CellRowNumber) const;
   /**
    * Helper function to determine the mirror curvature
    */
