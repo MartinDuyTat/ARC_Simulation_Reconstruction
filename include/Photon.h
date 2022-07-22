@@ -32,6 +32,7 @@ struct Photon {
    * DetectorHit: Photon hit the detector
    * DetectorMiss: Photon missed the detector
    * AerogelScattered: Scattered by the aerogel
+   * WallMiss: The photon hit the vessel wall on top, so an area without a mirror
    */
   enum class Status {
     Emitted,
@@ -40,7 +41,8 @@ struct Photon {
     EfficiencyMiss,
     DetectorHit,
     DetectorMiss,
-    AerogelScattered
+    AerogelScattered,
+    WallMiss
   };
   /**
    * Construct a photon with position, direction and energy

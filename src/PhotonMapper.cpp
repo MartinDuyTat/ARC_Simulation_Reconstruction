@@ -29,7 +29,12 @@ namespace PhotonMapper {
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
-    if(photon.m_RadiatorCell->IsInsideCell(photon)) {
+    const double MaxHeight = photon.m_RadiatorCell->GetRadiatorThickness()
+                           - 2*photon.m_RadiatorCell->GetVesselThickness()
+                           - photon.m_RadiatorCell->GetCoolingThickness();
+    if(photon.m_Position.Z() > MaxHeight) {
+      photon.m_Status = Photon::Status::WallMiss;
+    } else if(photon.m_RadiatorCell->IsInsideCell(photon)) {
       photon.m_Status = Photon::Status::MirrorHit;
       photon.m_MirrorHitPosition = std::make_unique<Vector>(photon.m_Position);
     } else {

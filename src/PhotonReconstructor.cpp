@@ -43,7 +43,7 @@ namespace PhotonReconstructor {
                                            /(EmissionMirrorDist*Curvature*Curvature);
     const double DetectionMirrorPerpDist = TMath::Sqrt(
 					   DetectionPoint.Mag2()/(Curvature*Curvature)
-					 - TMath::POwer(DetectionMirrorParaDist, 2));
+					 - TMath::Power(DetectionMirrorParaDist, 2));
     auto quarticSolution = SolveQuartic(EmissionMirrorDist,
 					DetectionMirrorParaDist,
 					DetectionMirrorPerpDist);
@@ -88,8 +88,8 @@ namespace PhotonReconstructor {
 			       double DetMirrorPerpDist) {
     // Em = Emission
     // Det = Detection
-    const double DetectionMirrorDist2 = DetMirrorParaDist*DetMirrorParaDist
-                                      + DetMirrorPerpDist*DetMirrorPerpDist;
+    const double DetMirrorDist2 = DetMirrorParaDist*DetMirrorParaDist
+                                + DetMirrorPerpDist*DetMirrorPerpDist;
     const double Denominator = 4.0*EmMirrorDist*EmMirrorDist*DetMirrorDist2;
     const double a = -4.0*EmMirrorDist*EmMirrorDist*DetMirrorPerpDist/Denominator;
     const double b = (DetMirrorPerpDist*DetMirrorPerpDist
@@ -126,7 +126,7 @@ namespace PhotonReconstructor {
     Vector Reflection = EmPoint*(quarticSolution.m_CosBeta[SolutionNumber]/EmMirrorDist);
     Reflection += (quarticSolution.m_SinBeta[SolutionNumber]/DetMirrorPerpDist)
                  *(DetPoint - EmPoint*(DetMirrorParaDist/EmMirrorDist));
-    return ReflectionPoint;
+    return Reflection;
   }
 
 }

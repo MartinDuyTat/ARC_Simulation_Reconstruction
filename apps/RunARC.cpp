@@ -164,17 +164,19 @@ int main(int argc, char *argv[]) {
 	  if(DrawMissPhoton && Photon.m_Status == Photon::Status::MirrorMiss) {
 	    eventDisplay.AddObject(Photon.DrawPhotonPath());
 	  }
-	  continue;
+	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] = -1.0;
+	  CherenkovAngle_Reco[NumberPhotons] = -1.0;
+	} else {
+	  auto reconstructedPhoton =
+	    PhotonReconstructor::ReconstructPhoton(particleTrack,
+						   particleTrack.GetPhotonHits().back(),
+						   Photon::Radiator::Gas);
+	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
+	    reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
+	  CherenkovAngle_Reco[NumberPhotons] = reconstructedPhoton.m_CherenkovAngle;
 	}
-	auto reconstructedPhoton =
-	  PhotonReconstructor::ReconstructPhoton(particleTrack,
-						 particleTrack.GetPhotonHits().back(),
-						 Photon::Radiator::Gas);
 	PhotonEnergy[NumberPhotons] = Photon.m_Energy;
 	PhotonStatus[NumberPhotons] = Photon.m_Status;
-	CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
-	  reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
-	CherenkovAngle_Reco[NumberPhotons] = reconstructedPhoton.m_CherenkovAngle;
 	NumberPhotons++;
       }
       CherenkovTree.Fill();

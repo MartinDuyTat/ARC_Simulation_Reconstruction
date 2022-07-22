@@ -29,7 +29,7 @@ void SiPM::AddPhotonHit(Photon &photon) {
   m_PhotonHits.emplace_back(photon.m_Position.X(),
 			    photon.m_Position.Y(),
 			    &photon);
-  if(photon.m_Status == Photon::Status::AerogelScattered) {
+  if(photon.m_Status != Photon::Status::MirrorHit) {
     return;
   }
   const double PhotonLambda = 1239.8/photon.m_Energy;

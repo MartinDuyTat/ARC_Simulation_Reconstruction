@@ -24,9 +24,9 @@ RadiatorCell::RadiatorCell(int CellColumnNumber,
   m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
   m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)),
   m_Detector(DetermineSiPMPositionX(), 0.0),
-  m_MirrorCurvature(DetermineMirrorCurvature()),
-  m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()) {
-  // TODO: Allow for off-axis mirror or mirror with different radius of curvature
+  m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
+  m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
+  m_MirrorCentre(m_DefaultMirrorCentre) {
 }
 
 double RadiatorCell::GetRadiatorThickness() const {
@@ -50,7 +50,6 @@ const Vector& RadiatorCell::GetMirrorCentre() const {
 }
 
 double RadiatorCell::GetMirrorCurvatureCentreZ() const {
-  // TODO: Allow for off-axis mirror
   return m_RadiatorThickness
        - m_MirrorCurvature
        - 2*m_VesselThickness
@@ -181,15 +180,18 @@ std::pair<int, int> RadiatorCell::GetCellNumber() const {
   return m_CellNumber;
 }
 
-double RadiatorCell::DetermineMirrorCurvature() const {
-  const double NominalCurvature = Settings::GetDouble("RadiatorCell/MirrorCurvature");
-  return NominalCurvature;
-}
-
 double RadiatorCell::DetermineSiPMPositionX() const {
   return 0.0;
 }
 
 SiPM& RadiatorCell::GetDetector() {
   return m_Detector;
+}
+
+void RadiatorCell::SetMirrorCurvature(double Curvature) {
+  m_MirrorCurvature = Curvature;
+}
+
+void RadiatorCell::SetMirrorPosition(double x, double z) {
+  m_MirrorCentre += Vector(x, 0.0, z);
 }

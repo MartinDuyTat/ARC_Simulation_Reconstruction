@@ -81,6 +81,15 @@ class RadiatorCell {
    * Get the detector
    */
   SiPM& GetDetector();
+  /**
+   * Set the mirror curvature
+   * @param Curvature New mirror curvature
+   */
+  void SetMirrorCurvature(double Curvature);
+  /**
+   * Set the mirror position, relative to the default position
+   */
+  void SetMirrorPosition(double x, double z);
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
@@ -123,19 +132,19 @@ class RadiatorCell {
   /**
    * Radius of curvature of the spherical mirror
    */
-  const double m_MirrorCurvature;
+  double m_MirrorCurvature;
   /**
    * Centre of curvature of the mirror
    */
-  const Vector m_MirrorCentre;
+  Vector m_MirrorCentre;
+  /**
+   * Default centre of curvature of the mirror
+   */
+  const Vector m_DefaultMirrorCentre;
   /**
    * Helper function to get cell position based on cell number
    */
   Vector GetCellPosition(int CellColumnNumber, int CellRowNumber) const;
-  /**
-   * Helper function to determine the mirror curvature
-   */
-  double DetermineMirrorCurvature() const;
   /**
    * Helper function to figure out position of SiPM
    */
