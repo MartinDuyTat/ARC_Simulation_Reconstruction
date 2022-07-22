@@ -99,8 +99,8 @@ namespace PhotonReconstructor {
 			    double EmissionMirrorDist,
 			    QuarticSolution quarticSolution,
 			    int SolutionNumber) {
-    Vector ReflectionPoint = EmissionPoint*quarticSolution.m_CosBeta[SolutionNumber]/EmissionMirrorDist;
-    ReflectionPoint += quarticSolution.m_SinBeta[SolutionNumber]*(DetectionPoint - EmissionPoint*DetectionMirrorParaDist/EmissionMirrorDist)/DetectionMirrorPerpDist;
+    Vector ReflectionPoint = EmissionPoint*(quarticSolution.m_CosBeta[SolutionNumber]/EmissionMirrorDist);
+    ReflectionPoint += (quarticSolution.m_SinBeta[SolutionNumber]/DetectionMirrorPerpDist)*(DetectionPoint - EmissionPoint*(DetectionMirrorParaDist/EmissionMirrorDist));
     return ReflectionPoint;
   }
 

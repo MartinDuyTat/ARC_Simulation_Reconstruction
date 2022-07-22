@@ -66,7 +66,7 @@ bool RadiatorCell::IsInsideCell(const Vector &Position) const {
   // Get x and y coordinates after mapping everything to first quadrant
   const double x = TMath::Abs(Position.X());
   // Need a stretching factor in y direction because of the curvature
-  const double Radius = Settings::GetDouble("ARCGeometry/Radius");
+  const double Radius = m_Position.Z() - m_CoolingThickness;
   const double TanTheta = Position.Y()/(Radius + m_CoolingThickness);
   const double SecTheta = TMath::Sqrt(1 + TanTheta*TanTheta);
   const double Stretch = SecTheta*(1 + m_CoolingThickness/Radius);

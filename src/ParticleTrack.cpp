@@ -22,7 +22,9 @@ ParticleTrack::ParticleTrack(int ParticleID,
 			     m_InitialPosition(Position),
 			     m_ParticleID(ParticleID),
 			     m_Location(Location::TrackerVolume),
-                             m_CoordinateSystem(CoordinateSystem::GlobalDetector) {
+                             m_CoordinateSystem(CoordinateSystem::GlobalDetector),
+                             m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
+                             m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")) {
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -180,6 +182,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Gas, 1239.8/400.0);
   const int PhotonYield = std::round(GetPhotonYield(RadiatorDistance, Beta(), IndexRefraction));
   std::vector<Photon> Photons;
+  Photons.reserve(PhotonYield);
   for(int i = 0; i < PhotonYield; i++) {
     Photons.push_back(GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas));
   }
@@ -196,7 +199,7 @@ double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energ
 	auto GetIndex = [] (double L) {
 	  return 1.0 + 0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(L*L)));
 	};
-	if(Settings::GetBool("General/ChromaticDispersion")) {
+	if(m_ChromaticDispersion) {
 	  // Pressure at 3.5 bar
 	  // Sellmeier equation with coefficients from https://twiki.cern.ch/twiki/bin/view/LHCb/C4F10
 	  // They are similar to A. Filippas, et al. Nucl. Instr. and Meth. B, 196 (2002), p. 340 but now quite...?
@@ -216,8 +219,7 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
 				     Photon::Radiator Radiator) const {
   const double Energy = gRandom->Uniform(1.55, 4.31);
   const double n_phase = GetIndexRefraction(Radiator, Energy);
-  const double RandomFraction = Settings::GetBool("General/RandomEmissionPoint")
-                              ? gRandom->Uniform(0.005, 0.995) : 0.5;
+  const double RandomFraction = m_RandomEmissionPoint ? gRandom->Uniform(0.005, 0.995) : 0.5;
   const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);

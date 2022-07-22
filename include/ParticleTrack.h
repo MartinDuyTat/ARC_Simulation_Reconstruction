@@ -198,6 +198,14 @@ class ParticleTrack {
    */
   CoordinateSystem m_CoordinateSystem;
   /**
+   * Flag that is true if emission point of photon is random
+   */
+  bool m_RandomEmissionPoint;
+  /**
+   * Flag that is true if chromatic dispersion is on
+   */
+  bool m_ChromaticDispersion;
+  /**
    * Frank-Tamm relation for photon yield
    */
   double GetPhotonYield(double x, double Beta, double n) const;
