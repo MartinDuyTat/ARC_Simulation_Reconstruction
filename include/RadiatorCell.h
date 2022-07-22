@@ -134,13 +134,13 @@ class RadiatorCell {
    */
   double m_MirrorCurvature;
   /**
-   * Centre of curvature of the mirror
-   */
-  Vector m_MirrorCentre;
-  /**
    * Default centre of curvature of the mirror
    */
   const Vector m_DefaultMirrorCentre;
+  /**
+   * Centre of curvature of the mirror
+   */
+  Vector m_MirrorCentre;
   /**
    * Helper function to get cell position based on cell number
    */

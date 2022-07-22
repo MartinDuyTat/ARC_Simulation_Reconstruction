@@ -61,6 +61,10 @@ class ParticleTrack {
    */
   void FindRadiator(RadiatorArray &radiatorArray);
   /**
+   * Set radiator
+   */
+  void SetRadiator(RadiatorCell &radiatorCell);
+  /**
    * Convert to local radiator coordinates
    */
   void ConvertToRadiatorCoordinates();
@@ -168,7 +172,7 @@ class ParticleTrack {
   /**
    * Pointer to the radiator cell that track enters
    */
-  RadiatorIter m_RadiatorCell;
+  RadiatorCell *m_RadiatorCell;
   /**
    * Flag that keeps track of where the particle is
    */

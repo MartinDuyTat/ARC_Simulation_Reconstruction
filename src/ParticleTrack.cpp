@@ -46,7 +46,11 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
 }
 
 void ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
-  m_RadiatorCell = radiatorArray.FindRadiator(*this);
+  m_RadiatorCell = &(*radiatorArray.FindRadiator(*this));
+}
+
+void ParticleTrack::SetRadiator(RadiatorCell &radiatorCell) {
+  m_RadiatorCell = &radiatorCell;
 }
 
 void ParticleTrack::ConvertToRadiatorCoordinates() {
