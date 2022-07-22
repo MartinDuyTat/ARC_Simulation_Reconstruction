@@ -23,8 +23,9 @@ namespace PhotonMapper {
   void TracePhotonToMirror(Photon &photon) {
     const double s = PhotonMirrorDistance(photon);
     const Vector Mirror = photon.m_Position + s*photon.m_Direction;
+    auto MirrorCentre = photon.m_RadiatorCell->GetMirrorCentre();
     const auto Curvature = photon.m_RadiatorCell->GetMirrorCurvature();
-    const Vector Normal = (Mirror - photon.m_RadiatorCell->GetMirrorCentre())/Curvature;
+    const Vector Normal = (Mirror - MirrorCentre)/Curvature;
     const Vector Vout = photon.m_Direction - 2*photon.m_Direction.Dot(Normal)*Normal;
     photon.m_Position = Mirror;
     photon.m_Direction = Vout;
@@ -43,11 +44,13 @@ namespace PhotonMapper {
     constexpr double T0 = 0.9679;
     constexpr double Clarity = 5.087e10;
     const double Lambda = 1239.8/photon.m_Energy;
-    const double Transmission = T0*TMath::Exp(-Clarity*(AerogelThickness/Slope)/TMath::Power(Lambda, 4));
+    const double Exponent = -Clarity*(AerogelThickness/Slope)/TMath::Power(Lambda, 4);
+    const double Transmission = T0*TMath::Exp(Exponent);
     if(gRandom->Uniform(0.0, 1.0) > Transmission) {
       photon.m_Status = Photon::Status::AerogelScattered;
     }
-    photon.m_Position += (photon.m_Position.Dot(Vector(0.0, 0.0, 1.0))/Slope)*photon.m_Direction;
+    const Vector zUnit(0.0, 0.0, 1.0);
+    photon.m_Position += (photon.m_Position.Dot(zUnit)/Slope)*photon.m_Direction;
     photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon);
   }
 

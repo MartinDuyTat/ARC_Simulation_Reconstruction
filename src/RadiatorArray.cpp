@@ -9,10 +9,11 @@
 #include"Settings.h"
 #include"ParticleTrack.h"
 
-RadiatorArray::RadiatorArray(): m_FullArray(Settings::GetBool("General/FullArray")),
-                                m_NumberMainRowCells(Settings::GetInt("ARCGeometry/CellsPerRow")),
-				m_xHexDist(Settings::GetDouble("ARCGeometry/Length")/(2*m_NumberMainRowCells - 1)),
-				m_yHexDist(m_xHexDist*TMath::Sqrt(3)/2.0) {
+RadiatorArray::RadiatorArray():
+  m_FullArray(Settings::GetBool("General/FullArray")),
+  m_NumberMainRowCells(Settings::GetInt("ARCGeometry/CellsPerRow")),
+  m_xHexDist(Settings::GetDouble("ARCGeometry/Length")/(2*m_NumberMainRowCells - 1)),
+  m_yHexDist(m_xHexDist*TMath::Sqrt(3)/2.0) {
   if(m_FullArray) {
     m_Cells.reserve(2*m_NumberMainRowCells);
     for(int i = 0; i < m_NumberMainRowCells; i++) {
@@ -45,7 +46,11 @@ RadiatorArray::DrawRadiatorArray() const {
 RadiatorIter RadiatorArray::operator()(int i, int j) {
   if(m_FullArray) {
     if((j != 1 && j != 2) || (i == 0 && j == 2)) {
-      throw std::invalid_argument("Radiator (" + std::to_string(i) + ", " + std::to_string(j) + ") does not exist");
+      throw std::invalid_argument("Radiator ("
+				  + std::to_string(i)
+				  + ", "
+				  + std::to_string(j)
+				  + ") does not exist");
     } else {
       if(j == 1) {
 	return m_Cells.begin() + i;
@@ -55,7 +60,11 @@ RadiatorIter RadiatorArray::operator()(int i, int j) {
     }
   } else {
     if(i != 0 && j != 0) {
-      throw std::invalid_argument("Cannot have radiator cell index (" + std::to_string(i) + ", " + std::to_string(j) + " )");
+      throw std::invalid_argument("Cannot have radiator cell index ("
+				  + std::to_string(i)
+				  + ", "
+				  + std::to_string(j)
+				  + " )");
     } else {
       return m_Cells.begin();
     }

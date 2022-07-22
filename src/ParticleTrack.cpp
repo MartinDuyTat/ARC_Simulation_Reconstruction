@@ -17,14 +17,14 @@
 ParticleTrack::ParticleTrack(int ParticleID,
 			     const Vector &Momentum,
 			     const Vector &Position):
-                             m_Momentum(Momentum),
-			     m_Position(Position),
-			     m_InitialPosition(Position),
-			     m_ParticleID(ParticleID),
-			     m_Location(Location::TrackerVolume),
-                             m_CoordinateSystem(CoordinateSystem::GlobalDetector),
-                             m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
-                             m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")) {
+  m_Momentum(Momentum),
+  m_Position(Position),
+  m_InitialPosition(Position),
+  m_ParticleID(ParticleID),
+  m_Location(Location::TrackerVolume),
+  m_CoordinateSystem(CoordinateSystem::GlobalDetector),
+  m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
+  m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")) {
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -200,9 +200,11 @@ double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energ
 	  return 1.0 + 0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(L*L)));
 	};
 	if(m_ChromaticDispersion) {
-	  // Pressure at 3.5 bar
-	  // Sellmeier equation with coefficients from https://twiki.cern.ch/twiki/bin/view/LHCb/C4F10
-	  // They are similar to A. Filippas, et al. Nucl. Instr. and Meth. B, 196 (2002), p. 340 but now quite...?
+	  // Pressure at 1.0 bar
+	  // Sellmeier equation with coefficients from
+	  // https://twiki.cern.ch/twiki/bin/view/LHCb/C4F10
+	  // They are similar to A. Filippas, et al. Nucl. Instr. and Meth. B, 196 (2002),
+	  // p. 340 but now quite...?
 	  const double Lambda = 1239.841987427/Energy;
 	  return GetIndex(Lambda);
 	} else {
@@ -219,7 +221,8 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
 				     Photon::Radiator Radiator) const {
   const double Energy = gRandom->Uniform(1.55, 4.31);
   const double n_phase = GetIndexRefraction(Radiator, Energy);
-  const double RandomFraction = m_RandomEmissionPoint ? gRandom->Uniform(0.005, 0.995) : 0.5;
+  const double RandomFraction = m_RandomEmissionPoint
+                              ? gRandom->Uniform(0.005, 0.995) : 0.5;
   const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
@@ -230,7 +233,12 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
   Direction = RotateY(Direction);
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
-  return {EmissionPoint, Direction, Energy, TMath::ACos(CosTheta), Radiator, &(*m_RadiatorCell)};
+  return {EmissionPoint,
+          Direction,
+          Energy,
+          TMath::ACos(CosTheta),
+          Radiator,
+          &(*m_RadiatorCell)};
 }
 
 double ParticleTrack::Beta() const {
@@ -291,7 +299,10 @@ void ParticleTrack::SwapXZ(Vector &Vec) const {
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
   const auto CurrentPosition = m_RadiatorCell->GetRadiatorPosition() + m_Position;
-  TLine Track(m_InitialPosition.X(), m_InitialPosition.Z(), CurrentPosition.X(), CurrentPosition.Z());
+  TLine Track(m_InitialPosition.X(),
+	      m_InitialPosition.Z(),
+	      CurrentPosition.X(),
+	      CurrentPosition.Z());
   Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
 }

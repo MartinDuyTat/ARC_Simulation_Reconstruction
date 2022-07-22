@@ -16,16 +16,16 @@
 RadiatorCell::RadiatorCell(int CellColumnNumber,
 			   int CellRowNumber,
 			   double HexagonSize):
-			   m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
-			   m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
-			   m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
-			   m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
-			   m_HexagonSize(HexagonSize),
-			   m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
-			   m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)),
-			   m_Detector(DetermineSiPMPositionX(), 0.0),
-			   m_MirrorCurvature(DetermineMirrorCurvature()),
-			   m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()) {
+  m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
+  m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
+  m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
+  m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
+  m_HexagonSize(HexagonSize),
+  m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
+  m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)),
+  m_Detector(DetermineSiPMPositionX(), 0.0),
+  m_MirrorCurvature(DetermineMirrorCurvature()),
+  m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()) {
   // TODO: Allow for off-axis mirror or mirror with different radius of curvature
 }
 
@@ -51,7 +51,10 @@ const Vector& RadiatorCell::GetMirrorCentre() const {
 
 double RadiatorCell::GetMirrorCurvatureCentreZ() const {
   // TODO: Allow for off-axis mirror
-  return m_RadiatorThickness - m_MirrorCurvature - 2*m_VesselThickness - m_CoolingThickness;
+  return m_RadiatorThickness
+       - m_MirrorCurvature
+       - 2*m_VesselThickness
+       - m_CoolingThickness;
 }
 
 double RadiatorCell::GetMirrorCurvature() const {
@@ -82,7 +85,8 @@ bool RadiatorCell::IsInsideCell(const Photon &photon) const {
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 RadiatorCell::DrawRadiatorGeometry() const {
-  // First find the mirror intersections with the walls in local coordinates by solving a quadratic
+  // First find the mirror intersections with the walls in local coordinates
+  // by solving a quadratic
   const double b = m_MirrorCentre.Z();
   const double c_left = TMath::Power(m_HexagonSize/2.0, 2)
                       + m_MirrorCentre.Mag2()
@@ -95,7 +99,6 @@ RadiatorCell::DrawRadiatorGeometry() const {
   const double s_left = TMath::Sqrt(b*b - c_left);
   const double s_right = TMath::Sqrt(b*b - c_right);
   const auto MirrorCentreGlobal = m_Position + m_MirrorCentre;
-  //const double ArcAngle = TMath::ASin(0.5*m_HexagonSize/m_MirrorCurvature)*180.0/TMath::Pi();
   TArc MirrorArc(MirrorCentreGlobal.X(),
 		 MirrorCentreGlobal.Z(),
 		 m_MirrorCurvature,
@@ -150,9 +153,11 @@ RadiatorCell::DrawRadiatorGeometry() const {
 
 Vector RadiatorCell::GetCellPosition(int CellColumnNumber, int CellRowNumber) const {
   if(CellColumnNumber > 9 || CellColumnNumber < 0) {
-    throw std::invalid_argument("Invalid cell column number: " + std::to_string(CellColumnNumber));
+    throw std::invalid_argument("Invalid cell column number: "
+				+ std::to_string(CellColumnNumber));
   }
-  const double ZPosition = Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness;
+  const double ZPosition = Settings::GetDouble("ARCGeometry/Radius")
+                         + m_CoolingThickness;
   if(CellRowNumber == 0 && CellColumnNumber == 0) {
     return Vector(0.0, 0.0, ZPosition);
   }
@@ -163,7 +168,8 @@ Vector RadiatorCell::GetCellPosition(int CellColumnNumber, int CellRowNumber) co
     const double XPosition = m_HexagonSize*(CellColumnNumber - 0.5);
     return Vector(XPosition, 0.0, ZPosition);
   } else {
-    throw std::invalid_argument("Invalid cell row number: " + std::to_string(CellRowNumber));
+    throw std::invalid_argument("Invalid cell row number: "
+				+ std::to_string(CellRowNumber));
   }
 }
 
@@ -178,23 +184,9 @@ std::pair<int, int> RadiatorCell::GetCellNumber() const {
 double RadiatorCell::DetermineMirrorCurvature() const {
   const double NominalCurvature = Settings::GetDouble("RadiatorCell/MirrorCurvature");
   return NominalCurvature;
-  /*if(Settings::GetBool("General/VariableMirrorCurvature")) {
-    const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-    const double Theta = TMath::ATan2(m_Position.X(), Radius + m_RadiatorThickness - m_VesselThickness);
-    return NominalCurvature/TMath::Abs(TMath::Cos(Theta));
-  } else {
-    return NominalCurvature;
-  }*/
 }
 
 double RadiatorCell::DetermineSiPMPositionX() const {
-  /*if(Settings::GetBool("General/VariableMirrorCurvature")) {
-    const double TanTheta = GetRadiatorPosition().X()/GetRadiatorPosition().Z();
-    const double SiPM_xPosition = 2*(m_RadiatorThickness - 2*m_VesselThickness - m_CoolingThickness)*TanTheta;
-    return SiPM_xPosition;
-  } else {
-    return 0.0;
-  }*/
   return 0.0;
 }
 

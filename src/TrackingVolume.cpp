@@ -9,10 +9,11 @@
 #include"TrackingVolume.h"
 #include"Settings.h"
 
-TrackingVolume::TrackingVolume(): m_Radius(Settings::GetDouble("ARCGeometry/Radius")),
-				  m_Length(Settings::GetDouble("ARCGeometry/Length")),
-				  m_CellsPerRow(Settings::GetInt("ARCGeometry/CellsPerRow")),
-				  m_FieldStrength(Settings::GetDouble("ARCGeometry/FieldStrength")) {
+TrackingVolume::TrackingVolume():
+  m_Radius(Settings::GetDouble("ARCGeometry/Radius")),
+  m_Length(Settings::GetDouble("ARCGeometry/Length")),
+  m_CellsPerRow(Settings::GetInt("ARCGeometry/CellsPerRow")),
+  m_FieldStrength(Settings::GetDouble("ARCGeometry/FieldStrength")) {
 }
 
 double TrackingVolume::GetRadius() const {
@@ -23,7 +24,8 @@ double TrackingVolume::GetFieldStrength() const {
   return m_FieldStrength;
 }
 
-std::vector<std::pair<std::unique_ptr<TObject>, std::string>> TrackingVolume::DrawARCGeometry() const {
+std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
+TrackingVolume::DrawARCGeometry() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Lines;
   const double ThetaLength = m_Length/(2*m_CellsPerRow - 1);
   const double VesselThickness = Settings::GetDouble("RadiatorCell/VesselThickness");

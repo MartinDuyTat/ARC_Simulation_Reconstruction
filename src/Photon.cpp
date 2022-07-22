@@ -28,10 +28,14 @@ Photon::Photon(const Vector &Position,
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 Photon::DrawPhotonPath() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> PhotonLine;
-  const auto EmissionPoint = m_EmissionPoint + m_RadiatorCell->GetRadiatorPosition();
+  const auto EmissionPoint = m_EmissionPoint
+                           + m_RadiatorCell->GetRadiatorPosition();
   const auto Position = m_Position + m_RadiatorCell->GetRadiatorPosition();
   if(!m_MirrorHitPosition) {
-    TLine PhotonLine1(EmissionPoint.X(), EmissionPoint.Z(), Position.X(), Position.Z());
+    TLine PhotonLine1(EmissionPoint.X(),
+		      EmissionPoint.Z(),
+		      Position.X(),
+		      Position.Z());
     if(m_Status == Status::MirrorMiss) {
       PhotonLine1.SetLineColor(7);
     } else {
@@ -39,9 +43,16 @@ Photon::DrawPhotonPath() const {
     }
     PhotonLine.push_back(std::make_pair(std::make_unique<TLine>(PhotonLine1), ""));
   } else {
-    const auto MirrorHitPosition = *m_MirrorHitPosition + m_RadiatorCell->GetRadiatorPosition();
-    TLine PhotonLine1(EmissionPoint.X(), EmissionPoint.Z(), MirrorHitPosition.X(), MirrorHitPosition.Z());
-    TLine PhotonLine2(MirrorHitPosition.X(), MirrorHitPosition.Z(), Position.X(), Position.Z());
+    const auto MirrorHitPosition = *m_MirrorHitPosition
+                                 + m_RadiatorCell->GetRadiatorPosition();
+    TLine PhotonLine1(EmissionPoint.X(),
+		      EmissionPoint.Z(),
+		      MirrorHitPosition.X(),
+		      MirrorHitPosition.Z());
+    TLine PhotonLine2(MirrorHitPosition.X(),
+		      MirrorHitPosition.Z(),
+		      Position.X(),
+		      Position.Z());
     if(m_Status != Status::DetectorHit) {
       PhotonLine1.SetLineColor(6);
       PhotonLine2.SetLineColor(6);
