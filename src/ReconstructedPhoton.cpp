@@ -4,6 +4,6 @@
 
 ReconstructedPhoton::ReconstructedPhoton(const Photon &photon):
   m_Photon(&photon),
-  m_CherenkovAngle_TrueEmissionPoint(0.0),
-  m_CherenkovAngle(0.0) {
+  m_CosCherenkovAngle_TrueEmissionPoint(1.0),
+  m_CosCherenkovAngle(1.0) {
 }

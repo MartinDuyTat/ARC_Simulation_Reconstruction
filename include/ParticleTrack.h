@@ -29,6 +29,10 @@ class ParticleTrack {
 		const Vector &Momentum,
 		const Vector &Position = Vector(0.0, 0.0, 0.0));
   /**
+   * Delete copy constructor for now (easy to spot bugs)
+   */
+  ParticleTrack(const ParticleTrack &particleTrack) = delete;
+  /**
    * Enum with the two coordinate systems used
    * GlobalDetector: z along symmetry axis, x is up, y is out of the plane (only used to generate charged tracks)
    * LocalRadiator: z axis in the radial direction, x in the theta direction and y in the phi direction
@@ -209,6 +213,10 @@ class ParticleTrack {
    * Flag that is true if chromatic dispersion is on
    */
   bool m_ChromaticDispersion;
+  /**
+   * Mass of particle
+   */
+  const double m_Mass;
   /**
    * Frank-Tamm relation for photon yield
    */

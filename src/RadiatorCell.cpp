@@ -195,3 +195,7 @@ void RadiatorCell::SetMirrorCurvature(double Curvature) {
 void RadiatorCell::SetMirrorPosition(double x, double z) {
   m_MirrorCentre += Vector(x, 0.0, z);
 }
+
+void RadiatorCell::ResetDetector() {
+  m_Detector.ResetDetector();
+}

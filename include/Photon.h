@@ -49,14 +49,14 @@ struct Photon {
    * @param Position Position vector
    * @param Direction Direction vector
    * @param Energy Photon energy
-   * @param CherenkovAngle Cherenkov angle
+   * @param CosCherenkovAngle Cosine of Cherenkov angle
    * @param radiator Aerogel or gas radiator where this photon was emitted
    * @param radiatorCell The radiator cell where this photon was emitted
    */
   Photon(const Vector &Position,
 	 const Vector &Direction,
 	 double Energy,
-	 double CherenkovAngle,
+	 double CosCherenkovAngle,
 	 Radiator radiator,
 	 RadiatorCell *radiatorCell);
   /**
@@ -86,7 +86,7 @@ struct Photon {
   /**
    * Cherenkov angle
    */
-  const double m_CherenkovAngle;
+  const double m_CosCherenkovAngle;
   /**
    * Flag specifying the status of the photon
    */

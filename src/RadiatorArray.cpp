@@ -150,3 +150,7 @@ bool RadiatorArray::IsAboveMainRow(double x, double y) const {
     return x_shift < TMath::Sqrt(3)*y - m_xHexDist/2.0;
   }
 }
+
+void RadiatorArray::ResetDetectors() {
+  for_each(m_Cells.begin(), m_Cells.end(), [](auto &Cell) { Cell.ResetDetector(); });
+}

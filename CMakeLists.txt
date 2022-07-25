@@ -13,6 +13,7 @@ add_compile_options(-Wall)
 add_compile_options(-Wunused)
 add_compile_options(-Wextra)
 add_compile_options(-Werror)
+add_compile_options(-O3)
 #set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_BUILD_TYPE Debug)
 

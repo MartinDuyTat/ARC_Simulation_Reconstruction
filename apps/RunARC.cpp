@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
       }
       auto Photons = particleTrack.GeneratePhotonsFromGas();
       for(auto &Photon : Photons) {
-	CherenkovAngle_True[NumberPhotons] = Photon.m_CherenkovAngle;
+	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.m_CosCherenkovAngle);
 	PhotonMapper::TracePhoton(Photon);
 	if(DrawThisTrack) {
 	  eventDisplay.AddObject(Photon.DrawPhotonPath());
@@ -172,14 +172,16 @@ int main(int argc, char *argv[]) {
 						   particleTrack.GetPhotonHits().back(),
 						   Photon::Radiator::Gas);
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
-	    reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint;
-	  CherenkovAngle_Reco[NumberPhotons] = reconstructedPhoton.m_CherenkovAngle;
+	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint);
+	  CherenkovAngle_Reco[NumberPhotons] =
+	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
 	}
 	PhotonEnergy[NumberPhotons] = Photon.m_Energy;
 	PhotonStatus[NumberPhotons] = Photon.m_Status;
 	NumberPhotons++;
       }
       CherenkovTree.Fill();
+      radiatorArray.ResetDetectors();
     }
     eventDisplay.DrawEventDisplay("EventDisplay.pdf");
     CherenkovTree.Write();

@@ -55,6 +55,10 @@ class RadiatorArray {
    * @param y Position along the curved direction, or y in location coordinates
    */
   bool IsAboveMainRow(double x, double y) const;
+  /**
+   * Reset the detectors of all radiator cells
+   */
+  void ResetDetectors();
  private:
   /**
    * Vector containing all the radiator cells

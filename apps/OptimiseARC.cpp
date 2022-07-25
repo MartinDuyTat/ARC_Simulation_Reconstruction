@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
   const int CellsPerRow = 2*Settings::GetDouble("ARCGeometry/CellsPerRow") - 1;
-  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/2*CellsPerRow;
+  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/(2*CellsPerRow);
   RadiatorCell radiatorCell(std::stoi(std::string(argv[1])),
 			    std::stoi(std::string(argv[2])), 
 			    HexagonSize);
@@ -70,22 +70,22 @@ int main(int argc, char *argv[]) {
 						  Radius,
 						  MomentumMag,
 						  ParticleID);
-    std::cout << Resolution << "\n";
     return Resolution;
   };
   ROOT::Math::Functor fcn(MinimiseFunction, 3);
   ROOT::Minuit2::Minuit2Minimizer Minimiser;
-  Minimiser.SetPrintLevel(4);
-  Minimiser.SetPrecision(0.01);
+  Minimiser.SetPrintLevel(5);
   Minimiser.SetFunction(fcn);
-  Minimiser.SetVariable(0, "MirrorCurvature", 0.37, 0.01);
+  Minimiser.SetVariable(0, "MirrorCurvature", 0.35, 0.10);
   Minimiser.SetVariableLimits(0, 0.25, 0.45);
-  Minimiser.SetVariable(1, "Mirror_xPosition", 0.0, 0.001);
+  Minimiser.SetVariable(1, "Mirror_xPosition", 0.0, 0.005);
   Minimiser.SetVariableLimits(1, -0.01, 0.01);
-  Minimiser.SetVariable(1, "Mirror_zPosition", 0.0, 0.001);
+  Minimiser.SetVariable(1, "Mirror_zPosition", 0.0, 0.005);
   Minimiser.SetVariableLimits(2, -0.01, 0.01);
   std::cout << "Starting minimisation...\n";
   Minimiser.Minimize();
+  std::cout << "Status: " << Minimiser.Status() << "\n";
+  std::cout << "Covariance matrix status: " << Minimiser.CovMatrixStatus() << "\n";
   std::cout << "ARC is optimised!\n";
   return 0;
 }
@@ -104,12 +104,14 @@ double CalculateResolution(const TrackingVolume &InnerTracker,
 			   double Radius,
 			   double MomentumMag, 
 			   double ParticleID) {
-  int NumberPhotons = 0;
+  int TotalNumberPhotons = 0;
   // x is the Cherenkov angle, x2 is the Cherenkov angle squared
   double x = 0.0, x2 = 0.0;
   double Resolution = 0.0, NewResolution = 0.0;
-  constexpr double Precision = 0.01;
+  constexpr double Precision = 1e-5;
   while(true) {
+    int NumberPhotons = 0;
+    int NumberTracks = 0;
     for(int i = 0; i < 1000; i++) {
       const double z = gRandom->Uniform(z_min, z_max);
       const double CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
@@ -134,20 +136,35 @@ double CalculateResolution(const TrackingVolume &InnerTracker,
 	    PhotonReconstructor::ReconstructPhoton(particleTrack,
 						   particleTrack.GetPhotonHits().back(),
 						   Photon::Radiator::Gas);
-	  x += reconstructedPhoton.m_CherenkovAngle;
-	  x2 += reconstructedPhoton.m_CherenkovAngle*reconstructedPhoton.m_CherenkovAngle;
-	  NumberPhotons++;
+	  if(Photon.m_Status == Photon::Status::DetectorHit) {
+	    const double CherenkovAngle = TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
+	    x += CherenkovAngle;
+	    x2 += CherenkovAngle*CherenkovAngle;
+	    NumberPhotons++;
+	    TotalNumberPhotons++;
+	  }
 	}
       }
+      NumberTracks++;
+      radiatorCell.ResetDetector();
     }
     Resolution = NewResolution;
-    NewResolution = TMath::Sqrt(x2/NumberPhotons - (x/NumberPhotons)*(x/NumberPhotons));
-    NewResolution /= TMath::Sqrt(NumberPhotons);
+    NewResolution = TMath::Sqrt(x2/TotalNumberPhotons
+			        - (x/TotalNumberPhotons)*(x/TotalNumberPhotons));
+    const double MeanNumberPhotons = static_cast<double>(NumberPhotons)/NumberTracks;
+    if(MeanNumberPhotons <= 0.0) {
+      return 1000.0;
+    }
+    NewResolution /= TMath::Sqrt(MeanNumberPhotons);
     if(TMath::Abs(NewResolution - Resolution)/NewResolution < Precision) {
-      // Round to nearest "Precision"
-      const double AbsolutePrecision = NewResolution*Precision;
-      Resolution = std::round(NewResolution/AbsolutePrecision)*AbsolutePrecision;
-      return Resolution;
+      // Round to nearest decimal with correct precision
+      /*auto PowerToDecimal = [](double a) {
+	return TMath::Power(10, std::floor(TMath::Log10(a)));
+      };*/
+      //const double AbsolutePrecision = Precision*PowerToDecimal(NewResolution);
+      //Resolution = std::round(NewResolution/AbsolutePrecision)*AbsolutePrecision;
+      //return Resolution;
+      return NewResolution;
     }
   }
 }

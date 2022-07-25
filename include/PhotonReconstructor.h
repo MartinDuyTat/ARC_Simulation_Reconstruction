@@ -18,16 +18,16 @@ using Vector = ROOT::Math::XYZVector;
 namespace PhotonReconstructor {
 
   /**
-   * Reconstruct Cherenkov angle of photon from the photon hit, charged track and mirror geometry
+   * Reconstruct cosine of Cherenkov angle of photon from the photon hit and charged track
    * @param Particle The charged particle that emitted the photon
    * @param photonHit The photon hit in the detector
    * @param TrueEmissionPoint Set to true to use the true emission point
    * @param Radiator The radiator that the photon was emitted from
    */
-  double ReconstructCherenkovAngle(const ParticleTrack &Particle,
-				   const PhotonHit &photonHit,
-				   bool TrueEmissionPoint,
-				   Photon::Radiator Radiator);
+  double ReconstructCosCherenkovAngle(const ParticleTrack &Particle,
+				      const PhotonHit &photonHit,
+				      bool TrueEmissionPoint,
+				      Photon::Radiator Radiator);
   /**
    * Reconstruct photon from the photon hit, charged track and mirror geometry
    * @param Particle The charged particle that emitted the photon
@@ -58,7 +58,9 @@ namespace PhotonReconstructor {
    * @param DetectionMirrorParaDist Parallel component of distance between detection point and mirror centre
    * @param DetectionMirrorPerpDist Perpendicular component of distance between detection point and mirror centre
    */
-  QuarticSolution SolveQuartic(double EmissionMirrorDist, double DetectionMirrorParaDist, double DetectionMirrorPerpDist);
+  QuarticSolution SolveQuartic(double EmissionMirrorDist,
+			       double DetectionMirrorParaDist,
+			       double DetectionMirrorPerpDist);
   /**
    * Helper function to calculate the reflection point after solving the quartic equation
    */
@@ -67,7 +69,7 @@ namespace PhotonReconstructor {
 			    double DetectionMirrorParaDist,
 			    double DetectionMirrorPerpDist,
 			    double EmissionMirrorDist,
-			    QuarticSolution quarticSolution,
+			    const QuarticSolution &quarticSolution,
 			    int SolutionNumber);
 }
 

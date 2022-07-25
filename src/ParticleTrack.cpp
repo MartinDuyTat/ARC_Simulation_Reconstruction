@@ -24,7 +24,8 @@ ParticleTrack::ParticleTrack(int ParticleID,
   m_Location(Location::TrackerVolume),
   m_CoordinateSystem(CoordinateSystem::GlobalDetector),
   m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
-  m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")) {
+  m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")),
+  m_Mass(ParticleMass::GetMass(m_ParticleID)) {
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -188,7 +189,7 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   std::vector<Photon> Photons;
   Photons.reserve(PhotonYield);
   for(int i = 0; i < PhotonYield; i++) {
-    Photons.push_back(GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas));
+    Photons.emplace_back(GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas));
   }
   return Photons;
 }
@@ -231,7 +232,10 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
-  Vector Direction(SinTheta*TMath::Cos(phi), SinTheta*TMath::Sin(phi), CosTheta);
+  const double CosPhi = TMath::Cos(phi);
+  const double SinPhi = (phi > TMath::Pi() ? -1.0 : +1.0)
+                        *TMath::Sqrt(1.0 - CosPhi*CosPhi);
+  Vector Direction(SinTheta*CosPhi, SinTheta*SinPhi, CosTheta);
   // Rotate to particle frame
   const ROOT::Math::RotationY RotateY(m_Momentum.Theta());
   Direction = RotateY(Direction);
@@ -240,15 +244,14 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
   return {EmissionPoint,
           Direction,
           Energy,
-          TMath::ACos(CosTheta),
+          CosTheta,
           Radiator,
           &(*m_RadiatorCell)};
 }
 
 double ParticleTrack::Beta() const {
   const double Momentum = TMath::Sqrt(m_Momentum.Mag2());
-  const double Mass = ParticleMass::GetMass(m_ParticleID);
-  return Momentum/TMath::Sqrt(Mass*Mass + Momentum*Momentum);
+  return Momentum/TMath::Sqrt(m_Mass*m_Mass + Momentum*Momentum);
 }
 
 const Vector& ParticleTrack::GetMomentum() const {

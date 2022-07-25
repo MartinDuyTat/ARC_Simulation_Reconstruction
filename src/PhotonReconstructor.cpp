@@ -9,20 +9,19 @@
 #include"TMath.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
-#include"Math/Polynomial.h"
+#include"Quartic.h"
 
 using Vector = ROOT::Math::XYZVector;
-using Polynomial = ROOT::Math::Polynomial;
 
 namespace PhotonReconstructor {
 
-  double ReconstructCherenkovAngle(const ParticleTrack &Particle,
-				   const PhotonHit &photonHit,
-				   bool TrueEmissionPoint,
-				   Photon::Radiator Radiator) {
+  double ReconstructCosCherenkovAngle(const ParticleTrack &Particle,
+				      const PhotonHit &photonHit,
+				      bool TrueEmissionPoint,
+				      Photon::Radiator Radiator) {
     const RadiatorCell *radiatorCell = photonHit.m_Photon->m_RadiatorCell;
     auto MirrorCentre = radiatorCell->GetMirrorCentre();
-    auto GetEmissionPoint = [=]() {
+    auto GetEmissionPoint = [&]() {
       if(TrueEmissionPoint) {
 	return photonHit.m_Photon->m_EmissionPoint;
       } else {
@@ -48,7 +47,7 @@ namespace PhotonReconstructor {
 					DetectionMirrorParaDist,
 					DetectionMirrorPerpDist);
     if(quarticSolution.m_DegenerateSolution) {
-      return -1.0;
+      return -2.0;
     }
     Vector ReflectionPoint = GetReflectionPoint(EmissionPoint,
 						DetectionPoint,
@@ -62,24 +61,23 @@ namespace PhotonReconstructor {
 						     DetectionMirrorPerpDist,
 						     EmissionMirrorDist,
 						     quarticSolution, 1);
-    if((OtherReflectionPoint - Particle.GetPosition()).Mag2()
-       < (ReflectionPoint - Particle.GetPosition()).Mag2()) {
+    if(OtherReflectionPoint.Z() > ReflectionPoint.Z()) {
       std::swap(ReflectionPoint, OtherReflectionPoint);
     }
     const Vector ReflectionEmissionPoint = ReflectionPoint - EmissionPoint;
     const Vector Direction = Particle.GetMomentum().Unit();
     const double CosTheta = ReflectionEmissionPoint.Unit().Dot(Direction);
-    return TMath::ACos(CosTheta);
+    return CosTheta;
   }
   
   ReconstructedPhoton ReconstructPhoton(const ParticleTrack &Particle,
 					const PhotonHit &photonHit,
 					Photon::Radiator Radiator) {
     ReconstructedPhoton reconstructedPhoton(*photonHit.m_Photon);
-    reconstructedPhoton.m_CherenkovAngle_TrueEmissionPoint =
-      ReconstructCherenkovAngle(Particle, photonHit, true, Radiator);
-    reconstructedPhoton.m_CherenkovAngle =
-      ReconstructCherenkovAngle(Particle, photonHit, false, Radiator);
+    reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint =
+      ReconstructCosCherenkovAngle(Particle, photonHit, true, Radiator);
+    reconstructedPhoton.m_CosCherenkovAngle =
+      ReconstructCosCherenkovAngle(Particle, photonHit, false, Radiator);
     return reconstructedPhoton;
   }
 
@@ -99,19 +97,23 @@ namespace PhotonReconstructor {
                      *(EmMirrorDist - DetMirrorParaDist)/Denominator;
     const double d = DetMirrorPerpDist*DetMirrorPerpDist
                      *(EmMirrorDist*EmMirrorDist - 1.0)/Denominator;
-    Polynomial polynomial(1.0, a, b, c, d);
-    auto polySolutions = polynomial.FindRealRoots();
+    auto polySolutions = Quartic::solve_quartic(a, b, c, d);
     QuarticSolution quarticSolution;
-    if(polySolutions.size() != 2) {
-      quarticSolution.m_DegenerateSolution = true;
+    std::size_t i = 0;
+    for(const auto &polySolution : polySolutions) {
+      if(polySolution.imag() == 0.0) {
+	double RealPart = polySolution.real();
+	quarticSolution.m_SinBeta[i] = RealPart;
+	quarticSolution.m_CosBeta[i] = (EmMirrorDist + DetMirrorParaDist)*RealPart;
+	quarticSolution.m_CosBeta[i] += EmMirrorDist*DetMirrorPerpDist
+	                                *(1.0 - 2.0*RealPart*RealPart);
+	quarticSolution.m_CosBeta[i] /= DetMirrorPerpDist
+	                              + 2.0*EmMirrorDist*DetMirrorParaDist*RealPart;
+	i++;
+      }
     }
-    for(std::size_t i = 0; i < 2; i++) {
-      quarticSolution.m_SinBeta[i] = polySolutions[i];
-      quarticSolution.m_CosBeta[i] = (EmMirrorDist + DetMirrorParaDist)*polySolutions[i];
-      quarticSolution.m_CosBeta[i] += EmMirrorDist*DetMirrorPerpDist
-	                              *(1.0 - 2.0*polySolutions[i]*polySolutions[i]);
-      quarticSolution.m_CosBeta[i] /= DetMirrorPerpDist
-	                            + 2.0*EmMirrorDist*DetMirrorParaDist*polySolutions[i];
+    if(i > 2) {
+      quarticSolution.m_DegenerateSolution = true;
     }
     return quarticSolution;
   }
@@ -121,11 +123,11 @@ namespace PhotonReconstructor {
 			    double DetMirrorParaDist,
 			    double DetMirrorPerpDist,
 			    double EmMirrorDist,
-			    QuarticSolution quarticSolution,
+			    const QuarticSolution &quarticSolution,
 			    int SolutionNumber) {
     Vector Reflection = EmPoint*(quarticSolution.m_CosBeta[SolutionNumber]/EmMirrorDist);
     Reflection += (quarticSolution.m_SinBeta[SolutionNumber]/DetMirrorPerpDist)
-                 *(DetPoint - EmPoint*(DetMirrorParaDist/EmMirrorDist));
+                  *(DetPoint - EmPoint*(DetMirrorParaDist/EmMirrorDist));
     return Reflection;
   }
 

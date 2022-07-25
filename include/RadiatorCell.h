@@ -90,6 +90,10 @@ class RadiatorCell {
    * Set the mirror position, relative to the default position
    */
   void SetMirrorPosition(double x, double z);
+  /**
+   * Reset the detector by removing all saved photon hits
+   */
+  void ResetDetector();
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates

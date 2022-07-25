@@ -63,6 +63,10 @@ class SiPM {
    * Check if photon hit the detector
    */
   bool IsDetectorHit(const Photon &photon) const;
+  /**
+   * Remove all saved photon hits to reset the detector
+   */
+  void ResetDetector();
  private:
   /**
    * Size of detector in x direction
@@ -93,13 +97,21 @@ class SiPM {
    */
   std::vector<PhotonHit> m_PhotonHits;
   /**
-   * Get the wavelengths used to measure PDE in SiPM, in nm
+   * The wavelengths used to measure PDE in SiPM, in nm
    */
-  constexpr std::array<double, 16> GetPDEWavelengths() const;
+  static constexpr std::array<double, 16> m_Lambda{
+    287.0, 299.0, 322.0, 340.0,
+    367.0, 392.0, 402.0, 413.0,
+    422.0, 437.0, 452.0, 467.0,
+    503.0, 590.0, 700.0, 800.0};
   /**
-   * Get the measured PDE
+   * The measured PDE
    */
-  constexpr std::array<double, 16> GetMeasuredPDE() const;
+  static constexpr std::array<double, 16> m_PDE{
+    0.20, 0.41, 0.46, 0.47,
+    0.52, 0.59, 0.60, 0.60,
+    0.59, 0.57, 0.56, 0.53,
+    0.51, 0.40, 0.26, 0.13};
 };
 
 #endif

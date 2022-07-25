@@ -22,7 +22,8 @@ SiPM::SiPM(double xPosition, double yPosition):
   m_DetectorPositionY(yPosition),
   m_MaxPDE(0.432),
   m_Interpolator(std::make_unique<Interpolator>(16, InterpolationType::kAKIMA)) {
-  m_Interpolator->SetData(16, GetPDEWavelengths().data(), GetMeasuredPDE().data());
+  m_Interpolator->SetData(16, m_Lambda.data(), m_PDE.data());
+  m_PhotonHits.reserve(100);
 }
 
 void SiPM::AddPhotonHit(Photon &photon) {
@@ -33,8 +34,7 @@ void SiPM::AddPhotonHit(Photon &photon) {
     return;
   }
   const double PhotonLambda = 1239.8/photon.m_Energy;
-  if(PhotonLambda < GetPDEWavelengths()[0]
-     || PhotonLambda > GetPDEWavelengths().back()) {
+  if(PhotonLambda < m_Lambda[0] || PhotonLambda > m_Lambda[15]) {
     std::cout << "Warning! Generated photon outside energy range of SiPM!\n";
   }
   if(!IsDetectorHit(photon)) {
@@ -121,18 +121,6 @@ const std::vector<PhotonHit>& SiPM::GetPhotonHits() const {
   return m_PhotonHits;
 }
 
-constexpr std::array<double, 16> SiPM::GetPDEWavelengths() const {
-  constexpr std::array<double, 16> Lambda{287.0, 299.0, 322.0, 340.0,
-                                          367.0, 392.0, 402.0, 413.0,
-                                          422.0, 437.0, 452.0, 467.0,
-                                          503.0, 590.0, 700.0, 800.0};
-  return Lambda;
-}
-
-constexpr std::array<double, 16> SiPM::GetMeasuredPDE() const {
-  constexpr std::array<double, 16> PDE{0.20, 0.41, 0.46, 0.47,
-                                       0.52, 0.59, 0.60, 0.60,
-                                       0.59, 0.57, 0.56, 0.53,
-                                       0.51, 0.40, 0.26, 0.13};
-  return PDE;
+void SiPM::ResetDetector() {
+  m_PhotonHits.clear();
 }

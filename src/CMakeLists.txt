@@ -1,5 +1,6 @@
 add_library(ARC_Simulation_Reconstruction
 	    EventDisplay.cpp
+	    Quartic.cpp
 	    ParticleTrack.cpp
 	    ParticleMass.cpp
 	    Photon.cpp

@@ -12,11 +12,12 @@ namespace PhotonMapper {
   double PhotonMirrorDistance(const Photon &photon) {
     auto MirrorCentre = photon.m_RadiatorCell->GetMirrorCentre();
     const double R = photon.m_RadiatorCell->GetMirrorCurvature();
-    const double a = 1.0;
-    const double b = -2*photon.m_Direction.Dot(MirrorCentre - photon.m_Position);
-    const double c = (MirrorCentre - photon.m_Position).Mag2() - R*R;
-    const double s1 = (-b + TMath::Sqrt(b*b - 4.0*a*c))/(2.0*a);
-    const double s2 = (-b - TMath::Sqrt(b*b - 4.0*a*c))/(2.0*a);
+    const Vector MirrorCentreMinusPosition = MirrorCentre - photon.m_Position;
+    const double b = -photon.m_Direction.Dot(MirrorCentreMinusPosition);
+    const double c = (MirrorCentreMinusPosition).Mag2() - R*R;
+    const double Discriminant = TMath::Sqrt(b*b - c);
+    const double s1 = -b + Discriminant;
+    const double s2 = -b - Discriminant;
     return std::max(s1, s2);
   }
 
@@ -49,7 +50,9 @@ namespace PhotonMapper {
     constexpr double T0 = 0.9679;
     constexpr double Clarity = 5.087e10;
     const double Lambda = 1239.8/photon.m_Energy;
-    const double Exponent = -Clarity*(AerogelThickness/Slope)/TMath::Power(Lambda, 4);
+    const double Lambda2 = Lambda*Lambda;
+    const double Lambda4 = Lambda2*Lambda2;
+    const double Exponent = -Clarity*(AerogelThickness/Slope)/Lambda4;
     const double Transmission = T0*TMath::Exp(Exponent);
     if(gRandom->Uniform(0.0, 1.0) > Transmission) {
       photon.m_Status = Photon::Status::AerogelScattered;

@@ -21,11 +21,11 @@ struct ReconstructedPhoton {
   /**
    * The reconstructed Cherenkov angle, using the true emission point
    */
-  double m_CherenkovAngle_TrueEmissionPoint;
+  double m_CosCherenkovAngle_TrueEmissionPoint;
   /**
    * The reconstructed Cherenkov angle, assming emission in the middle
    */
-  double m_CherenkovAngle;
+  double m_CosCherenkovAngle;
 };
 
 #endif
