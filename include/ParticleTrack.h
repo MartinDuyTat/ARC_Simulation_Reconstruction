@@ -29,10 +29,6 @@ class ParticleTrack {
 		const Vector &Momentum,
 		const Vector &Position = Vector(0.0, 0.0, 0.0));
   /**
-   * Delete copy constructor for now (easy to spot bugs)
-   */
-  ParticleTrack(const ParticleTrack &particleTrack) = delete;
-  /**
    * Enum with the two coordinate systems used
    * GlobalDetector: z along symmetry axis, x is up, y is out of the plane (only used to generate charged tracks)
    * LocalRadiator: z axis in the radial direction, x in the theta direction and y in the phi direction
@@ -67,7 +63,7 @@ class ParticleTrack {
   /**
    * Set radiator
    */
-  void SetRadiator(RadiatorCell &radiatorCell);
+  void SetRadiator(const RadiatorCell &radiatorCell);
   /**
    * Convert to local radiator coordinates
    */
@@ -124,10 +120,6 @@ class ParticleTrack {
    */
   std::unique_ptr<TLine> DrawParticleTrack() const;
   /**
-   * Get photon hits in SiPM
-   */
-  const std::vector<PhotonHit>& GetPhotonHits() const;
-  /**
    * Get particle position
    */
   const Vector& GetPosition() const;
@@ -176,7 +168,7 @@ class ParticleTrack {
   /**
    * Pointer to the radiator cell that track enters
    */
-  RadiatorCell *m_RadiatorCell;
+  const RadiatorCell *m_RadiatorCell;
   /**
    * Flag that keeps track of where the particle is
    */

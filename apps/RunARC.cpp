@@ -26,6 +26,7 @@
 #include"RadiatorArray.h"
 #include"Settings.h"
 #include"EventDisplay.h"
+#include"SiPM.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -64,13 +65,20 @@ int main(int argc, char *argv[]) {
     particleTrack.TrackThroughRadiatorCell();
     auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
     auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
+    std::vector<PhotonHit> photonHits;
     for(auto &photon : PhotonsAerogel) {
-      PhotonMapper::TracePhoton(photon);
+      auto photonHit = PhotonMapper::TracePhoton(photon);
+      if(!photonHit) {
+	photonHits.push_back(*photonHit);
+      }
     }
     for(auto &photon : PhotonsGas) {
-      PhotonMapper::TracePhoton(photon);
+      auto photonHit = PhotonMapper::TracePhoton(photon);
+      if(!photonHit) {
+	photonHits.push_back(*photonHit);
+      }
     }
-    radiatorArray(0, 0)->GetDetector().PlotHits("PhotonHits.pdf");
+    radiatorArray(0, 0)->GetDetector().PlotHits("PhotonHits.pdf", photonHits);
   } else if(RunMode == "CherenkovAngleResolution") {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
@@ -156,7 +164,7 @@ int main(int argc, char *argv[]) {
       auto Photons = particleTrack.GeneratePhotonsFromGas();
       for(auto &Photon : Photons) {
 	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.m_CosCherenkovAngle);
-	PhotonMapper::TracePhoton(Photon);
+	auto photonHit = PhotonMapper::TracePhoton(Photon);
 	if(DrawThisTrack) {
 	  eventDisplay.AddObject(Photon.DrawPhotonPath());
 	}
@@ -169,7 +177,7 @@ int main(int argc, char *argv[]) {
 	} else {
 	  auto reconstructedPhoton =
 	    PhotonReconstructor::ReconstructPhoton(particleTrack,
-						   particleTrack.GetPhotonHits().back(),
+						   *photonHit,
 						   Photon::Radiator::Gas);
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint);
@@ -181,7 +189,6 @@ int main(int argc, char *argv[]) {
 	NumberPhotons++;
       }
       CherenkovTree.Fill();
-      radiatorArray.ResetDetectors();
     }
     eventDisplay.DrawEventDisplay("EventDisplay.pdf");
     CherenkovTree.Write();

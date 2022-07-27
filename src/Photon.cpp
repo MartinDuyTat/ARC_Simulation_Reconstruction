@@ -13,7 +13,7 @@ Photon::Photon(const Vector &Position,
 	       double Energy,
 	       double CosCherenkovAngle,
 	       Radiator radiator,
-	       RadiatorCell *radiatorCell):
+	       const RadiatorCell *radiatorCell):
                m_Position(Position),
 	       m_EmissionPoint(Position),
 	       m_Direction(Direction),
@@ -64,4 +64,20 @@ Photon::DrawPhotonPath() const {
     PhotonLine.push_back(std::make_pair(std::make_unique<TLine>(PhotonLine2), ""));
   }
   return PhotonLine;
+}
+
+Photon::Photon(const Photon &photon):
+  m_Position(photon.m_Position),
+  m_EmissionPoint(photon.m_EmissionPoint),
+  m_Direction(photon.m_Direction),
+  m_Energy(photon.m_Energy),
+  m_Radiator(photon.m_Radiator),
+  m_CosCherenkovAngle(photon.m_CosCherenkovAngle),
+  m_Status(photon.m_Status),
+  m_RadiatorCell(photon.m_RadiatorCell) {
+  if(photon.m_MirrorHitPosition) {
+    m_MirrorHitPosition = std::make_unique<Vector>(*photon.m_MirrorHitPosition);
+  } else {
+    m_MirrorHitPosition = nullptr;
+  }
 }

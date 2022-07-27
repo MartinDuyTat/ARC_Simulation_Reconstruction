@@ -27,6 +27,23 @@ RadiatorCell::RadiatorCell(int CellColumnNumber,
   m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
   m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
   m_MirrorCentre(m_DefaultMirrorCentre) {
+  const std::string RadiatorName = "Radiator_c"
+                                 + std::to_string(m_CellNumber.first)
+                                 + "_r"
+                                 + std::to_string(m_CellNumber.second)
+                                 + "_";
+  const std::string CurvatureName = "RadiatorCell/" + RadiatorName + "Curvature";
+  if(Settings::Exists(CurvatureName)) {
+    SetMirrorCurvature(Settings::GetDouble(CurvatureName));
+  }
+  const std::string XPositionName = "RadiatorCell/" + RadiatorName + "XPosition";
+  if(Settings::Exists(XPositionName)) {
+    SetMirrorXPosition(Settings::GetDouble(XPositionName));
+  }
+  const std::string ZPositionName = "RadiatorCell/" + RadiatorName + "ZPosition";
+  if(Settings::Exists(ZPositionName)) {
+    SetMirrorZPosition(Settings::GetDouble(ZPositionName));
+  }
 }
 
 double RadiatorCell::GetRadiatorThickness() const {
@@ -184,7 +201,7 @@ double RadiatorCell::DetermineSiPMPositionX() const {
   return 0.0;
 }
 
-SiPM& RadiatorCell::GetDetector() {
+const SiPM& RadiatorCell::GetDetector() const {
   return m_Detector;
 }
 
@@ -192,10 +209,10 @@ void RadiatorCell::SetMirrorCurvature(double Curvature) {
   m_MirrorCurvature = Curvature;
 }
 
-void RadiatorCell::SetMirrorPosition(double x, double z) {
-  m_MirrorCentre += Vector(x, 0.0, z);
+void RadiatorCell::SetMirrorXPosition(double x) {
+  m_MirrorCentre.SetX(m_DefaultMirrorCentre.X() + x);
 }
 
-void RadiatorCell::ResetDetector() {
-  m_Detector.ResetDetector();
+void RadiatorCell::SetMirrorZPosition(double z) {
+  m_MirrorCentre.SetZ(m_DefaultMirrorCentre.Z() + z);
 }

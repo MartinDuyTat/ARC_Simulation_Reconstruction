@@ -20,18 +20,13 @@ SiPM::SiPM(double xPosition, double yPosition):
   m_DetectorSizeY(0.08),
   m_DetectorPositionX(xPosition),
   m_DetectorPositionY(yPosition),
-  m_MaxPDE(0.432),
-  m_Interpolator(std::make_unique<Interpolator>(16, InterpolationType::kAKIMA)) {
-  m_Interpolator->SetData(16, m_Lambda.data(), m_PDE.data());
-  m_PhotonHits.reserve(100);
+  m_MaxPDE(0.432) {
 }
 
-void SiPM::AddPhotonHit(Photon &photon) {
-  m_PhotonHits.emplace_back(photon.m_Position.X(),
-			    photon.m_Position.Y(),
-			    &photon);
+PhotonHit SiPM::AddPhotonHit(Photon &photon) const {
+  PhotonHit photonHit(photon.m_Position.X(), photon.m_Position.Y(), &photon);
   if(photon.m_Status != Photon::Status::MirrorHit) {
-    return;
+    return photonHit;
   }
   const double PhotonLambda = 1239.8/photon.m_Energy;
   if(PhotonLambda < m_Lambda[0] || PhotonLambda > m_Lambda[15]) {
@@ -39,20 +34,22 @@ void SiPM::AddPhotonHit(Photon &photon) {
   }
   if(!IsDetectorHit(photon)) {
     photon.m_Status = Photon::Status::DetectorMiss;
-    return;
+    return photonHit;
   }
   const double RandomNumber = gRandom->Uniform(0.0, m_MaxPDE);
-  const double Efficiency = m_Interpolator->Eval(PhotonLambda)*0.90*0.80;
+  const double Efficiency = m_Interpolator.Eval(PhotonLambda)*0.90*0.80;
   if(RandomNumber <= Efficiency) {
     photon.m_Status = Photon::Status::DetectorHit;
   } else {
     photon.m_Status = Photon::Status::EfficiencyMiss;
   }
+  return photonHit;
 }
 
-void SiPM::PlotHits(const std::string &Filename) const {
+void SiPM::PlotHits(const std::string &Filename,
+		    const std::vector<PhotonHit> &photonHits) const {
   std::vector<double> xHits_Aerogel, yHits_Aerogel, xHits_Gas, yHits_Gas;
-  for(const auto &PhotonHit : m_PhotonHits) {
+  for(const auto &PhotonHit : photonHits) {
     if(PhotonHit.m_Photon->m_Radiator == Photon::Radiator::Aerogel) {
       xHits_Aerogel.push_back(PhotonHit.x*100.0);
       yHits_Aerogel.push_back(PhotonHit.y*100.0);
@@ -117,10 +114,7 @@ bool SiPM::IsDetectorHit(const Photon &photon) const {
   }
 }
 
-const std::vector<PhotonHit>& SiPM::GetPhotonHits() const {
-  return m_PhotonHits;
-}
-
-void SiPM::ResetDetector() {
-  m_PhotonHits.clear();
-}
+const Interpolator SiPM::m_Interpolator{
+    std::vector<double>(m_Lambda.begin(), m_Lambda.end()),
+    std::vector<double>(m_PDE.begin(), m_PDE.end()),
+    InterpolationType::kAKIMA};

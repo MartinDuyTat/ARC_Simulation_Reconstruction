@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(ROOT 6.22 CONFIG REQUIRED)
+find_package(OpenMP REQUIRED)
 
 add_compile_options(-Wall)
 add_compile_options(-Wunused)

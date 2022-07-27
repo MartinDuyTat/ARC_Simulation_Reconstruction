@@ -44,13 +44,14 @@ class SiPM {
    */
   SiPM(double xPosition, double yPosition);
   /**
-   * Add a photon hit
+   * Register a photon hit and return it
    */
-  void AddPhotonHit(Photon &photon);
+  PhotonHit AddPhotonHit(Photon &photon) const;
   /**
    * Plot photon hits
    */
-  void PlotHits(const std::string &Filename) const;
+  void PlotHits(const std::string &Filename,
+		const std::vector<PhotonHit> &photonHits) const;
   /**
    * Get photon hits in SiPM
    */
@@ -63,10 +64,6 @@ class SiPM {
    * Check if photon hit the detector
    */
   bool IsDetectorHit(const Photon &photon) const;
-  /**
-   * Remove all saved photon hits to reset the detector
-   */
-  void ResetDetector();
  private:
   /**
    * Size of detector in x direction
@@ -89,14 +86,6 @@ class SiPM {
    */
   const double m_MaxPDE;
   /**
-   * Interpolator for PDE
-   */
-  std::unique_ptr<Interpolator> m_Interpolator;
-  /**
-   * Vector of photon hits
-   */
-  std::vector<PhotonHit> m_PhotonHits;
-  /**
    * The wavelengths used to measure PDE in SiPM, in nm
    */
   static constexpr std::array<double, 16> m_Lambda{
@@ -112,6 +101,10 @@ class SiPM {
     0.52, 0.59, 0.60, 0.60,
     0.59, 0.57, 0.56, 0.53,
     0.51, 0.40, 0.26, 0.13};
+  /**
+   * Interpolator for PDE
+   */
+  static const Interpolator m_Interpolator;
 };
 
 #endif

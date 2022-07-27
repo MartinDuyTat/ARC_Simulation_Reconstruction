@@ -80,20 +80,20 @@ class RadiatorCell {
   /**
    * Get the detector
    */
-  SiPM& GetDetector();
+  const SiPM& GetDetector() const;
   /**
    * Set the mirror curvature
    * @param Curvature New mirror curvature
    */
   void SetMirrorCurvature(double Curvature);
   /**
-   * Set the mirror position, relative to the default position
+   * Set the mirror x position, relative to the default position
    */
-  void SetMirrorPosition(double x, double z);
+  void SetMirrorXPosition(double x);
   /**
-   * Reset the detector by removing all saved photon hits
+   * Set the mirror z position, relative to the default position
    */
-  void ResetDetector();
+  void SetMirrorZPosition(double z);
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
@@ -122,7 +122,7 @@ class RadiatorCell {
   /**
    * Radiator cell row number (first) and column number (second)
    * For a single central cell, it is assigned number (0, 0)
-   * For an array of radiator cells, numbering starts from (1, 0) from the middle of the main row
+   * For an array of radiator cells, numbering starts from (0, 1) from the middle of the main row
    */
   const std::pair<int, int> m_CellNumber;
   /**
@@ -132,7 +132,7 @@ class RadiatorCell {
   /**
    * The SiPM in the radiator cell
    */
-  SiPM m_Detector;
+  const SiPM m_Detector;
   /**
    * Radius of curvature of the spherical mirror
    */

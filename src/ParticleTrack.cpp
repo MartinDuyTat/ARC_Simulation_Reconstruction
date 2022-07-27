@@ -50,7 +50,7 @@ void ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
   m_RadiatorCell = &(*radiatorArray.FindRadiator(*this));
 }
 
-void ParticleTrack::SetRadiator(RadiatorCell &radiatorCell) {
+void ParticleTrack::SetRadiator(const RadiatorCell &radiatorCell) {
   m_RadiatorCell = &radiatorCell;
 }
 
@@ -312,10 +312,6 @@ std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
 	      CurrentPosition.Z());
   Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
-}
-
-const std::vector<PhotonHit>& ParticleTrack::GetPhotonHits() const {
-  return m_RadiatorCell->GetDetector().GetPhotonHits();
 }
 
 const Vector& ParticleTrack::GetPosition() const {

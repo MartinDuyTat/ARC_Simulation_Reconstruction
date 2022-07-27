@@ -6,8 +6,10 @@
 #ifndef PHOTONMAPPER
 #define PHOTONMAPPER
 
+#include<memory>
 #include"RadiatorCell.h"
 #include"Photon.h"
+#include"SiPM.h"
 
 namespace PhotonMapper {
   /**
@@ -21,11 +23,11 @@ namespace PhotonMapper {
   /**
    * Trace photon from mirror to detector plane and register detector hit
    */
-  void TracePhotonToDetector(Photon &photon);
+  PhotonHit TracePhotonToDetector(Photon &photon);
   /**
    * Trace photon from emission point to detector and register detector hit
    */
-  void TracePhoton(Photon &photon);
+  std::unique_ptr<PhotonHit> TracePhoton(Photon &photon);
 }
 
 #endif

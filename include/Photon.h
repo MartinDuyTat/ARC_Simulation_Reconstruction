@@ -58,7 +58,11 @@ struct Photon {
 	 double Energy,
 	 double CosCherenkovAngle,
 	 Radiator radiator,
-	 RadiatorCell *radiatorCell);
+	 const RadiatorCell *radiatorCell);
+  /**
+   * Copy constructor
+   */
+  Photon(const Photon &photon);
   /**
    * Draw photon path
    */
@@ -98,7 +102,7 @@ struct Photon {
   /**
    * Pointer to the radiator cell that this photon is inside
    */
-  RadiatorCell *m_RadiatorCell;
+  const RadiatorCell *m_RadiatorCell;
 };
 
 #endif

@@ -81,8 +81,10 @@ RadiatorIter RadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
     double x = Position.Z();
     double y = TMath::ATan2(Position.Y(), Position.X())*Radius;
     // First check if track is on the correct side and not hitting endcap
+    bool IsReflected = false;
     if(x < 0.0) {
       particleTrack.ReflectZ();
+      IsReflected = true;
       x = particleTrack.GetPosition().Z();
     } else if(x > Settings::GetDouble("ARCGeometry/Length")/2.0) {
       throw std::runtime_error("Particle hitting endcap");
@@ -104,12 +106,18 @@ RadiatorIter RadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
       // Particle hits the upper row
       const int xIndex = (x/m_xHexDist) + 1;
       const int yIndex = 2;
+      if(xIndex == 0 && yIndex == 1 && IsReflected) {
+	particleTrack.ReflectZ();
+      }
       particleTrack.MapPhi(-DeltaPhi/2.0);
       return (*this)(xIndex, yIndex);
     } else {
       // Particle hits the main row
       const int xIndex = (x + m_xHexDist/2.0)/m_xHexDist;
       const int yIndex = 1;
+      if(xIndex == 0 && yIndex == 1 && IsReflected) {
+	particleTrack.ReflectZ();
+      }
       return (*this)(xIndex, yIndex);
     }
   } else {
@@ -149,8 +157,4 @@ bool RadiatorArray::IsAboveMainRow(double x, double y) const {
     // If hexagon slope is downwards
     return x_shift < TMath::Sqrt(3)*y - m_xHexDist/2.0;
   }
-}
-
-void RadiatorArray::ResetDetectors() {
-  for_each(m_Cells.begin(), m_Cells.end(), [](auto &Cell) { Cell.ResetDetector(); });
 }

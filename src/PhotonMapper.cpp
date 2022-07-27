@@ -1,11 +1,13 @@
 // Martin Duy Tat 1st May 2022
 
 #include<algorithm>
+#include<memory>
 #include"TMath.h"
 #include"TRandom.h"
 #include"PhotonMapper.h"
 #include"Photon.h"
 #include"Settings.h"
+#include"SiPM.h"
 
 namespace PhotonMapper {
 
@@ -35,6 +37,8 @@ namespace PhotonMapper {
                            - photon.m_RadiatorCell->GetCoolingThickness();
     if(photon.m_Position.Z() > MaxHeight) {
       photon.m_Status = Photon::Status::WallMiss;
+    } else if((photon.m_Position - MirrorCentre).Mag2() > Curvature*Curvature) {
+      photon.m_Status = Photon::Status::MirrorMiss;
     } else if(photon.m_RadiatorCell->IsInsideCell(photon)) {
       photon.m_Status = Photon::Status::MirrorHit;
       photon.m_MirrorHitPosition = std::make_unique<Vector>(photon.m_Position);
@@ -43,7 +47,7 @@ namespace PhotonMapper {
     }
   }
 
-  void TracePhotonToDetector(Photon &photon) {
+  PhotonHit TracePhotonToDetector(Photon &photon) {
     const double Slope = TMath::Abs(photon.m_Direction.Z());
     // TODO: Account for photons generated in aerogel
     const double AerogelThickness = photon.m_RadiatorCell->GetAerogelThickness();
@@ -59,13 +63,17 @@ namespace PhotonMapper {
     }
     const Vector zUnit(0.0, 0.0, 1.0);
     photon.m_Position += (photon.m_Position.Dot(zUnit)/Slope)*photon.m_Direction;
-    photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon);
+    const PhotonHit photonHit = photon.m_RadiatorCell->GetDetector().AddPhotonHit(photon);
+    return photonHit;
   }
 
-  void TracePhoton(Photon &photon) {
+  std::unique_ptr<PhotonHit> TracePhoton(Photon &photon) {
     TracePhotonToMirror(photon);
     if(photon.m_MirrorHitPosition) {
-      TracePhotonToDetector(photon);
+      PhotonHit photonHit = TracePhotonToDetector(photon);
+      return std::make_unique<PhotonHit>(photonHit);
+    } else {
+      return nullptr;
     }
   }
 
