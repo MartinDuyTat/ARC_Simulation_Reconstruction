@@ -1,7 +1,7 @@
 // Martin Duy Tat 5th May 2022
 
 #include<string>
-#include<map>
+#include<unordered_map>
 #include<stdexcept>
 #include<utility>
 #include<fstream>
@@ -11,13 +11,13 @@
 #include<algorithm>
 #include"Settings.h"
 
-std::map<std::string, std::map<std::string, std::string>> Settings::m_Settings;
+std::unordered_map<std::string, ssMap> Settings::m_Settings;
 
 void Settings::AddSettings(const std::string &Name, const std::string &Filename) {
   if(m_Settings.find(Name) != m_Settings.end()) {
     throw std::runtime_error("Settings " + Name + " already exists");
   }
-  std::map<std::string, std::string> NewSettings;
+  ssMap NewSettings;
   std::ifstream File(Filename);
   std::string Line;
   while(std::getline(File, Line)) {

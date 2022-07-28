@@ -9,8 +9,10 @@
 #define SETTINGS
 
 #include<string>
-#include<map>
+#include<unordered_map>
 #include<vector>
+
+using ssMap = std::unordered_map<std::string, std::string>;
 
 class Settings {
  public:
@@ -52,7 +54,7 @@ class Settings {
   /**
    * Map where keys are name of settings file and values are maps with settings
    */
-  static std::map<std::string, std::map<std::string, std::string>> m_Settings;
+  static std::unordered_map<std::string, ssMap> m_Settings;
 };
 
 #endif

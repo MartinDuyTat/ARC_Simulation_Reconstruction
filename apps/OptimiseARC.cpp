@@ -9,31 +9,20 @@
 #include<string>
 #include<utility>
 #include<vector>
-#include<numeric>
+#include<fstream>
 #include"TRandom.h"
-#include"TF1.h"
-#include"TCanvas.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
-#include"Minuit2/Minuit2Minimizer.h"
-#include"Math/Functor.h"
 #include"Settings.h"
 #include"RadiatorCell.h"
 #include"TrackingVolume.h"
 #include"ParticleTrack.h"
-#include"PhotonMapper.h"
-#include"PhotonReconstructor.h"
-#include"SiPM.h"
-#include"DifferentialEvolution.h"
+#include"ResolutionUtilities.h"
 
 using Vector = ROOT::Math::XYZVector;
 using TracksPhotons = std::vector<std::pair<ParticleTrack, std::vector<Photon>>>;
 
 Vector VectorFromSpherical(double R, double CosTheta, double Phi);
-
-double CalculateResolution(const RadiatorCell &radiatorCell,
-			   const TracksPhotons &ParticlesPhotons);
-			   
 
 int main(int argc, char *argv[]) {
   if(argc%2 != 1 || argc < 3) {
@@ -87,77 +76,14 @@ int main(int argc, char *argv[]) {
     ParticlesPhotons.push_back(std::make_pair(particleTrack, std::move(Photons)));
     NumberTracks++;
   }
-  class MinimiseClass: public de::IOptimizable {
-   public:
-    MinimiseClass(RadiatorCell &radiatorCell,
-		  const TracksPhotons &ParticlesPhotons):
-      IOptimizable(),
-      m_RadiatorCell(&radiatorCell),
-      m_ParticlesPhotons(&ParticlesPhotons) {}
-    double EvaluateCost(std::vector<double> x) const override {
-      m_RadiatorCell->SetMirrorCurvature(x[0]);
-      m_RadiatorCell->SetMirrorXPosition(x[1]);
-      m_RadiatorCell->SetMirrorZPosition(x[2]);
-      const double Resolution = CalculateResolution(*m_RadiatorCell, *m_ParticlesPhotons);
-      return Resolution;
-    }
-    unsigned int NumberOfParameters() const override {
-      return 3;
-    }
-    std::vector<Constraints> GetConstraints() const override {
-      std::vector<Constraints> constraints;
-      constraints.reserve(NumberOfParameters());
-      constraints.push_back(Constraints(0.25, 0.40, true));
-      constraints.push_back(Constraints(-0.1, 0.1, true));
-      constraints.push_back(Constraints(-0.1, 0.1, true));
-      return constraints;
-    }
-   private:
-    RadiatorCell *m_RadiatorCell;
-    const TracksPhotons *m_ParticlesPhotons;
-  };
-  std::cout << "Setting up differential evolution objects...\n";
-  MinimiseClass minimiseClass(radiatorCell, ParticlesPhotons);
-  const int NumberAgents = Settings::GetInt("Optimisation/NumberAgents");
-  de::DifferentialEvolution de(minimiseClass, NumberAgents);
-  std::cout << "Differential evolution ready, sending off agents...\n";
-  const int Iterations = Settings::GetInt("Optimisation/Iterations");
-  de.Optimize(Iterations, true);
-  std::cout << "ARC is optimised!\n";
-  if(Settings::GetBool("General/PlotProjections")) {
+  if(Settings::GetBool("Optimisation/DoFit")) {
+    std::cout << "Differential evolution ready, sending off agents...\n";
+    ResolutionUtilities::DoFit(radiatorCell, ParticlesPhotons);
+    std::cout << "ARC is optimised!\n";
+  }
+  if(Settings::GetBool("Optimisation/PlotProjections")) {
     std::cout << "Plotting...\n";
-    auto MinimiseFunction = [&] (const double *x) {
-      radiatorCell.SetMirrorCurvature(x[0]);
-      radiatorCell.SetMirrorXPosition(x[1]);
-      radiatorCell.SetMirrorZPosition(x[2]);
-      const double Resolution = CalculateResolution(radiatorCell, ParticlesPhotons);
-      return Resolution;
-    };
-    auto Result = de.GetBestAgent();
-    auto MinimiseFunctionMirrorCurvature = [&] (double *x, double*) {
-      double xx[3] = {x[0], Result[1], Result[2]};
-      return MinimiseFunction(xx);
-    };
-    auto MinimiseFunctionXPosition = [&] (double *x, double*) {
-      double xx[3] = {Result[0], x[0], Result[2]};
-      return MinimiseFunction(xx);
-    };
-    auto MinimiseFunctionZPosition = [&] (double *x, double*) {
-      double xx[3] = {Result[0], Result[1], x[0]};
-      return MinimiseFunction(xx);
-    };
-    TF1 f1("MirrorCurvature", MinimiseFunctionMirrorCurvature, 0.34, 0.385, 0);
-    TF1 f2("XPosition", MinimiseFunctionXPosition, -0.04, 0.04, 0);
-    TF1 f3("ZPosition", MinimiseFunctionZPosition, -0.003, 0.003, 0);
-    TCanvas c1("c1", "", 1200, 900);
-    f1.Draw();
-    c1.SaveAs("MirrorCurvatureOptimisation.pdf");
-    TCanvas c2("c2", "", 1200, 900);
-    f2.Draw();
-    c2.SaveAs("XPositionOptimisation.pdf");
-    TCanvas c3("c3", "", 1200, 900);
-    f3.Draw();
-    c3.SaveAs("ZPositionOptimisation.pdf");
+    ResolutionUtilities::PlotProjections(radiatorCell, ParticlesPhotons);
     std::cout << "Resolution projections plotted\n";
   }
   return 0;
@@ -170,55 +96,4 @@ Vector VectorFromSpherical(double R, double CosTheta, double Phi) {
   return Vector{R*CosPhi*SinTheta, R*SinPhi*SinTheta, R*CosTheta};
 }
 
-double CalculateResolution(const RadiatorCell &radiatorCell,
-			   const TracksPhotons &ParticlesPhotons) {
-  // Struct containing sum of Cherenkov angle, sum of square of Cherenkov
-  // angle and total number of photons
-  struct ResolutionStruct {
-    // x is the Cherenkov angle, x2 is the Cherenkov angle squared
-    double x = 0.0;
-    double x2 = 0.0;
-    int N = 0;
-  };
-  // Lambda for tracking photons and calculating the Cherenkov angles
-  auto TrackPhotons = [&radiatorCell] (const auto &a) {
-    const auto particleTrack = a.first;
-    const auto Photons = a.second;
-    ResolutionStruct resolutionStruct;
-    for(auto Photon : Photons) {
-      auto photonHit = PhotonMapper::TracePhoton(Photon);
-      if(Photon.m_Status == Photon::Status::DetectorHit) {
-	auto reconstructedPhoton =
-	  PhotonReconstructor::ReconstructPhoton(particleTrack,
-						 *photonHit,
-						 Photon::Radiator::Gas);
-	const double CherenkovAngle = TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
-	resolutionStruct.x += CherenkovAngle;
-	resolutionStruct.x2 += CherenkovAngle*CherenkovAngle;
-	resolutionStruct.N++;
-      }
-    }
-    return resolutionStruct;
-  };
-  // Put it all together
-  ResolutionStruct Total{};
-  #pragma omp parallel for num_threads(8)
-  for(std::size_t i = 0; i < ParticlesPhotons.size(); i++) {
-    ResolutionStruct resolutionStruct = TrackPhotons(ParticlesPhotons[i]);
-    #pragma omp critical (Update)
-    {
-    Total.x += resolutionStruct.x;
-    Total.x2 += resolutionStruct.x2;
-    Total.N += resolutionStruct.N;
-    }
-  }
-  const double Resolution = TMath::Sqrt(Total.x2/Total.N
-			  - (Total.x/Total.N)*(Total.x/Total.N));
-  const double MeanNumberPhotons = static_cast<double>(Total.N)
-                                   /ParticlesPhotons.size();
-  if(MeanNumberPhotons <= 3.0) {
-    return 1000.0;
-  } else {
-    return Resolution/TMath::Sqrt(MeanNumberPhotons);
-  }
-}
+
