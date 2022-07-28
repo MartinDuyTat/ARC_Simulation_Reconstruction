@@ -37,7 +37,7 @@ namespace PhotonMapper {
                            - photon.m_RadiatorCell->GetCoolingThickness();
     if(photon.m_Position.Z() > MaxHeight) {
       photon.m_Status = Photon::Status::WallMiss;
-    } else if((photon.m_Position - MirrorCentre).Mag2() > Curvature*Curvature) {
+    } else if((photon.m_Position - MirrorCentre).Mag2() - Curvature*Curvature > 1e-6) {
       photon.m_Status = Photon::Status::MirrorMiss;
     } else if(photon.m_RadiatorCell->IsInsideCell(photon)) {
       photon.m_Status = Photon::Status::MirrorHit;

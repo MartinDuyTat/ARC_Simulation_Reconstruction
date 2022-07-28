@@ -24,6 +24,7 @@
 #include"PhotonMapper.h"
 #include"PhotonReconstructor.h"
 #include"SiPM.h"
+#include"DifferentialEvolution.h"
 
 using Vector = ROOT::Math::XYZVector;
 using TracksPhotons = std::vector<std::pair<ParticleTrack, std::vector<Photon>>>;
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
   const int CellsPerRow = 2*Settings::GetDouble("ARCGeometry/CellsPerRow") - 1;
-  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/(2*CellsPerRow);
+  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/CellsPerRow;
   RadiatorCell radiatorCell(std::stoi(std::string(argv[1])),
 			    std::stoi(std::string(argv[2])), 
 			    HexagonSize);
@@ -86,33 +87,53 @@ int main(int argc, char *argv[]) {
     ParticlesPhotons.push_back(std::make_pair(particleTrack, std::move(Photons)));
     NumberTracks++;
   }
-  auto MinimiseFunction = [&] (const double *x) {
-    radiatorCell.SetMirrorCurvature(x[0]);
-    radiatorCell.SetMirrorXPosition(x[1]);
-    radiatorCell.SetMirrorZPosition(x[2]);
-    const double Resolution = CalculateResolution(radiatorCell, ParticlesPhotons);
-    return Resolution;
+  class MinimiseClass: public de::IOptimizable {
+   public:
+    MinimiseClass(RadiatorCell &radiatorCell,
+		  const TracksPhotons &ParticlesPhotons):
+      IOptimizable(),
+      m_RadiatorCell(&radiatorCell),
+      m_ParticlesPhotons(&ParticlesPhotons) {}
+    double EvaluateCost(std::vector<double> x) const override {
+      m_RadiatorCell->SetMirrorCurvature(x[0]);
+      m_RadiatorCell->SetMirrorXPosition(x[1]);
+      m_RadiatorCell->SetMirrorZPosition(x[2]);
+      const double Resolution = CalculateResolution(*m_RadiatorCell, *m_ParticlesPhotons);
+      return Resolution;
+    }
+    unsigned int NumberOfParameters() const override {
+      return 3;
+    }
+    std::vector<Constraints> GetConstraints() const override {
+      std::vector<Constraints> constraints;
+      constraints.reserve(NumberOfParameters());
+      constraints.push_back(Constraints(0.25, 0.40, true));
+      constraints.push_back(Constraints(-0.1, 0.1, true));
+      constraints.push_back(Constraints(-0.1, 0.1, true));
+      return constraints;
+    }
+   private:
+    RadiatorCell *m_RadiatorCell;
+    const TracksPhotons *m_ParticlesPhotons;
   };
-  ROOT::Math::Functor fcn(MinimiseFunction, 3);
-  ROOT::Minuit2::Minuit2Minimizer Minimiser(ROOT::Minuit2::kSimplex);
-  Minimiser.SetPrintLevel(4);
-  Minimiser.SetPrecision(0.0001);
-  Minimiser.SetFunction(fcn);
-  Minimiser.SetVariable(0, "MirrorCurvature", 0.37, 0.01);
-  Minimiser.SetVariableLimits(0, 0.33, 0.40);
-  Minimiser.SetVariable(1, "Mirror_xPosition", 0.01, 0.005);
-  Minimiser.SetVariableLimits(1, -0.1, 0.1);
-  //Minimiser.FixVariable(1);
-  Minimiser.SetVariable(2, "Mirror_zPosition", 0.0, 0.01);
-  Minimiser.SetVariableLimits(2, -0.05, 0.05);
-  std::cout << "Starting minimisation...\n";
-  Minimiser.Minimize();
-  std::cout << "Status: " << Minimiser.Status() << "\n";
-  std::cout << "Covariance matrix status: " << Minimiser.CovMatrixStatus() << "\n";
+  std::cout << "Setting up differential evolution objects...\n";
+  MinimiseClass minimiseClass(radiatorCell, ParticlesPhotons);
+  const int NumberAgents = Settings::GetInt("Optimisation/NumberAgents");
+  de::DifferentialEvolution de(minimiseClass, NumberAgents);
+  std::cout << "Differential evolution ready, sending off agents...\n";
+  const int Iterations = Settings::GetInt("Optimisation/Iterations");
+  de.Optimize(Iterations, true);
   std::cout << "ARC is optimised!\n";
   if(Settings::GetBool("General/PlotProjections")) {
     std::cout << "Plotting...\n";
-    auto Result = Minimiser.X();
+    auto MinimiseFunction = [&] (const double *x) {
+      radiatorCell.SetMirrorCurvature(x[0]);
+      radiatorCell.SetMirrorXPosition(x[1]);
+      radiatorCell.SetMirrorZPosition(x[2]);
+      const double Resolution = CalculateResolution(radiatorCell, ParticlesPhotons);
+      return Resolution;
+    };
+    auto Result = de.GetBestAgent();
     auto MinimiseFunctionMirrorCurvature = [&] (double *x, double*) {
       double xx[3] = {x[0], Result[1], Result[2]};
       return MinimiseFunction(xx);
@@ -125,9 +146,9 @@ int main(int argc, char *argv[]) {
       double xx[3] = {Result[0], Result[1], x[0]};
       return MinimiseFunction(xx);
     };
-    TF1 f1("MirrorCurvature", MinimiseFunctionMirrorCurvature, 0.34, 0.375, 0);
-    TF1 f2("XPosition", MinimiseFunctionXPosition, -0.05, 0.05, 0);
-    TF1 f3("ZPosition", MinimiseFunctionZPosition, -0.002, 0.0045, 0);
+    TF1 f1("MirrorCurvature", MinimiseFunctionMirrorCurvature, 0.34, 0.385, 0);
+    TF1 f2("XPosition", MinimiseFunctionXPosition, -0.04, 0.04, 0);
+    TF1 f3("ZPosition", MinimiseFunctionZPosition, -0.003, 0.003, 0);
     TCanvas c1("c1", "", 1200, 900);
     f1.Draw();
     c1.SaveAs("MirrorCurvatureOptimisation.pdf");
@@ -195,7 +216,7 @@ double CalculateResolution(const RadiatorCell &radiatorCell,
 			  - (Total.x/Total.N)*(Total.x/Total.N));
   const double MeanNumberPhotons = static_cast<double>(Total.N)
                                    /ParticlesPhotons.size();
-  if(MeanNumberPhotons <= 0.0) {
+  if(MeanNumberPhotons <= 3.0) {
     return 1000.0;
   } else {
     return Resolution/TMath::Sqrt(MeanNumberPhotons);
