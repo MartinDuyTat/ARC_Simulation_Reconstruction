@@ -25,6 +25,14 @@ void EventDisplay::DrawEventDisplay(const std::string &Filename) {
 		 Settings::GetDouble("ARCGeometry/Length")/2.0,
 		 Settings::GetDouble("ARCGeometry/Radius")
 		 - Settings::GetDouble("RadiatorCell/VesselThickness"));
+  TLine OuterWall(-Settings::GetDouble("ARCGeometry/Length")/2.0,
+		  Settings::GetDouble("ARCGeometry/Radius")
+		  + Settings::GetDouble("RadiatorCell/RadiatorThickness")
+		  - 2*Settings::GetDouble("RadiatorCell/VesselThickness"),
+		  Settings::GetDouble("ARCGeometry/Length")/2.0,
+		  Settings::GetDouble("ARCGeometry/Radius")
+		  + Settings::GetDouble("RadiatorCell/RadiatorThickness")
+		  - 2*Settings::GetDouble("RadiatorCell/VesselThickness"));
   TLine OuterARC(-Settings::GetDouble("ARCGeometry/Length")/2.0,
 		 Settings::GetDouble("ARCGeometry/Radius")
 		 + Settings::GetDouble("RadiatorCell/RadiatorThickness")
@@ -34,8 +42,10 @@ void EventDisplay::DrawEventDisplay(const std::string &Filename) {
 		 + Settings::GetDouble("RadiatorCell/RadiatorThickness")
 		 - Settings::GetDouble("RadiatorCell/VesselThickness"));
   InnerARC.SetLineColor(kBlack);
+  OuterWall.SetLineColor(kBlack);
   OuterARC.SetLineColor(kBlack);
   m_EventObjects.push_back(std::make_pair(std::make_unique<TLine>(InnerARC), ""));
+  m_EventObjects.push_back(std::make_pair(std::make_unique<TLine>(OuterWall), ""));
   m_EventObjects.push_back(std::make_pair(std::make_unique<TLine>(OuterARC), ""));
   for(auto &Object : m_EventObjects) {
     Object.first->Draw(Object.second.c_str());

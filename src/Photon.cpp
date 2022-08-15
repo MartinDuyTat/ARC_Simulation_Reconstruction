@@ -21,6 +21,7 @@ Photon::Photon(const Vector &Position,
 	       m_Radiator(radiator),
 	       m_CosCherenkovAngle(CosCherenkovAngle),
 	       m_Status(Status::Emitted),
+	       m_AerogelTravelDistance(0.0),
 	       m_MirrorHitPosition(nullptr),
                m_RadiatorCell(radiatorCell) {
 }
@@ -74,6 +75,7 @@ Photon::Photon(const Photon &photon):
   m_Radiator(photon.m_Radiator),
   m_CosCherenkovAngle(photon.m_CosCherenkovAngle),
   m_Status(photon.m_Status),
+  m_AerogelTravelDistance(photon.m_AerogelTravelDistance),
   m_RadiatorCell(photon.m_RadiatorCell) {
   if(photon.m_MirrorHitPosition) {
     m_MirrorHitPosition = std::make_unique<Vector>(*photon.m_MirrorHitPosition);

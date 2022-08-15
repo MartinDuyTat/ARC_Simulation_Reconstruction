@@ -29,13 +29,25 @@ ResolutionOptimizable::ResolutionOptimizable(RadiatorCell &radiatorCell,
 }
 
 double ResolutionOptimizable::EvaluateCost(std::vector<double> x) const {
+  std::array<double, 5> xx;
+  std::size_t j = 0;
+  for(std::size_t i = 0; i < m_Parameters.size(); i++) {
+    const auto iter = m_FixedParameters.find(i);
+    if(iter == m_FixedParameters.end()) {
+      xx[i] = x[j];
+      j++;
+    } else {
+      xx[i] = iter->second;
+    }
+  }
   const double Resolution =
-    ResolutionUtilities::fcn(x[0], x[1], x[2], *m_RadiatorCell, *m_ParticlesPhotons);
+    ResolutionUtilities::fcn(xx[0], xx[1], xx[2], xx[3], xx[4],
+			     *m_RadiatorCell, *m_ParticlesPhotons);
   return Resolution;
 }
 
 unsigned int ResolutionOptimizable::NumberOfParameters() const {
-  return 3 - m_FixedParameters.size();
+  return m_Parameters.size() - m_FixedParameters.size();
 }
 
 std::vector<Constraints> ResolutionOptimizable::GetConstraints() const {

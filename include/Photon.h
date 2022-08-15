@@ -33,6 +33,7 @@ struct Photon {
    * DetectorMiss: Photon missed the detector
    * AerogelScattered: Scattered by the aerogel
    * WallMiss: The photon hit the vessel wall on top, so an area without a mirror
+   * Backwards: The photon must travel backwards to hit mirror (impossible!)
    */
   enum class Status {
     Emitted,
@@ -42,7 +43,8 @@ struct Photon {
     DetectorHit,
     DetectorMiss,
     AerogelScattered,
-    WallMiss
+    WallMiss,
+    Backwards
   };
   /**
    * Construct a photon with position, direction and energy
@@ -95,6 +97,10 @@ struct Photon {
    * Flag specifying the status of the photon
    */
   Status m_Status;
+  /**
+   * The total distance travelled through aerogel
+   */
+  double m_AerogelTravelDistance;
   /**
    * Hit position of the mirror, or nullptr if the photon missed the mirror
    */

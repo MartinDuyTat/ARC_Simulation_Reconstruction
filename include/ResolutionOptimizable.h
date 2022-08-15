@@ -66,10 +66,12 @@ class ResolutionOptimizable: public de::IOptimizable {
   /**
    * Free parameter names
    */
-  static constexpr std::array<std::string_view, 3> m_Parameters{
+  static constexpr std::array<std::string_view, 5> m_Parameters{
     "MirrorCurvature",
     "MirrorXPosition",
-    "MirrorZPosition"};
+    "MirrorZPosition",
+    "DetectorPosition",
+    "DetectorTilt"};
 };
 
 #endif

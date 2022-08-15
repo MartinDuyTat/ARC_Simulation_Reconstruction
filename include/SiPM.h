@@ -23,12 +23,14 @@ struct PhotonHit {
   /**
    * Constructor saving the photon hits
    */
-  PhotonHit(double x, double y, const Photon *photon): x(x), y(y), m_Photon(photon) {}
+  PhotonHit(const Vector &HitPosition, const Photon *photon):
+  m_HitPosition(HitPosition),
+  m_Photon(photon) {
+  }
   /**
    * Detector hit coordinates
    */
-  const double x;
-  const double y;
+  const Vector m_HitPosition;
   /**
    * Pointer to the photon that caused this hit
    */
@@ -39,10 +41,8 @@ class SiPM {
  public:
   /**
    * Constructor setting up the detector coordinates and detector size
-   * @param xPosition Position in the x direction
-   * @param yPosition Position in the y direction
    */
-  SiPM(double xPosition, double yPosition);
+  SiPM();
   /**
    * Register a photon hit and return it
    */
@@ -64,6 +64,26 @@ class SiPM {
    * Check if photon hit the detector
    */
   bool IsDetectorHit(const Photon &photon) const;
+  /**
+   * Set the detector X position
+   */
+  void SetDetectorPosition(double x);
+  /**
+   * Set the detector tilt, in radians
+   */
+  void SetDetectorTilt(double Angle);
+  /**
+   * Get the detector X position
+   */
+  double GetDetectorXPosition() const;
+  /**
+   * Get the detector Z position
+   */
+  double GetDetectorZPosition() const;
+  /**
+   * Get the detector tilt, in radiations
+   */
+  double GetDetectorTilt() const;
  private:
   /**
    * Size of detector in x direction
@@ -76,11 +96,24 @@ class SiPM {
   /**
    * Centre of detector in x direction
    */
-  const double m_DetectorPositionX;
+  double m_DetectorPositionX;
   /**
    * Centre of detector in y direction
    */
   const double m_DetectorPositionY;
+  /**
+   * Centre of detector in z direction
+   */
+  double m_DetectorPositionZ;
+  /**
+   * The tilt of the detector plane, in radians
+   * Positive tilt is anti-clockwise
+   */
+  double m_DetectorTilt;
+  /**
+   * Aerogel thickness
+   */
+  double m_CoolingThickness;
   /**
    * Max PDE
    */

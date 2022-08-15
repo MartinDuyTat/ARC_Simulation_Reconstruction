@@ -28,6 +28,10 @@ namespace PhotonMapper {
    * Trace photon from emission point to detector and register detector hit
    */
   std::unique_ptr<PhotonHit> TracePhoton(Photon &photon);
+  /**
+   * Check if photon has been scattered in the aerogel
+   */
+  bool IsScatteredInAerogel(const Photon &photon);
 }
 
 #endif

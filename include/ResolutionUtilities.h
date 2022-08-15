@@ -27,6 +27,8 @@ namespace ResolutionUtilities {
   double fcn(double MirrorCurvature,
 	     double MirrorXPosition,
 	     double MirrorZPosition,
+	     double DetectorPosition,
+	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
 	     const TracksPhotons &ParticlesPhotons);
   /**
@@ -38,7 +40,9 @@ namespace ResolutionUtilities {
    * Do the actual fit and save the results
    */
   void DoFit(RadiatorCell &radiatorCell,
-	     const TracksPhotons &ParticlesPhotons);
+	     const TracksPhotons &ParticlesPhotons,
+	     int Column,
+	     int Row);
 
 }
 

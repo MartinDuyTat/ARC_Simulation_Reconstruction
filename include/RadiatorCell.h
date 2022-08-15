@@ -94,6 +94,14 @@ class RadiatorCell {
    * Set the mirror z position, relative to the default position
    */
   void SetMirrorZPosition(double z);
+  /**
+   * Set the detector X position
+   */
+  void SetDetectorPosition(double x);
+  /**
+   * Set the detector tilt, in radians
+   */
+  void SetDetectorTilt(double Angle);
  private:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
@@ -132,7 +140,7 @@ class RadiatorCell {
   /**
    * The SiPM in the radiator cell
    */
-  const SiPM m_Detector;
+  SiPM m_Detector;
   /**
    * Radius of curvature of the spherical mirror
    */
@@ -149,10 +157,6 @@ class RadiatorCell {
    * Helper function to get cell position based on cell number
    */
   Vector GetCellPosition(int CellColumnNumber, int CellRowNumber) const;
-  /**
-   * Helper function to figure out position of SiPM
-   */
-  double DetermineSiPMPositionX() const;
 };
 
 #endif

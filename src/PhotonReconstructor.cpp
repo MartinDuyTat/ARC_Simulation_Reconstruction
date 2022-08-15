@@ -30,8 +30,7 @@ namespace PhotonReconstructor {
       }
     };
     const Vector EmissionPoint = GetEmissionPoint() - MirrorCentre;
-    const Vector DetectionPoint = Vector(photonHit.x, photonHit.y, 0.0)
-                                - MirrorCentre;
+    const Vector DetectionPoint = photonHit.m_HitPosition - MirrorCentre;
     const double Curvature = radiatorCell->GetMirrorCurvature();
     // Distance between emission point and mirror centre,
     // in units of mirror curvature

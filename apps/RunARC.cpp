@@ -113,6 +113,7 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("CosTheta", &CosTheta);
     CherenkovTree.Branch("Phi", &Phi);
     const int NumberTracks = Settings::GetInt("General/NumberTracks");
+    const bool DrawAllTracks = Settings::GetBool("General/DrawAllTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
     const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
     for(int i = 0; i < NumberTracks; i++) {
@@ -138,9 +139,20 @@ int main(int argc, char *argv[]) {
       Phi = particleTrack.GetPosition().Phi();
       RadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
       RadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
-      const bool DrawThisTrack = std::find(TracksToDraw.begin(),
-					   TracksToDraw.end(), i) != TracksToDraw.end() &&
-	                         RadiatorRowNumber == Settings::GetInt("EventDisplay/RowToDraw");
+      auto IsTrackDraw = [&] () {
+	if(RadiatorRowNumber != Settings::GetInt("EventDisplay/RowToDraw")) {
+	  return false;
+	}
+	if(DrawAllTracks) {
+	  return true;
+	}
+	const auto iter = std::find(TracksToDraw.begin(), TracksToDraw.end(), i);
+	if(iter == TracksToDraw.end()) {
+	  return false;
+	}
+	return true;
+      };
+      const bool DrawThisTrack = IsTrackDraw();
       particleTrack.ConvertToRadiatorCoordinates();
       auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
       Entrance_x = EntranceWindowPosition.X();

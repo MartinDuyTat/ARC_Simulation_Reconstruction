@@ -10,6 +10,7 @@
 #include<utility>
 #include<vector>
 #include<fstream>
+#include<array>
 #include"TRandom.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
@@ -44,9 +45,9 @@ int main(int argc, char *argv[]) {
   const TrackingVolume InnerTracker;
   const int CellsPerRow = 2*Settings::GetDouble("ARCGeometry/CellsPerRow") - 1;
   const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/CellsPerRow;
-  RadiatorCell radiatorCell(std::stoi(std::string(argv[1])),
-			    std::stoi(std::string(argv[2])), 
-			    HexagonSize);
+  const int Column = std::stoi(std::string(argv[1]));
+  const int Row = std::stoi(std::string(argv[2]));
+  RadiatorCell radiatorCell(Column, Row, HexagonSize);
   const Vector CellPosition = radiatorCell.GetRadiatorPosition();
   const double Radius = Settings::GetDouble("ARCGeometry/Radius");
   const double MomentumMag = Settings::GetDouble("Particle/Momentum");
@@ -76,9 +77,27 @@ int main(int argc, char *argv[]) {
     ParticlesPhotons.push_back(std::make_pair(particleTrack, std::move(Photons)));
     NumberTracks++;
   }
+  if(Settings::GetBool("Optimisation/SinglePoints")) {
+    while(true) {
+      std::cout << "Input parameters:\n";
+      std::array<double, 5> x;
+      for(double &xx : x) {
+	std::cin >> xx;
+      }
+      double Value = ResolutionUtilities::fcn(x[0], x[1], x[2], x[3], x[4],
+					      radiatorCell, ParticlesPhotons);
+      std::cout << "fcn = " << Value << "\n";
+      std::cout << "Calculate new value?(y/n)\n";
+      std::string Answer;
+      std::cin >> Answer;
+      if(Answer != "y") {
+	return 0;
+      }
+    }
+  }
   if(Settings::GetBool("Optimisation/DoFit")) {
     std::cout << "Differential evolution ready, sending off agents...\n";
-    ResolutionUtilities::DoFit(radiatorCell, ParticlesPhotons);
+    ResolutionUtilities::DoFit(radiatorCell, ParticlesPhotons, Column, Row);
     std::cout << "ARC is optimised!\n";
   }
   if(Settings::GetBool("Optimisation/PlotProjections")) {

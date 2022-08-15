@@ -23,7 +23,7 @@ RadiatorCell::RadiatorCell(int CellColumnNumber,
   m_HexagonSize(HexagonSize),
   m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
   m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)),
-  m_Detector(DetermineSiPMPositionX(), 0.0),
+  m_Detector(),
   m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
   m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
   m_MirrorCentre(m_DefaultMirrorCentre) {
@@ -43,6 +43,14 @@ RadiatorCell::RadiatorCell(int CellColumnNumber,
   const std::string ZPositionName = "RadiatorCell/" + RadiatorName + "ZPosition";
   if(Settings::Exists(ZPositionName)) {
     SetMirrorZPosition(Settings::GetDouble(ZPositionName));
+  }
+  const std::string DetPositionName = "RadiatorCell/" + RadiatorName + "DetPosition";
+  if(Settings::Exists(DetPositionName)) {
+    SetDetectorPosition(Settings::GetDouble(DetPositionName));
+  }
+  const std::string DetTiltName = "RadiatorCell/" + RadiatorName + "DetTilt";
+  if(Settings::Exists(DetTiltName)) {
+    SetDetectorTilt(Settings::GetDouble(DetTiltName));
   }
 }
 
@@ -107,11 +115,11 @@ RadiatorCell::DrawRadiatorGeometry() const {
   const double c_left = TMath::Power(m_HexagonSize/2.0, 2)
                       + m_MirrorCentre.Mag2()
                       - m_MirrorCurvature*m_MirrorCurvature
-                      - m_MirrorCentre.X()*m_HexagonSize;
+                      + m_MirrorCentre.X()*m_HexagonSize;
   const double c_right = TMath::Power(m_HexagonSize/2.0, 2)
                        + m_MirrorCentre.Mag2()
                        - m_MirrorCurvature*m_MirrorCurvature
-                       + m_MirrorCentre.X()*m_HexagonSize;
+                       - m_MirrorCentre.X()*m_HexagonSize;
   const double s_left = TMath::Sqrt(b*b - c_left);
   const double s_right = TMath::Sqrt(b*b - c_right);
   const auto MirrorCentreGlobal = m_Position + m_MirrorCentre;
@@ -197,10 +205,6 @@ std::pair<int, int> RadiatorCell::GetCellNumber() const {
   return m_CellNumber;
 }
 
-double RadiatorCell::DetermineSiPMPositionX() const {
-  return 0.0;
-}
-
 const SiPM& RadiatorCell::GetDetector() const {
   return m_Detector;
 }
@@ -215,4 +219,12 @@ void RadiatorCell::SetMirrorXPosition(double x) {
 
 void RadiatorCell::SetMirrorZPosition(double z) {
   m_MirrorCentre.SetZ(m_DefaultMirrorCentre.Z() + z);
+}
+
+void RadiatorCell::SetDetectorPosition(double x) {
+  m_Detector.SetDetectorPosition(x);
+}
+
+void RadiatorCell::SetDetectorTilt(double Angle) {
+  m_Detector.SetDetectorTilt(Angle);
 }
