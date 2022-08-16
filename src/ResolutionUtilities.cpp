@@ -6,7 +6,10 @@
 #include<sstream>
 #include"TCanvas.h"
 #include"TF1.h"
+#include"TLine.h"
 #include"TRandom.h"
+#include"TPad.h"
+#include"TH1.h"
 #include"ResolutionUtilities.h"
 #include"RadiatorCell.h"
 #include"ParticleTrack.h"
@@ -164,20 +167,40 @@ namespace ResolutionUtilities {
     double DetTilt_max = Settings::GetDouble(Name5 + "max");
     TF1 f5("DetectorTilt", MinimiseFunctionDetTilt,
 	   DetTilt_min, DetTilt_max, 0);
+    auto GetSolutionLine = [] (double Result, double ymax = 0.0) {
+      TLine Solution(Result, 0.0, Result, 0.9*ymax);
+      Solution.SetLineWidth(3);
+      return Solution;
+    };
     TCanvas c1("c1", "", 1200, 900);
+    f1.SetTitle("Mirror curvature;Curvature (m);Resolution (rad)");
     f1.Draw();
+    auto Solution1 = GetSolutionLine(Result[0], f1.GetHistogram()->GetMaximum());
+    Solution1.Draw("SAME");
     c1.SaveAs("MirrorCurvatureOptimisation.pdf");
     TCanvas c2("c2", "", 1200, 900);
+    f2.SetTitle("Horizontal mirror position;x (m);Resolution (rad)");
     f2.Draw();
+    auto Solution2 = GetSolutionLine(Result[1], f2.GetHistogram()->GetMaximum());
+    Solution2.Draw("SAME");
     c2.SaveAs("XPositionOptimisation.pdf");
     TCanvas c3("c3", "", 1200, 900);
+    f3.SetTitle("Vertical mirror position;z (m);Resolution (rad)");
     f3.Draw();
+    auto Solution3 = GetSolutionLine(Result[2], f3.GetHistogram()->GetMaximum());
+    Solution3.Draw("SAME");
     c3.SaveAs("ZPositionOptimisation.pdf");
     TCanvas c4("c4", "", 1200, 900);
+    f4.SetTitle("Horizontal detector position;x (m);Resolution (rad)");
     f4.Draw();
+    auto Solution4 = GetSolutionLine(Result[3], f4.GetHistogram()->GetMaximum());
+    Solution4.Draw("SAME");
     c4.SaveAs("DetectorPositionOptimisation.pdf");
     TCanvas c5("c4", "", 1200, 900);
+    f5.SetTitle("Detector tilt angle;#theta (^{o});Resolution (rad)");
     f5.Draw();
+    auto Solution5 = GetSolutionLine(Result[4], f5.GetHistogram()->GetMaximum());
+    Solution5.Draw("SAME");
     c5.SaveAs("DetectorTiltOptimisation.pdf");
   }
 
