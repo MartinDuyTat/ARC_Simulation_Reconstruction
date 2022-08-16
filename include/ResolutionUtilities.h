@@ -13,14 +13,14 @@
 #include"RadiatorCell.h"
 #include"ParticleTrack.h"
 
-using TracksPhotons = std::vector<std::pair<ParticleTrack, std::vector<Photon>>>;
+using Tracks = std::vector<ParticleTrack>;
 
 namespace ResolutionUtilities {
   /**
    * Helper function where the (parallel) calculation takes place
    */
   double CalculateResolution(const RadiatorCell &radiatorCell,
-			     const TracksPhotons &ParticlesPhotons);
+			     const Tracks &Particles);
   /**
    * The "cost" function for minimisation
    */
@@ -30,17 +30,18 @@ namespace ResolutionUtilities {
 	     double DetectorPosition,
 	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
-	     const TracksPhotons &ParticlesPhotons);
+	     const Tracks &Particles,
+	     int Seed);
   /**
    * Load fit results and plot the fit projections
    */
   void PlotProjections(RadiatorCell &radiatorCell,
-		       const TracksPhotons &ParticlesPhotons);
+		       const Tracks &Particles);
   /**
    * Do the actual fit and save the results
    */
   void DoFit(RadiatorCell &radiatorCell,
-	     const TracksPhotons &ParticlesPhotons,
+	     const Tracks &Particles,
 	     int Column,
 	     int Row);
 

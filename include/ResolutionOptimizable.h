@@ -14,7 +14,7 @@
 #include"DifferentialEvolution.h"
 #include"ParticleTrack.h"
 
-using TracksPhotons = std::vector<std::pair<ParticleTrack, std::vector<Photon>>>;
+using Tracks = std::vector<ParticleTrack>;
 
 class ResolutionOptimizable: public de::IOptimizable {
  public:
@@ -24,7 +24,7 @@ class ResolutionOptimizable: public de::IOptimizable {
    * @param ParticlesPhotons The generated particles and photons
    */
   ResolutionOptimizable(RadiatorCell &radiatorCell,
-			const TracksPhotons &ParticlesPhotons);
+			const Tracks &Particles);
   /**
    * Function that evaluates the resolution
    * The free parameters are:
@@ -54,7 +54,7 @@ class ResolutionOptimizable: public de::IOptimizable {
   /**
    * The generated tracks and photons used to calculate resolution
    */
-  const TracksPhotons *m_ParticlesPhotons;
+  const Tracks *m_Particles;
   /**
    * Map of parameters and that are fixed and their values
    */
@@ -63,6 +63,10 @@ class ResolutionOptimizable: public de::IOptimizable {
    * The parameter space
    */
   std::vector<Constraints> m_ParameterSpace;
+  /**
+   * The seed used for each iteration
+   */
+  const int m_Seed;
   /**
    * Free parameter names
    */

@@ -53,8 +53,10 @@ namespace PhotonMapper {
     const auto Position = photon.m_Position;
     const auto Direction = photon.m_Direction;
     auto Detector = photon.m_RadiatorCell->GetDetector();
-    const double SinTheta = TMath::Sin(Detector.GetDetectorTilt());
-    const double CosTheta = TMath::Cos(Detector.GetDetectorTilt());
+    const double Theta = Detector.GetDetectorTilt();
+    const double CosTheta = TMath::Cos(Theta);
+    const double SinTheta = (Theta < 0.0 ? -1.0 : +1.0)
+                            *TMath::Sqrt(1.0 - CosTheta*CosTheta);
     // Find intersection between straight photon trajectory and tilted detector plane
     const double Det = SinTheta*Direction.X() - CosTheta*Direction.Z();
     const double s = ((Position.Z() - Detector.GetDetectorZPosition())*CosTheta

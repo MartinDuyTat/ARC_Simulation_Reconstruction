@@ -6,6 +6,7 @@
 #include<sstream>
 #include"TCanvas.h"
 #include"TF1.h"
+#include"TRandom.h"
 #include"ResolutionUtilities.h"
 #include"RadiatorCell.h"
 #include"ParticleTrack.h"
@@ -20,7 +21,7 @@
 namespace ResolutionUtilities {
 
   double CalculateResolution(const RadiatorCell &radiatorCell,
-			     const TracksPhotons &ParticlesPhotons) {
+			     const Tracks &Particles) {
     // Struct containing sum of Cherenkov angle, sum of square of Cherenkov
     // angle and total number of photons
     struct ResolutionStruct {
@@ -31,9 +32,10 @@ namespace ResolutionUtilities {
       bool HitTopWall = false;
     };
     // Lambda for tracking photons and calculating the Cherenkov angles
-    auto TrackPhotons = [&radiatorCell] (const auto &a) {
-      const auto particleTrack = a.first;
-      const auto Photons = a.second;
+    auto TrackPhotons = [&radiatorCell] (auto particleTrack) {
+      particleTrack.TrackThroughRadiatorCell();
+      auto Photons = particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror ?
+                     std::vector<Photon>() : particleTrack.GeneratePhotonsFromGas();
       ResolutionStruct resolutionStruct;
       for(auto Photon : Photons) {
 	auto photonHit = PhotonMapper::TracePhoton(Photon);
@@ -58,8 +60,8 @@ namespace ResolutionUtilities {
     ResolutionStruct Total{};
     std::size_t TracksWithPhotonsHittingWall = 0;
     #pragma omp parallel for num_threads(8)
-    for(std::size_t i = 0; i < ParticlesPhotons.size(); i++) {
-    ResolutionStruct resolutionStruct = TrackPhotons(ParticlesPhotons[i]);
+    for(std::size_t i = 0; i < Particles.size(); i++) {
+    ResolutionStruct resolutionStruct = TrackPhotons(Particles[i]);
     #pragma omp critical (Update)
     {
       if(resolutionStruct.HitTopWall) {
@@ -73,12 +75,12 @@ namespace ResolutionUtilities {
     const double Resolution =
       TMath::Sqrt(Total.x2/Total.N - (Total.x/Total.N)*(Total.x/Total.N));
     const double MeanNumberPhotons =
-      static_cast<double>(Total.N)/ParticlesPhotons.size();
+      static_cast<double>(Total.N)/Particles.size();
     if(MeanNumberPhotons <= 3.0) {
       return 1000.0;
     } else {
-      const auto Particles = ParticlesPhotons.size();
-      const double Penalty = (1.0*TracksWithPhotonsHittingWall)/Particles;
+      const auto NumberParticles = Particles.size();
+      const double Penalty = (10.0*TracksWithPhotonsHittingWall)/NumberParticles;
       return Resolution/TMath::Sqrt(MeanNumberPhotons) + Penalty;
     } 
   }
@@ -89,18 +91,20 @@ namespace ResolutionUtilities {
 	     double DetectorPosition,
 	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
-	     const TracksPhotons &ParticlesPhotons) {
+	     const Tracks &Particles,
+	     int Seed) {
     radiatorCell.SetMirrorCurvature(MirrorCurvature);
     radiatorCell.SetMirrorXPosition(MirrorXPosition);
     radiatorCell.SetMirrorZPosition(MirrorZPosition);
     radiatorCell.SetDetectorPosition(DetectorPosition);
     radiatorCell.SetDetectorTilt(DetectorTilt);
-    const double Resolution = CalculateResolution(radiatorCell, ParticlesPhotons);
+    gRandom->SetSeed(Seed);
+    const double Resolution = CalculateResolution(radiatorCell, Particles);
     return Resolution;
   }
 
   void PlotProjections(RadiatorCell &radiatorCell,
-                       const TracksPhotons &ParticlesPhotons) {
+                       const Tracks &Particles) {
     std::string ResultFilename = Settings::GetString("Optimisation/Filename");
     std::ifstream File(ResultFilename);
     std::vector<double> Result;
@@ -113,25 +117,26 @@ namespace ResolutionUtilities {
       Result.push_back(Value);
     }
     File.close();
+    const int Seed = Settings::GetInt("General/Seed");
     auto MinimiseFunctionMirrorCurvature = [&] (double *x, double*) {
       return fcn(x[0], Result[1], Result[2], Result[3], Result[4],
-	         radiatorCell, ParticlesPhotons);
+	         radiatorCell, Particles, Seed);
     };
     auto MinimiseFunctionXPosition = [&] (double *x, double*) {
       return fcn(Result[0], x[0], Result[2], Result[3], Result[4],
-	         radiatorCell, ParticlesPhotons);
+	         radiatorCell, Particles, Seed);
     };
     auto MinimiseFunctionZPosition = [&] (double *x, double*) {
       return fcn(Result[0], Result[1], x[0], Result[3], Result[4],
-	         radiatorCell, ParticlesPhotons);
+	         radiatorCell, Particles, Seed);
     };
     auto MinimiseFunctionDetPosition = [&] (double *x, double*) {
       return fcn(Result[0], Result[1], Result[2], x[0], Result[4],
-	         radiatorCell, ParticlesPhotons);
+	         radiatorCell, Particles, Seed);
     };
     auto MinimiseFunctionDetTilt = [&] (double *x, double*) {
       return fcn(Result[0], Result[1], Result[2], Result[3], x[0],
-	         radiatorCell, ParticlesPhotons);
+	         radiatorCell, Particles, Seed);
     };
     std::string Name1("Optimisation/MirrorCurvaturePlot_");
     double Curvature_min = Settings::GetDouble(Name1 + "min");
@@ -177,10 +182,10 @@ namespace ResolutionUtilities {
   }
 
   void DoFit(RadiatorCell &radiatorCell,
-	     const TracksPhotons &ParticlesPhotons,
+	     const Tracks &Particles,
 	     int Column,
 	     int Row) {
-    ResolutionOptimizable resolutionOptimisable(radiatorCell, ParticlesPhotons);
+    ResolutionOptimizable resolutionOptimisable(radiatorCell, Particles);
     const int NumberAgents = Settings::GetInt("Optimisation/NumberAgents");
     de::DifferentialEvolution de(resolutionOptimisable, NumberAgents);
     const int Iterations = Settings::GetInt("Optimisation/Iterations");
@@ -205,20 +210,13 @@ namespace ResolutionUtilities {
 	j++;
       }
     }
-    const double Resolution = fcn(AllParameters[0],
-	                          AllParameters[1],
-	                          AllParameters[2],
-	                          AllParameters[3],
-	                          AllParameters[4],
-	                          radiatorCell,
-	                          ParticlesPhotons);
     std::string ResultFilename = Settings::GetString("Optimisation/Filename");
     std::ofstream File(ResultFilename);
     for(std::size_t i = 0; i < TotalParameters; i++) {
       File << "Radiator_c" << Column << "_r" << Row << "_" << ParameterNames[i] << " ";
       File << AllParameters[i] << "\n";
     }
-    File << "\n" << "OptimalResolution: " << Resolution << "\n";
+    File << "\n" << "OptimalResolution: " << de.GetBestCost()*1000.0 << " mrad" << "\n";
     File.close();
   }
 

@@ -21,7 +21,7 @@
 #include"ResolutionUtilities.h"
 
 using Vector = ROOT::Math::XYZVector;
-using TracksPhotons = std::vector<std::pair<ParticleTrack, std::vector<Photon>>>;
+using Tracks = std::vector<ParticleTrack>;
 
 Vector VectorFromSpherical(double R, double CosTheta, double Phi);
 
@@ -37,9 +37,8 @@ int main(int argc, char *argv[]) {
     std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
   }
   const std::string RunMode(argv[1]);
-  if(Settings::Exists("General/Seed")) {
-    gRandom->SetSeed(Settings::GetInt("General/Seed"));
-  }
+  const int Seed = Settings::GetInt("General/Seed");
+  gRandom->SetSeed(Seed);
   std::cout << "Generating tracks and photons...\n";
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
@@ -53,9 +52,9 @@ int main(int argc, char *argv[]) {
   const double MomentumMag = Settings::GetDouble("Particle/Momentum");
   const double z_min = CellPosition.X() - HexagonSize/2.0;
   const double z_max = CellPosition.X() + HexagonSize/2.0;
-  TracksPhotons ParticlesPhotons;
+  Tracks Particles;
   const double TotalNumberTracks = Settings::GetInt("General/NumberTracks");
-  ParticlesPhotons.reserve(TotalNumberTracks);
+  Particles.reserve(TotalNumberTracks);
   int NumberTracks = 0;
   while(NumberTracks < TotalNumberTracks) {
     const double z = gRandom->Uniform(z_min, z_max);
@@ -69,12 +68,7 @@ int main(int argc, char *argv[]) {
     if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
       continue;
     }
-    particleTrack.TrackThroughRadiatorCell();
-    if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
-      continue;
-    }
-    auto Photons = particleTrack.GeneratePhotonsFromGas();
-    ParticlesPhotons.push_back(std::make_pair(particleTrack, std::move(Photons)));
+    Particles.push_back(particleTrack);
     NumberTracks++;
   }
   if(Settings::GetBool("Optimisation/SinglePoints")) {
@@ -85,7 +79,7 @@ int main(int argc, char *argv[]) {
 	std::cin >> xx;
       }
       double Value = ResolutionUtilities::fcn(x[0], x[1], x[2], x[3], x[4],
-					      radiatorCell, ParticlesPhotons);
+					      radiatorCell, Particles, Seed);
       std::cout << "fcn = " << Value << "\n";
       std::cout << "Calculate new value?(y/n)\n";
       std::string Answer;
@@ -97,12 +91,12 @@ int main(int argc, char *argv[]) {
   }
   if(Settings::GetBool("Optimisation/DoFit")) {
     std::cout << "Differential evolution ready, sending off agents...\n";
-    ResolutionUtilities::DoFit(radiatorCell, ParticlesPhotons, Column, Row);
+    ResolutionUtilities::DoFit(radiatorCell, Particles, Column, Row);
     std::cout << "ARC is optimised!\n";
   }
   if(Settings::GetBool("Optimisation/PlotProjections")) {
     std::cout << "Plotting...\n";
-    ResolutionUtilities::PlotProjections(radiatorCell, ParticlesPhotons);
+    ResolutionUtilities::PlotProjections(radiatorCell, Particles);
     std::cout << "Resolution projections plotted\n";
   }
   return 0;
