@@ -30,7 +30,15 @@ SiPM::SiPM():
 }
 
 PhotonHit SiPM::AddPhotonHit(Photon &photon) const {
-  PhotonHit photonHit(photon.m_Position, &photon);
+  const Vector DetectorCentre(m_DetectorPositionX,
+			      0.0,
+			      m_DetectorPositionZ);
+  const Vector PhotonXZPosition(photon.m_Position.X(),
+				0.0,
+				photon.m_Position.Z());
+  PhotonHit photonHit{photon.m_Position,
+                      &photon,
+                      PhotonXZPosition - DetectorCentre};
   if(photon.m_Status != Photon::Status::MirrorHit) {
     return photonHit;
   }

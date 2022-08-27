@@ -43,7 +43,7 @@ double ResolutionOptimizable::EvaluateCost(std::vector<double> x) const {
   }
   const double Resolution =
     ResolutionUtilities::fcn(xx[0], xx[1], xx[2], xx[3], xx[4],
-			     *m_RadiatorCell, *m_Particles, m_Seed);
+			     *m_RadiatorCell, *m_Particles, m_Seed, true);
   return Resolution;
 }
 

@@ -21,13 +21,6 @@ namespace InterpolationType = ROOT::Math::Interpolation;
 
 struct PhotonHit {
   /**
-   * Constructor saving the photon hits
-   */
-  PhotonHit(const Vector &HitPosition, const Photon *photon):
-  m_HitPosition(HitPosition),
-  m_Photon(photon) {
-  }
-  /**
    * Detector hit coordinates
    */
   const Vector m_HitPosition;
@@ -35,6 +28,10 @@ struct PhotonHit {
    * Pointer to the photon that caused this hit
    */
   const Photon *m_Photon;
+  /**
+   * Vector between photon hit and centre of detector
+   */
+  const Vector m_CentreHitDistance;
 };
 
 class SiPM {

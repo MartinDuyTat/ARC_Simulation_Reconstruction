@@ -202,7 +202,14 @@ int main(int argc, char *argv[]) {
       }
       CherenkovTree.Fill();
     }
-    eventDisplay.DrawEventDisplay("EventDisplay.pdf");
+    std::string EventDisplayFilename("EventDisplay");
+    if(Settings::GetInt("EventDisplay/RowToDraw") == 1) {
+      EventDisplayFilename += "_MainRow";
+    } else if(Settings::GetInt("EventDisplay/RowToDraw") == 2) {
+      EventDisplayFilename += "_UpperRow";
+    }
+    EventDisplayFilename += ".pdf";
+    eventDisplay.DrawEventDisplay(EventDisplayFilename);
     CherenkovTree.Write();
     CherenkovFile.Close();
   }

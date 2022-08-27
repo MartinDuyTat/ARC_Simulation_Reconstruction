@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 	std::cin >> xx;
       }
       double Value = ResolutionUtilities::fcn(x[0], x[1], x[2], x[3], x[4],
-					      radiatorCell, Particles, Seed);
+					      radiatorCell, Particles, Seed, false);
       std::cout << "fcn = " << Value << "\n";
       std::cout << "Calculate new value?(y/n)\n";
       std::string Answer;

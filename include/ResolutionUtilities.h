@@ -20,7 +20,8 @@ namespace ResolutionUtilities {
    * Helper function where the (parallel) calculation takes place
    */
   double CalculateResolution(const RadiatorCell &radiatorCell,
-			     const Tracks &Particles);
+			     const Tracks &Particles,
+			     bool IncludeCentrePenalty);
   /**
    * The "cost" function for minimisation
    */
@@ -31,7 +32,8 @@ namespace ResolutionUtilities {
 	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
 	     const Tracks &Particles,
-	     int Seed);
+	     int Seed,
+	     bool IncludeCentrePenalty);
   /**
    * Load fit results and plot the fit projections
    */
