@@ -63,7 +63,7 @@ class ParticleTrack {
   /**
    * Set radiator
    */
-  void SetRadiator(const RadiatorCell &radiatorCell);
+  void SetRadiator(const RadiatorCell *radiatorCell);
   /**
    * Convert to local radiator coordinates
    */
@@ -226,7 +226,7 @@ class ParticleTrack {
    * Helper function to swap radiator cell if particle is outside in the theta direction
    * @return Returns true if swapping radiator cell was successful (no edges hit)
    */
-  bool SwapRadiatorCell();
+  //bool SwapRadiatorCell();
   /**
    * Helper function to change coordinate origin
    */

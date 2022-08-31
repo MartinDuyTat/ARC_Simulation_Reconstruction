@@ -47,11 +47,11 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
 }
 
 void ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
-  m_RadiatorCell = &(*radiatorArray.FindRadiator(*this));
+  m_RadiatorCell = radiatorArray.FindRadiator(*this);
 }
 
-void ParticleTrack::SetRadiator(const RadiatorCell &radiatorCell) {
-  m_RadiatorCell = &radiatorCell;
+void ParticleTrack::SetRadiator(const RadiatorCell *radiatorCell) {
+  m_RadiatorCell = radiatorCell;
 }
 
 void ParticleTrack::ConvertToRadiatorCoordinates() {
@@ -113,7 +113,7 @@ void ParticleTrack::TrackThroughGasToMirror() {
                Location::Mirror : Location::MissedMirror;
 }
 
-bool ParticleTrack::SwapRadiatorCell() {
+/*bool ParticleTrack::SwapRadiatorCell() {
   if(m_RadiatorCell->IsInsideCell(m_Position)) {
     return true;
   }
@@ -139,7 +139,7 @@ bool ParticleTrack::SwapRadiatorCell() {
   auto NewRadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
   ChangeCoordinateOrigin(NewRadiatorPosition - CurrentRadiatorPosition);
   return true;
-}
+}*/
 
 void ParticleTrack::ChangeCoordinateOrigin(const Vector &Shift) {
   m_Position -= Shift;

@@ -18,7 +18,6 @@
 #include"Photon.h"
 
 using Vector = ROOT::Math::XYZVector;
-using RadiatorIter = std::vector<RadiatorCell>::iterator;
 
 class RadiatorCell {
  public:
@@ -60,7 +59,7 @@ class RadiatorCell {
   /**
    * Function that checks if the position is inside the radiator
    */
-  bool IsInsideCell(const Vector &Position) const;
+  virtual bool IsInsideCell(const Vector &Position) const;
   /**
    * Function that checks if the photon is inside the radiator
    */
@@ -68,7 +67,8 @@ class RadiatorCell {
   /**
    * Draw radiator geometry
    */
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorGeometry() const;
+  virtual std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
+  DrawRadiatorGeometry() const;
   /**
    * Get length between two edges of a hexagon cell
    */
@@ -102,7 +102,7 @@ class RadiatorCell {
    * Set the detector tilt, in radians
    */
   void SetDetectorTilt(double Angle);
- private:
+ protected:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
    */

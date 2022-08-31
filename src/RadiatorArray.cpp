@@ -6,6 +6,7 @@
 #include"Math/Vector3Dfwd.h"
 #include"RadiatorArray.h"
 #include"RadiatorCell.h"
+#include"HalfRadiatorCell.h"
 #include"Settings.h"
 #include"ParticleTrack.h"
 
@@ -18,14 +19,16 @@ RadiatorArray::RadiatorArray():
     m_Cells.reserve(2*m_NumberMainRowCells);
     for(int i = 0; i < m_NumberMainRowCells; i++) {
       // Main row
-      m_Cells.emplace_back(i, 1, m_xHexDist);
+      m_Cells.emplace_back(std::make_unique<RadiatorCell>(i, 1, m_xHexDist));
     }
-    for(int i = 0; i < m_NumberMainRowCells; i++) {
+    for(int i = 0; i < m_NumberMainRowCells - 1; i++) {
       // Upper row
-      m_Cells.emplace_back(i + 1, 2, m_xHexDist);
+      m_Cells.emplace_back(std::make_unique<RadiatorCell>(i + 1, 2, m_xHexDist));
     }
+    m_Cells.emplace_back(std::make_unique<HalfRadiatorCell>(m_NumberMainRowCells,
+							    2, m_xHexDist));
   } else {
-    m_Cells.emplace_back(0, 0, m_xHexDist);
+    m_Cells.emplace_back(std::make_unique<RadiatorCell>(0, 0, m_xHexDist));
   }
 }
 
@@ -33,8 +36,8 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 RadiatorArray::DrawRadiatorArray() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorArrayObjects;
   for(const auto &Cell : m_Cells) {
-    if(Cell.GetCellNumber().second == Settings::GetInt("EventDisplay/RowToDraw")) {
-      auto RadiatorObjects = Cell.DrawRadiatorGeometry();
+    if(Cell->GetCellNumber().second == Settings::GetInt("EventDisplay/RowToDraw")) {
+      auto RadiatorObjects = Cell->DrawRadiatorGeometry();
       RadiatorArrayObjects.insert(RadiatorArrayObjects.end(),
 				  std::make_move_iterator(RadiatorObjects.begin()),
 				  std::make_move_iterator(RadiatorObjects.end()));
@@ -43,7 +46,7 @@ RadiatorArray::DrawRadiatorArray() const {
   return RadiatorArrayObjects;
 }
 
-RadiatorIter RadiatorArray::operator()(int i, int j) {
+const RadiatorCell* RadiatorArray::operator()(int i, int j) {
   if(m_FullArray) {
     if((j != 1 && j != 2) || (i == 0 && j == 2)) {
       throw std::invalid_argument("Radiator ("
@@ -53,9 +56,9 @@ RadiatorIter RadiatorArray::operator()(int i, int j) {
 				  + ") does not exist");
     } else {
       if(j == 1) {
-	return m_Cells.begin() + i;
+	return (m_Cells.begin() + i)->get();
       } else {
-	return m_Cells.begin() + m_NumberMainRowCells + i - 1;
+	return (m_Cells.begin() + m_NumberMainRowCells + i - 1)->get();
       }
     }
   } else {
@@ -66,12 +69,12 @@ RadiatorIter RadiatorArray::operator()(int i, int j) {
 				  + std::to_string(j)
 				  + " )");
     } else {
-      return m_Cells.begin();
+      return m_Cells.begin()->get();
     }
   }
 }
 
-RadiatorIter RadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
+const RadiatorCell* RadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
   if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
     throw std::runtime_error("Cannot find radiator since track is not at entrance window");
   }
@@ -121,7 +124,7 @@ RadiatorIter RadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
       return (*this)(xIndex, yIndex);
     }
   } else {
-    return m_Cells.begin();
+    return m_Cells.begin()->get();
   }
 }
 

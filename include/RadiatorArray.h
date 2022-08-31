@@ -31,12 +31,12 @@ class RadiatorArray {
   /**
    * Operator overload to get the individual radiator cells
    */
-  RadiatorIter operator()(int i, int j);
+  const RadiatorCell* operator()(int i, int j);
   /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  RadiatorIter FindRadiator(ParticleTrack &particleTrack);
+  const RadiatorCell* FindRadiator(ParticleTrack &particleTrack);
   /**
    * Check if particle track hits below the main row
    * @param x Position along the z direction of the barrel, or x in local coordinates
@@ -59,7 +59,7 @@ class RadiatorArray {
   /**
    * Vector containing all the radiator cells
    */
-  std::vector<RadiatorCell> m_Cells;
+  std::vector<std::unique_ptr<RadiatorCell>> m_Cells;
   /**
    * Flag that is true if the full geometry is included, otherwise a single cell in the middle is used
    */

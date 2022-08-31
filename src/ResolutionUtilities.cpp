@@ -23,8 +23,7 @@
 
 namespace ResolutionUtilities {
 
-  double CalculateResolution(const RadiatorCell &radiatorCell,
-			     const Tracks &Particles,
+  double CalculateResolution(const Tracks &Particles,
 			     bool IncludeCentrePenalty) {
     // Struct containing sum of Cherenkov angle, sum of square of Cherenkov
     // angle and total number of photons
@@ -38,7 +37,7 @@ namespace ResolutionUtilities {
       Vector CentreHitDistance{0.0, 0.0, 0.0};
     };
     // Lambda for tracking photons and calculating the Cherenkov angles
-    auto TrackPhotons = [&radiatorCell] (auto particleTrack) {
+    auto TrackPhotons = [] (auto particleTrack) {
       particleTrack.TrackThroughRadiatorCell();
       auto Photons = particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror ?
                      std::vector<Photon>() : particleTrack.GeneratePhotonsFromGas();
@@ -124,8 +123,7 @@ namespace ResolutionUtilities {
     radiatorCell.SetDetectorPosition(DetectorPosition);
     radiatorCell.SetDetectorTilt(DetectorTilt);
     gRandom->SetSeed(Seed);
-    const double Resolution = CalculateResolution(radiatorCell,
-	                                          Particles,
+    const double Resolution = CalculateResolution(Particles,
 	                                          IncludeCentrePenalty);
     return Resolution;
   }

@@ -19,8 +19,7 @@ namespace ResolutionUtilities {
   /**
    * Helper function where the (parallel) calculation takes place
    */
-  double CalculateResolution(const RadiatorCell &radiatorCell,
-			     const Tracks &Particles,
+  double CalculateResolution(const Tracks &Particles,
 			     bool IncludeCentrePenalty);
   /**
    * The "cost" function for minimisation
