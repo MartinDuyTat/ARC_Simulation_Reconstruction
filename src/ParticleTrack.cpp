@@ -89,7 +89,7 @@ void ParticleTrack::ConvertToRadiatorCoordinates() {
   // Save the entrance window position
   m_EntranceWindowPosition = m_Position;
   // Check that particle is inside the correct cell
-  assert(m_RadiatorCell->IsInsideCell(m_Position));
+  //assert(m_RadiatorCell->IsInsideCell(m_Position));
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {

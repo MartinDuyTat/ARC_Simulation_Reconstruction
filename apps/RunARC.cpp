@@ -30,14 +30,9 @@
 #include"SiPM.h"
 #include"BarrelRadiatorArray.h"
 #include"EndCapRadiatorArray.h"
+#include"Utilities.h"
 
 using Vector = ROOT::Math::XYZVector;
-
-Vector VectorFromSpherical(double R, double CosTheta, double Phi);
-
-Vector GenerateRandomBarrelTrack(double &CosTheta, double &Phi);
-
-Vector GenerateRandomEndCapTrack();
 
 int main(int argc, char *argv[]) {
   if(argc%2 != 0) {
@@ -69,9 +64,10 @@ int main(int argc, char *argv[]) {
   eventDisplay.AddObject(radiatorArray->DrawRadiatorArray());
   if(RunMode == "SingleTrack") {
     std::cout << "Run mode: Single track\n";
-    const Vector Momentum = VectorFromSpherical(Settings::GetDouble("Particle/Momentum"),
-						Settings::GetDouble("Particle/CosTheta"),
-						Settings::GetDouble("Particle/Phi"));
+    const Vector Momentum = Utilities::VectorFromSpherical(
+      Settings::GetDouble("Particle/Momentum"),
+      Settings::GetDouble("Particle/CosTheta"),
+      Settings::GetDouble("Particle/Phi"));
     const int ParticleID = Settings::GetInt("Particle/ID");;
     ParticleTrack particleTrack(ParticleID, Momentum);
     particleTrack.TrackThroughTracker(InnerTracker);
@@ -138,9 +134,9 @@ int main(int argc, char *argv[]) {
       RadiatorColumnNumber = -1;
       auto GetMomentum = [&] () {
 	if(BarrelOrEndcap == "Barrel") {
-	  return GenerateRandomBarrelTrack(CosTheta, Phi);
+	  return Utilities::GenerateRandomBarrelTrack(CosTheta, Phi);
 	} else if(BarrelOrEndcap == "EndCap") {
-	  return GenerateRandomEndCapTrack();
+	  return Utilities::GenerateRandomEndCapTrack();
 	} else {
 	  return Vector(0.0, 0.0, 0.0);
 	}
@@ -231,42 +227,4 @@ int main(int argc, char *argv[]) {
     CherenkovFile.Close();
   }
   return 0;
-}
-
-Vector VectorFromSpherical(double R, double CosTheta, double Phi) {
-  const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
-  const double CosPhi = TMath::Cos(Phi);
-  const double SinPhi = TMath::Sin(Phi);
-  return Vector{R*CosPhi*SinTheta, R*SinPhi*SinTheta, R*CosTheta};
-}
-
-Vector GenerateRandomBarrelTrack(double &CosTheta, double &Phi) {
-  const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-  const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
-				    Settings::GetDouble("Particle/z_max"));
-  CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
-  Phi = Settings::GetBool("Particle/RandomPhi")
-    ? gRandom->Uniform(-TMath::Pi(), TMath::Pi())
-    : gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
-		       Settings::GetDouble("Particle/Phi_max"));
-  const double MomentumMag = Settings::GetDouble("Particle/Momentum");
-  const Vector Momentum = VectorFromSpherical(MomentumMag, CosTheta, Phi);
-  return Momentum;
-}
-
-Vector GenerateRandomEndCapTrack() {
-  const double Radius = Settings::GetDouble("ARCGeometry/Radius") + 0.10;
-  const double z = Settings::GetDouble("ARCGeometry/BarrelZ");
-  auto GetUniformCircle = [Radius] () {
-    double x = Radius, y = Radius;
-    while(x*x + y*y > Radius*Radius) {
-      x = gRandom->Uniform(-Radius, Radius);
-      y = gRandom->Uniform(-Radius, Radius);
-    }
-    return std::make_pair(x, y);
-  };
-  auto [x, y] = GetUniformCircle();
-  const double MomentumMag = Settings::GetDouble("Particle/Momentum");
-  const Vector Momentum = Vector(x, y, z).Unit()*MomentumMag;
-  return Momentum;
 }

@@ -22,11 +22,10 @@
 #include"TrackingVolume.h"
 #include"ParticleTrack.h"
 #include"ResolutionUtilities.h"
+#include"Utilities.h"
 
 using Vector = ROOT::Math::XYZVector;
 using Tracks = std::vector<ParticleTrack>;
-
-Vector VectorFromSpherical(double R, double CosTheta, double Phi);
 
 int main(int argc, char *argv[]) {
   if(argc%2 != 1 || argc < 3) {
@@ -50,14 +49,19 @@ int main(int argc, char *argv[]) {
   const int Column = std::stoi(std::string(argv[1]));
   const int Row = std::stoi(std::string(argv[2]));
   std::unique_ptr<RadiatorCell> radiatorCell = nullptr;
-  if(Row == 2 && Column == Settings::GetDouble("ARCGeometry/CellsPerRow")) {
-    radiatorCell = std::make_unique<HalfRadiatorCell>(Column, Row, HexagonSize);
+  const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
+  if(BarrelOrEndcap == "Barrel") {
+    if(Row == 2 && Column == Settings::GetDouble("ARCGeometry/CellsPerRow")) {
+      radiatorCell = std::make_unique<HalfRadiatorCell>(Column, Row, HexagonSize);
+    } else {
+      radiatorCell = std::make_unique<BarrelRadiatorCell>(Column, Row, HexagonSize);
+    }
+  } else if(BarrelOrEndcap == "EndCap") {
+    radiatorCell = std::make_unique<EndCapRadiatorCell>(Column, Row, HexagonSize);
   } else {
-    radiatorCell = std::make_unique<BarrelRadiatorCell>(Column, Row, HexagonSize);
+    return 0;
   }
   const Vector CellPosition = radiatorCell->GetRadiatorPosition();
-  const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-  const double MomentumMag = Settings::GetDouble("Particle/Momentum");
   const double z_min = CellPosition.X() - HexagonSize/2.0;
   const double z_max = CellPosition.X() + HexagonSize/2.0;
   Tracks Particles;
@@ -65,10 +69,16 @@ int main(int argc, char *argv[]) {
   Particles.reserve(TotalNumberTracks);
   int NumberTracks = 0;
   while(NumberTracks < TotalNumberTracks) {
-    const double z = gRandom->Uniform(z_min, z_max);
-    const double CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
-    const double Phi = gRandom->Uniform(-0.1, 0.1);
-    const Vector Momentum = VectorFromSpherical(MomentumMag, CosTheta, Phi);
+    auto GetMomentum = [=] () {
+      if(BarrelOrEndcap == "Barrel") {
+	return Utilities::GenerateRandomBarrelTrackZRange(z_min, z_max);
+      } else if(BarrelOrEndcap == "EndCap") {
+	return Utilities::GenerateRandomEndCapTrack();
+      } else {
+	return Vector(0.0, 0.0, 0.0);
+      }
+    };
+    const Vector Momentum = GetMomentum();
     ParticleTrack particleTrack(ParticleID, Momentum, Vector(0.0, 0.0, 0.0));
     particleTrack.TrackThroughTracker(InnerTracker);
     particleTrack.SetRadiator(radiatorCell.get());
@@ -109,12 +119,3 @@ int main(int argc, char *argv[]) {
   }
   return 0;
 }
-
-Vector VectorFromSpherical(double R, double CosTheta, double Phi) {
-  const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
-  const double CosPhi = TMath::Cos(Phi);
-  const double SinPhi = TMath::Sin(Phi);
-  return Vector{R*CosPhi*SinTheta, R*SinPhi*SinTheta, R*CosTheta};
-}
-
-

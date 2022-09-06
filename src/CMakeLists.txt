@@ -18,7 +18,8 @@ add_library(ARC_Simulation_Reconstruction
 	    ResolutionUtilities.cpp
 	    Settings.cpp
 	    SiPM.cpp
-	    TrackingVolume.cpp)
+	    TrackingVolume.cpp
+	    Utilities.cpp)
 
 target_include_directories(ARC_Simulation_Reconstruction PUBLIC ../include)
 

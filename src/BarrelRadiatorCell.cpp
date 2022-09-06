@@ -23,8 +23,8 @@ BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
 BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
 				       int CellRowNumber,
 				       double HexagonSize):
-  BarrelRadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize,
-		     GetCellPosition(CellColumnNumber, CellRowNumber)) {
+  RadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize),
+  m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)) {
 }
 
 const Vector& BarrelRadiatorCell::GetRadiatorPosition() const {

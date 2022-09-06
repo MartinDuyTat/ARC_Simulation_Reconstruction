@@ -26,7 +26,7 @@ double TrackingVolume::GetFieldStrength() const {
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 TrackingVolume::DrawARCGeometry() const {
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Lines;
+  /*std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Lines;
   const double ThetaLength = m_Length/(2*m_CellsPerRow - 1);
   const double VesselThickness = Settings::GetDouble("RadiatorCell/VesselThickness");
   if(Settings::GetBool("General/FullArray")) {
@@ -49,5 +49,6 @@ TrackingVolume::DrawARCGeometry() const {
     Line2.SetLineColor(kBlack);
     Lines.push_back(std::make_pair(std::make_unique<TLine>(Line2), ""));
   }
-  return Lines;
+  return Lines;*/
+  return {};
 }
