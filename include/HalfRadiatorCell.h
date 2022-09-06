@@ -6,9 +6,9 @@
 #ifndef HALFRADIATORCELL
 #define HAlFRADIATORCELL
 
-#include"RadiatorCell.h"
+#include"BarrelRadiatorCell.h"
 
-class HalfRadiatorCell: public RadiatorCell {
+class HalfRadiatorCell: public BarrelRadiatorCell {
  public:
   /**
    * Default constructor that simply calls the parent constructor

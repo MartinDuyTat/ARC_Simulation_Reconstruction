@@ -16,7 +16,8 @@
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 #include"Settings.h"
-#include"RadiatorCell.h"
+#include"BarrelRadiatorCell.h"
+#include"EndCapRadiatorCell.h"
 #include"HalfRadiatorCell.h"
 #include"TrackingVolume.h"
 #include"ParticleTrack.h"
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
   if(Row == 2 && Column == Settings::GetDouble("ARCGeometry/CellsPerRow")) {
     radiatorCell = std::make_unique<HalfRadiatorCell>(Column, Row, HexagonSize);
   } else {
-    radiatorCell = std::make_unique<RadiatorCell>(Column, Row, HexagonSize);
+    radiatorCell = std::make_unique<BarrelRadiatorCell>(Column, Row, HexagonSize);
   }
   const Vector CellPosition = radiatorCell->GetRadiatorPosition();
   const double Radius = Settings::GetDouble("ARCGeometry/Radius");

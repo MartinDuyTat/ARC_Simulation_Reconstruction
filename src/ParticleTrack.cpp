@@ -33,21 +33,35 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   if(m_Location != Location::TrackerVolume) {
     throw std::runtime_error("Cannot track particle through inner tracker again");
   }
-  // Solve quadratic to track particle to edge of tracking barrel
-  const double b = m_Position.X()*m_Momentum.Unit().X()
-                 + m_Position.Y()*m_Momentum.Unit().Y();
-  const double c = m_Position.X()*m_Position.X()
-                 + m_Position.Y()*m_Position.Y()
-                 - InnerTracker.GetRadius()*InnerTracker.GetRadius();
-  const double s = TMath::Sqrt(b*b - c) - b;
-  const double xyUnit = TMath::Sqrt(TMath::Power(m_Momentum.Unit().X(), 2) +
-				    TMath::Power(m_Momentum.Unit().Y(), 2));
-  m_Position += s*m_Momentum.Unit()/xyUnit;
+  // Check if we're considering the end cap or barrel
+  if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
+    // Solve quadratic to track particle to edge of tracking barrel
+    const double b = m_Position.X()*m_Momentum.Unit().X()
+      + m_Position.Y()*m_Momentum.Unit().Y();
+    const double c = m_Position.X()*m_Position.X()
+      + m_Position.Y()*m_Position.Y()
+      - InnerTracker.GetRadius()*InnerTracker.GetRadius();
+    const double s = TMath::Sqrt(b*b - c) - b;
+    const double xyUnit = TMath::Sqrt(TMath::Power(m_Momentum.Unit().X(), 2) +
+				      TMath::Power(m_Momentum.Unit().Y(), 2));
+    m_Position += s*m_Momentum.Unit()/xyUnit;
+  } else {
+    // z-distance to end cap
+    const double BarrelZ = Settings::GetDouble("ARCGeometry/BarrelZ");
+    const double ZDist = BarrelZ - m_Position.Z();
+    const double Slope = 1.0/m_Momentum.Z();
+    m_Position += m_Momentum*ZDist*Slope;
+  }
   m_Location = Location::EntranceWindow;
 }
 
-void ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
+bool ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
   m_RadiatorCell = radiatorArray.FindRadiator(*this);
+  if(m_RadiatorCell) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void ParticleTrack::SetRadiator(const RadiatorCell *radiatorCell) {
@@ -59,10 +73,12 @@ void ParticleTrack::ConvertToRadiatorCoordinates() {
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
     throw std::runtime_error("Particle position is already in local radiator coordinates");
   }
-  // Then rotate around y-axis so that z axis now points towards the high pT cell
-  SwapXZ(m_InitialPosition);
-  SwapXZ(m_Position);
-  SwapXZ(m_Momentum);
+  // For barrel, rotate around y-axis so that z axis now points towards the high pT cell
+  if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
+    SwapXZ(m_InitialPosition);
+    SwapXZ(m_Position);
+    SwapXZ(m_Momentum);
+  }
   // Finally shift coordinates so that the origin is the detector plane of the radiator cell
   m_Position -= m_RadiatorCell->GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
@@ -72,6 +88,8 @@ void ParticleTrack::ConvertToRadiatorCoordinates() {
   }
   // Save the entrance window position
   m_EntranceWindowPosition = m_Position;
+  // Check that particle is inside the correct cell
+  assert(m_RadiatorCell->IsInsideCell(m_Position));
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {
@@ -280,9 +298,13 @@ const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   // TODO: Move this to separate class
-  const double Efficiency = 0.60*0.90*0.80;
-  const double DeltaE = 2.55;
-  return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
+  if(Beta*n < 1.0) {
+    return 0.0;
+  } else {
+    const double Efficiency = 0.60*0.90*0.80;
+    const double DeltaE = 2.55;
+    return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
+  }
 }
 
 void ParticleTrack::MapPhi(double DeltaPhi) {
@@ -296,6 +318,12 @@ void ParticleTrack::ReflectZ() {
   m_Position.SetZ(-m_Position.Z());
   m_InitialPosition.SetZ(-m_InitialPosition.Z());
   m_Momentum.SetZ(-m_Momentum.Z());
+}
+
+void ParticleTrack::ReflectY() {
+  m_Position.SetY(-m_Position.Y());
+  m_InitialPosition.SetY(-m_InitialPosition.Y());
+  m_Momentum.SetY(-m_Momentum.Y());
 }
 
 void ParticleTrack::SwapXZ(Vector &Vec) const {

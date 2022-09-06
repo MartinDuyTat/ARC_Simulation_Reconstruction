@@ -1,26 +1,51 @@
-// Martin Duy Tat 27th August 2022
+// Martin Duy Tat 6th September 2022
 
+#include<vector>
+#include<memory>
+#include<utility>
+#include<string>
 #include"TArc.h"
 #include"TLine.h"
-#include"HalfRadiatorCell.h"
+#include"TMath.h"
+#include"TObject.h"
+#include"BarrelRadiatorCell.h"
+#include"RadiatorCell.h"
 #include"Settings.h"
 
-HalfRadiatorCell::HalfRadiatorCell(int CellColumnNumber,
-				   int CellRowNumber,
-				   double HexagonSize):
-  BarrelRadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize) {
+BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
+				       int CellRowNumber,
+				       double HexagonSize,
+				       const Vector &Position):
+  RadiatorCell::RadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize),
+  m_Position(Position) {
 }
 
-bool HalfRadiatorCell::IsInsideCell(const Vector &Position) const {
-  if(Position.X() > 0.0) {
-    return false;
-  } else {
-    return BarrelRadiatorCell::IsInsideCell(Position);
-  }
+BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
+				       int CellRowNumber,
+				       double HexagonSize):
+  BarrelRadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize,
+		     GetCellPosition(CellColumnNumber, CellRowNumber)) {
+}
+
+const Vector& BarrelRadiatorCell::GetRadiatorPosition() const {
+  return m_Position;
+}
+
+bool BarrelRadiatorCell::IsInsideCell(const Vector &Position) const {
+  // Get x and y coordinates after mapping everything to first quadrant
+  const double x = TMath::Abs(Position.X());
+  // Need a stretching factor in y direction because of the curvature
+  const double Radius = m_Position.Z() - m_CoolingThickness;
+  const double TanTheta = Position.Y()/(Radius + m_CoolingThickness);
+  const double SecTheta = TMath::Sqrt(1 + TanTheta*TanTheta);
+  const double Stretch = SecTheta*(1 + m_CoolingThickness/Radius);
+  const double y = TMath::Abs(Position.Y())/Stretch;
+  // First part is checking the sloped part, the other is the vertical part
+  return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
-HalfRadiatorCell::DrawRadiatorGeometry() const {
+BarrelRadiatorCell::DrawRadiatorGeometry() const {
   // First find the mirror intersections with the walls in local coordinates
   // by solving a quadratic
   const double b = m_MirrorCentre.Z();
@@ -28,8 +53,10 @@ HalfRadiatorCell::DrawRadiatorGeometry() const {
                       + m_MirrorCentre.Mag2()
                       - m_MirrorCurvature*m_MirrorCurvature
                       + m_MirrorCentre.X()*m_HexagonSize;
-  const double c_right = m_MirrorCentre.Mag2()
-                       - m_MirrorCurvature*m_MirrorCurvature;
+  const double c_right = TMath::Power(m_HexagonSize/2.0, 2)
+                       + m_MirrorCentre.Mag2()
+                       - m_MirrorCurvature*m_MirrorCurvature
+                       - m_MirrorCentre.X()*m_HexagonSize;
   const double s_left = TMath::Sqrt(b*b - c_left);
   const double s_right = TMath::Sqrt(b*b - c_right);
   const double SinLeft = s_left/m_MirrorCurvature;
@@ -78,9 +105,9 @@ HalfRadiatorCell::DrawRadiatorGeometry() const {
 		 + m_RadiatorThickness - m_VesselThickness);
   LeftLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(LeftLine), ""));
-  TLine RightLine(m_Position.X(),
+  TLine RightLine(m_HexagonSize/2.0 + m_Position.X(),
 		  Settings::GetDouble("ARCGeometry/Radius") - m_VesselThickness,
-		  m_Position.X(),
+		  m_HexagonSize/2.0 + m_Position.X(),
 		  Settings::GetDouble("ARCGeometry/Radius")
 		  + m_RadiatorThickness - m_VesselThickness);
   RightLine.SetLineColor(kBlack);
@@ -88,7 +115,7 @@ HalfRadiatorCell::DrawRadiatorGeometry() const {
   // Draw the detector plane
   TLine DetectorLine(-m_HexagonSize/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness,
-		     m_Position.X(),
+		     m_HexagonSize/2.0 + m_Position.X(),
 		     Settings::GetDouble("ARCGeometry/Radius") + m_CoolingThickness);
   DetectorLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(DetectorLine), ""));
@@ -96,7 +123,7 @@ HalfRadiatorCell::DrawRadiatorGeometry() const {
   TLine AerogelLine(-m_HexagonSize/2.0 + m_Position.X(),
 		    Settings::GetDouble("ARCGeometry/Radius")
 		    + m_CoolingThickness + m_AerogelThickness,
-		    m_Position.X(),
+		    m_HexagonSize/2.0 + m_Position.X(),
 		    Settings::GetDouble("ARCGeometry/Radius")
 		    + m_CoolingThickness + m_AerogelThickness);
   AerogelLine.SetLineColor(kBlack);
@@ -104,11 +131,34 @@ HalfRadiatorCell::DrawRadiatorGeometry() const {
   // Draw the bottom cooling plane
   TLine CoolingLine(-m_HexagonSize/2.0 + m_Position.X(),
 		    Settings::GetDouble("ARCGeometry/Radius"),
-		    m_Position.X(),
+		    m_HexagonSize/2.0 + m_Position.X(),
 		    Settings::GetDouble("ARCGeometry/Radius"));
   CoolingLine.SetLineColor(kBlack);
   Objects.push_back(std::make_pair(std::make_unique<TLine>(CoolingLine), ""));
   // Draw SiPM
   Objects.push_back(std::make_pair(m_Detector.DrawSiPM(GetRadiatorPosition()), ""));
   return Objects;
+}
+
+Vector BarrelRadiatorCell::GetCellPosition(int CellColumnNumber,
+					   int CellRowNumber) const {
+  if(CellColumnNumber > 9 || CellColumnNumber < 0) {
+    throw std::invalid_argument("Invalid cell column number: "
+				+ std::to_string(CellColumnNumber));
+  }
+  const double ZPosition = Settings::GetDouble("ARCGeometry/Radius")
+                         + m_CoolingThickness;
+  if(CellRowNumber == 0 && CellColumnNumber == 0) {
+    return Vector(0.0, 0.0, ZPosition);
+  }
+  if(CellRowNumber == 1) {
+    const double XPosition = m_HexagonSize*CellColumnNumber;
+    return Vector(XPosition, 0.0, ZPosition);
+  } else if(CellRowNumber == 2) {
+    const double XPosition = m_HexagonSize*(CellColumnNumber - 0.5);
+    return Vector(XPosition, 0.0, ZPosition);
+  } else {
+    throw std::invalid_argument("Invalid cell row number: "
+				+ std::to_string(CellRowNumber));
+  }
 }

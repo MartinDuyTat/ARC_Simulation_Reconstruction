@@ -1,6 +1,6 @@
-// Martin Duy Tat 23rd June 2022
+// Martin Duy Tat 2nd September 2022
 /**
- * RadiatorArray contains the full ARC geometry of radiators
+ * RadiatorArray is an abstract class that represent an array of radiator cells
  */
 
 #ifndef RADIATORARRAY
@@ -8,62 +8,35 @@
 
 #include<vector>
 #include<memory>
-#include<utility>
-#include<string>
-#include"TObject.h"
-#include"Math/Vector3Dfwd.h"
 #include"RadiatorCell.h"
-
-using Vector = ROOT::Math::XYZVector;
 
 class ParticleTrack;
 
 class RadiatorArray {
  public:
   /**
-   * Constructor that sets up the geometry
+   * Default constructor
    */
   RadiatorArray();
   /**
-   * Draw all the radiator cells
-   */
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorArray() const;
-  /**
    * Operator overload to get the individual radiator cells
    */
-  const RadiatorCell* operator()(int i, int j);
+  virtual const RadiatorCell* operator()(int i, int j) = 0;
   /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  const RadiatorCell* FindRadiator(ParticleTrack &particleTrack);
+  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) = 0;
   /**
-   * Check if particle track hits below the main row
-   * @param x Position along the z direction of the barrel, or x in local coordinates
-   * @param y Position along the curved direction, or y in location coordinates
+   * Draw all the radiator cells
    */
-  bool IsBelowMainRow(double x, double y) const;
-  /**
-   * Check if particle track hits above the upper row
-   * @param x Position along the z direction of the barrel, or x in local coordinates
-   * @param y Position along the curved direction, or y in location coordinates
-   */
-  bool IsAboveUpperRow(double x, double y) const;
-  /**
-   * Check if particle track hits above the main row
-   * @param x Position along the z direction of the barrel, or x in local coordinates
-   * @param y Position along the curved direction, or y in location coordinates
-   */
-  bool IsAboveMainRow(double x, double y) const;
- private:
+  virtual std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
+  DrawRadiatorArray() const = 0;
+ protected:
   /**
    * Vector containing all the radiator cells
    */
   std::vector<std::unique_ptr<RadiatorCell>> m_Cells;
-  /**
-   * Flag that is true if the full geometry is included, otherwise a single cell in the middle is used
-   */
-  const bool m_FullArray;
   /**
    * Number of cells in theta direction along the main row
    */

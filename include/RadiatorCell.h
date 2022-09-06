@@ -22,7 +22,7 @@ using Vector = ROOT::Math::XYZVector;
 class RadiatorCell {
  public:
   /**
-   * Constructor that sets up the geometry
+   * Constructor that sets up the geometry with a default cell position
    * @param CellColumnNumber The column number of this cell
    * @param CellRowNumber The row number of this cell
    * @param HexagonSize The length between two opposide edges (not points) of the hexagons
@@ -55,11 +55,11 @@ class RadiatorCell {
   /**
    * Get the radiator cell position in the global coordinates
    */
-  const Vector& GetRadiatorPosition() const;
+  virtual const Vector& GetRadiatorPosition() const = 0;
   /**
    * Function that checks if the position is inside the radiator
    */
-  virtual bool IsInsideCell(const Vector &Position) const;
+  virtual bool IsInsideCell(const Vector &Position) const = 0;
   /**
    * Function that checks if the photon is inside the radiator
    */
@@ -68,7 +68,7 @@ class RadiatorCell {
    * Draw radiator geometry
    */
   virtual std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
-  DrawRadiatorGeometry() const;
+  DrawRadiatorGeometry() const = 0;
   /**
    * Get length between two edges of a hexagon cell
    */
@@ -134,10 +134,6 @@ class RadiatorCell {
    */
   const std::pair<int, int> m_CellNumber;
   /**
-   * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
-   */
-  const Vector m_Position;
-  /**
    * The SiPM in the radiator cell
    */
   SiPM m_Detector;
@@ -153,10 +149,6 @@ class RadiatorCell {
    * Centre of curvature of the mirror
    */
   Vector m_MirrorCentre;
-  /**
-   * Helper function to get cell position based on cell number
-   */
-  Vector GetCellPosition(int CellColumnNumber, int CellRowNumber) const;
 };
 
 #endif

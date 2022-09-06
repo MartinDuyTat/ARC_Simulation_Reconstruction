@@ -59,7 +59,7 @@ class ParticleTrack {
   /**
    * Find the correct radiator that the particle goes through
    */
-  void FindRadiator(RadiatorArray &radiatorArray);
+  bool FindRadiator(RadiatorArray &radiatorArray);
   /**
    * Set radiator
    */
@@ -140,6 +140,10 @@ class ParticleTrack {
    * Reflect everything in the z-direction since radiator cells are symmetric
    */
   void ReflectZ();
+  /**
+   * Reflect everything in the y-direction
+   */
+  void ReflectY();
   /**
    * Get the column number of the radiator
    */

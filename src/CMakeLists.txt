@@ -1,4 +1,8 @@
 add_library(ARC_Simulation_Reconstruction
+	    BarrelRadiatorArray.cpp
+	    BarrelRadiatorCell.cpp
+	    EndCapRadiatorArray.cpp
+	    EndCapRadiatorCell.cpp
 	    EventDisplay.cpp
 	    HalfRadiatorCell.cpp
 	    Quartic.cpp
