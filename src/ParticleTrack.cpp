@@ -13,6 +13,7 @@
 #include"Settings.h"
 #include"SiPM.h"
 #include"RadiatorArray.h"
+#include"Utilities.h"
 
 ParticleTrack::ParticleTrack(int ParticleID,
 			     const Vector &Momentum,
@@ -334,10 +335,12 @@ void ParticleTrack::SwapXZ(Vector &Vec) const {
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
   const auto CurrentPosition = m_RadiatorCell->GetRadiatorPosition() + m_Position;
+  const auto CurrentPositionSwapped = Utilities::SwapXZForEndCap(m_RadiatorCell,
+								 CurrentPosition);
   TLine Track(m_InitialPosition.X(),
 	      m_InitialPosition.Z(),
-	      CurrentPosition.X(),
-	      CurrentPosition.Z());
+	      CurrentPositionSwapped.X(),
+	      CurrentPositionSwapped.Z());
   Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
 }

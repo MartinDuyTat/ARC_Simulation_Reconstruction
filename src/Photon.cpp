@@ -7,6 +7,8 @@
 #include"TLine.h"
 #include"Photon.h"
 #include"RadiatorCell.h"
+#include"BarrelRadiatorCell.h"
+#include"Utilities.h"
 
 Photon::Photon(const Vector &Position,
 	       const Vector &Direction,
@@ -29,9 +31,12 @@ Photon::Photon(const Vector &Position,
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 Photon::DrawPhotonPath() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> PhotonLine;
-  const auto EmissionPoint = m_EmissionPoint
-                           + m_RadiatorCell->GetRadiatorPosition();
-  const auto Position = m_Position + m_RadiatorCell->GetRadiatorPosition();
+  const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
+  const auto EmissionPoint = Utilities::SwapXZForEndCap(m_RadiatorCell,
+							m_EmissionPoint
+							+ RadiatorPosition);
+  const auto Position = Utilities::SwapXZForEndCap(m_RadiatorCell,
+						   m_Position + RadiatorPosition);
   if(!m_MirrorHitPosition) {
     TLine PhotonLine1(EmissionPoint.X(),
 		      EmissionPoint.Z(),
@@ -44,8 +49,9 @@ Photon::DrawPhotonPath() const {
     }
     PhotonLine.push_back(std::make_pair(std::make_unique<TLine>(PhotonLine1), ""));
   } else {
-    const auto MirrorHitPosition = *m_MirrorHitPosition
-                                 + m_RadiatorCell->GetRadiatorPosition();
+    const auto MirrorHitPosition = Utilities::SwapXZForEndCap(m_RadiatorCell,
+							      *m_MirrorHitPosition 
+							      + RadiatorPosition);
     TLine PhotonLine1(EmissionPoint.X(),
 		      EmissionPoint.Z(),
 		      MirrorHitPosition.X(),

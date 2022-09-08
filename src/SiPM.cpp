@@ -4,6 +4,7 @@
 #include<iostream>
 #include<memory>
 #include<array>
+#include<algorithm>
 #include"TGraph.h"
 #include"TCanvas.h"
 #include"TLegend.h"
@@ -26,7 +27,8 @@ SiPM::SiPM():
   m_DetectorPositionZ(0.0),
   m_DetectorTilt(0.0),
   m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
-  m_MaxPDE(0.432) {
+  m_MaxPDE(0.432),
+  m_SwapXZ(Settings::GetString("General/BarrelOrEndcap") == "EndCap") {
 }
 
 PhotonHit SiPM::AddPhotonHit(Photon &photon) const {
@@ -129,6 +131,9 @@ std::unique_ptr<TObject> SiPM::DrawSiPM(const Vector &RadiatorPosition) const {
   // Back to left corner
   xPoints[4] = DetectorPositionX - CosTheta*m_DetectorSizeX/2.0;
   zPoints[4] = RadiatorZ - 0.002 + m_DetectorPositionZ - SinTheta*m_DetectorSizeX/2.0;
+  if(m_SwapXZ) {
+    std::swap(xPoints, zPoints);
+  }
   TPolyLine DetectorLine(5, xPoints.data(), zPoints.data());
   DetectorLine.SetFillColor(kBlack);
   return std::make_unique<TPolyLine>(DetectorLine);
@@ -155,10 +160,16 @@ bool SiPM::IsDetectorHit(const Photon &photon) const {
 }
 
 void SiPM::SetDetectorPosition(double x) {
+  if(m_SwapXZ) {
+    x = -x;
+  }
   m_DetectorPositionX = x;
 }
 
 void SiPM::SetDetectorTilt(double Angle) {
+  if(m_SwapXZ) {
+    Angle = -Angle;
+  }
   m_DetectorTilt = Angle;
   const double AbsAngle = TMath::Abs(Angle);
   const double DetectorSizeXOver2 = m_DetectorSizeX*0.5;

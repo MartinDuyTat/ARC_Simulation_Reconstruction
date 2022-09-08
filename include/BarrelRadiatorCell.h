@@ -22,17 +22,6 @@ class BarrelRadiatorCell: public RadiatorCell {
    */
   BarrelRadiatorCell(int CellColumnNumber, int CellRowNumber, double HexagonSize);
   /**
-   * Constructor that sets up the geometry and the position of the barrel radiator cell
-   * @param CellColumnNumber The column number of this cell
-   * @param CellRowNumber The row number of this cell
-   * @param HexagonSize The length between two opposide edges (not points) of the hexagons
-   * @param Position The position of the cell in the global coordinate system
-   */
-  BarrelRadiatorCell(int CellColumnNumber,
-		     int CellRowNumber,
-		     double HexagonSize,
-		     const Vector &Position);
-  /**
    * Get the radiator cell position in the global coordinates
    */
   virtual const Vector& GetRadiatorPosition() const override;

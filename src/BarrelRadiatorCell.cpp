@@ -14,14 +14,6 @@
 
 BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
 				       int CellRowNumber,
-				       double HexagonSize,
-				       const Vector &Position):
-  RadiatorCell::RadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize),
-  m_Position(Position) {
-}
-
-BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
-				       int CellRowNumber,
 				       double HexagonSize):
   RadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize),
   m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)) {
@@ -73,7 +65,7 @@ BarrelRadiatorCell::DrawRadiatorGeometry() const {
   const double cc = h*h + m_MirrorCentre.Mag2() - 2.0*m_MirrorCentre.Z()*h
                   - m_MirrorCurvature*m_MirrorCurvature;
   const double s1 = bb + TMath::Sqrt(bb*bb - cc);
-  const double s2 = bb + TMath::Sqrt(bb*bb - cc);
+  const double s2 = bb - TMath::Sqrt(bb*bb - cc);
   if(bb*bb > cc &&
      (TMath::Abs(s1) < m_HexagonSize/2.0 || TMath::Abs(s2) < m_HexagonSize/2.0)) {
     const double s = TMath::Abs(s1) < m_HexagonSize/2.0 ? s1 : s2;

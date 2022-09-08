@@ -45,6 +45,10 @@ class EndCapRadiatorCell: public RadiatorCell {
     {8, 1}, {8, 2}, {8, 3}, {8, 4}, {7, 5},
     {0, 1}, {1, 1}, {1, 2}
   }};
+  /**
+   * Set the mirror x position, relative to the default position
+   */
+  virtual void SetMirrorXPosition(double x) override;
  private:
   /**
    * The distance between hexagons in the y-direction

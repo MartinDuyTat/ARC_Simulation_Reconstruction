@@ -55,6 +55,7 @@ class SiPM {
   const std::vector<PhotonHit>& GetPhotonHits() const;
   /**
    * Draw SiPM
+   * @param RadiatorPosition The position of the radiator cell
    */
   std::unique_ptr<TObject> DrawSiPM(const Vector &RadiatorPosition) const;
   /**
@@ -115,6 +116,10 @@ class SiPM {
    * Max PDE
    */
   const double m_MaxPDE;
+  /**
+   * Flag that is true for end cap radiator cells
+   */
+  const bool m_SwapXZ;
   /**
    * The wavelengths used to measure PDE in SiPM, in nm
    */

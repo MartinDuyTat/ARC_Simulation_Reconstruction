@@ -11,7 +11,8 @@
 
 RadiatorCell::RadiatorCell(int CellColumnNumber,
 			   int CellRowNumber,
-			   double HexagonSize):
+			   double HexagonSize,
+			   const std::string &Prefix):
   m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
   m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
   m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
@@ -22,7 +23,7 @@ RadiatorCell::RadiatorCell(int CellColumnNumber,
   m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
   m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
   m_MirrorCentre(m_DefaultMirrorCentre) {
-  const std::string RadiatorName = "Radiator_c"
+  const std::string RadiatorName = Prefix + "Radiator_c"
                                  + std::to_string(m_CellNumber.first)
                                  + "_r"
                                  + std::to_string(m_CellNumber.second)

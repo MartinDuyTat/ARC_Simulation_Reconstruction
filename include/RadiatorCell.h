@@ -26,8 +26,16 @@ class RadiatorCell {
    * @param CellColumnNumber The column number of this cell
    * @param CellRowNumber The row number of this cell
    * @param HexagonSize The length between two opposide edges (not points) of the hexagons
+   * @param Prefix Prefix in the names of cells in options file
    */
-  RadiatorCell(int CellColumnNumber, int CellRowNumber, double HexagonSize);
+  RadiatorCell(int CellColumnNumber,
+	       int CellRowNumber,
+	       double HexagonSize,
+	       const std::string &Prefix = "");
+  /**
+   * Need virtual destructor because of polymorphism
+   */
+  virtual ~RadiatorCell() = default;
   /**
    * Get total radiator cell thickness
    */
@@ -89,7 +97,7 @@ class RadiatorCell {
   /**
    * Set the mirror x position, relative to the default position
    */
-  void SetMirrorXPosition(double x);
+  virtual void SetMirrorXPosition(double x);
   /**
    * Set the mirror z position, relative to the default position
    */

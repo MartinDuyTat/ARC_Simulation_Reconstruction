@@ -4,6 +4,8 @@
 #include"TMath.h"
 #include"Utilities.h"
 #include"Settings.h"
+#include"RadiatorCell.h"
+#include"BarrelRadiatorCell.h"
 
 namespace Utilities {
 
@@ -57,5 +59,16 @@ namespace Utilities {
     const Vector Momentum = Vector(x, y, z).Unit()*MomentumMag;
     return Momentum;
   }
+
+  Vector SwapXZForEndCap(const RadiatorCell *radiatorCell, Vector v) {
+    const auto radiatorCellCast =
+      dynamic_cast<const BarrelRadiatorCell*>(radiatorCell);
+    if(!radiatorCellCast) {
+      const double Temp = v.X();
+      v.SetX(v.Z());
+      v.SetZ(Temp);
+    }
+    return v;
+  };
 
 }

@@ -19,6 +19,10 @@ class RadiatorArray {
    */
   RadiatorArray();
   /**
+   * Need virtual destructor because of polymorphism
+   */
+  virtual ~RadiatorArray() = default;
+  /**
    * Operator overload to get the individual radiator cells
    */
   virtual const RadiatorCell* operator()(int i, int j) = 0;

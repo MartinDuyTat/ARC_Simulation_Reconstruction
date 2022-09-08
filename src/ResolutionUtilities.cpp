@@ -257,7 +257,10 @@ namespace ResolutionUtilities {
     }
     std::string ResultFilename = Settings::GetString("Optimisation/Filename");
     std::ofstream File(ResultFilename);
+    const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
+    const std::string Prefix = BarrelOrEndcap == "Barrel" ? "" : "EndCap";
     for(std::size_t i = 0; i < TotalParameters; i++) {
+      File << Prefix;
       File << "Radiator_c" << Column << "_r" << Row << "_" << ParameterNames[i] << " ";
       File << AllParameters[i] << "\n";
     }
