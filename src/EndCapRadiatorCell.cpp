@@ -76,9 +76,6 @@ EndCapRadiatorCell::DrawRadiatorGeometry() const {
       RightAngle = MidAngle;
     }
   }
-  LeftAngle -= 90.0;
-  RightAngle -= 90.0;
-  std::cout << m_CellNumber.first << " " << m_CellNumber.second << " " << LeftAngle << " " << RightAngle << "\n";
   // Finally draw everything
   const auto MirrorCentreGlobal = Utilities::SwapXZForEndCap(this,
 							     m_Position
@@ -87,8 +84,8 @@ EndCapRadiatorCell::DrawRadiatorGeometry() const {
   TArc MirrorArc(MirrorCentreGlobal.X(),
 		 MirrorCentreGlobal.Z(),
 		 m_MirrorCurvature,
-		 RightAngle,
-		 LeftAngle);
+		 RightAngle - 90.0,
+		 LeftAngle - 90.0);
   MirrorArc.SetLineColor(kBlack);
   MirrorArc.SetLineWidth(2);
   MirrorArc.SetFillColorAlpha(kWhite, 0.0);

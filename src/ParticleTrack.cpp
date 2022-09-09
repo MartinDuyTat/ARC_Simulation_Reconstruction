@@ -50,7 +50,7 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
     // z-distance to end cap
     const double BarrelZ = Settings::GetDouble("ARCGeometry/BarrelZ");
     const double ZDist = BarrelZ - m_Position.Z();
-    const double Slope = 1.0/m_Momentum.Z();
+    const double Slope = TMath::Abs(1.0/m_Momentum.Z());
     m_Position += m_Momentum*ZDist*Slope;
   }
   m_Location = Location::EntranceWindow;
@@ -84,7 +84,7 @@ void ParticleTrack::ConvertToRadiatorCoordinates() {
   m_Position -= m_RadiatorCell->GetRadiatorPosition();
   m_CoordinateSystem = CoordinateSystem::LocalRadiator;
   // Check if particle is within acceptance
-  if(!m_RadiatorCell->IsInsideCell(m_Position)) {
+  if(!m_RadiatorCell->IsInsideCell(m_Position) || m_Momentum.Z() < 0.0) {
     m_Location = Location::MissedEntranceWindow;
   }
   // Save the entrance window position

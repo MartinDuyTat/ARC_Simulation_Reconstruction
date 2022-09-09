@@ -85,7 +85,7 @@ namespace ResolutionUtilities {
 	        + 0.0003*0.0003);
     const double MeanNumberPhotons =
       static_cast<double>(Total.N)/Particles.size();
-    if(MeanNumberPhotons <= 3.0) {
+    if(MeanNumberPhotons <= 1.0) {
       return 1000.0;
     } else {
       const auto NumberParticles = Particles.size();
@@ -122,6 +122,9 @@ namespace ResolutionUtilities {
     radiatorCell.SetMirrorZPosition(MirrorZPosition);
     radiatorCell.SetDetectorPosition(DetectorPosition);
     radiatorCell.SetDetectorTilt(DetectorTilt);
+    if(!radiatorCell.IsDetectorInsideCell()) {
+      return 1000.0;
+    }
     gRandom->SetSeed(Seed);
     const double Resolution = CalculateResolution(Particles,
 	                                          IncludeCentrePenalty);

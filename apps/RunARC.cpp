@@ -79,13 +79,13 @@ int main(int argc, char *argv[]) {
     std::vector<PhotonHit> photonHits;
     for(auto &photon : PhotonsAerogel) {
       auto photonHit = PhotonMapper::TracePhoton(photon);
-      if(!photonHit) {
+      if(photonHit) {
 	photonHits.push_back(*photonHit);
       }
     }
     for(auto &photon : PhotonsGas) {
       auto photonHit = PhotonMapper::TracePhoton(photon);
-      if(!photonHit) {
+      if(photonHit) {
 	photonHits.push_back(*photonHit);
       }
     }

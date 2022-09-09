@@ -20,8 +20,8 @@
 #include"RadiatorCell.h"
 
 SiPM::SiPM():
-  m_DetectorSizeX(0.08),
-  m_DetectorSizeY(0.08),
+  m_DetectorSizeX(Settings::GetDouble("RadiatorCell/DetectorSize")),
+  m_DetectorSizeY(m_DetectorSizeX),
   m_DetectorPositionX(0.0),
   m_DetectorPositionY(0.0),
   m_DetectorPositionZ(0.0),
@@ -197,4 +197,8 @@ double SiPM::GetDetectorZPosition() const {
 
 double SiPM::GetDetectorTilt() const {
   return m_DetectorTilt;
+}
+
+double SiPM::GetDetectorSizeX() const {
+  return m_DetectorSizeX;
 }

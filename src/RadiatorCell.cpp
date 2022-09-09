@@ -116,3 +116,16 @@ void RadiatorCell::SetDetectorPosition(double x) {
 void RadiatorCell::SetDetectorTilt(double Angle) {
   m_Detector.SetDetectorTilt(Angle);
 }
+
+bool RadiatorCell::IsDetectorInsideCell() const {
+  const double Position = m_Detector.GetDetectorXPosition();
+  const double Tilt = m_Detector.GetDetectorTilt();
+  const double DetSize = m_Detector.GetDetectorSizeX();
+  if(Position + DetSize*TMath::Cos(Tilt)/2.0 > m_HexagonSize/2.0) {
+    return false;
+  } else if(Position - DetSize*TMath::Cos(Tilt)/2.0 < -m_HexagonSize/2.0) {
+    return false;
+  } else {
+    return true;
+  }
+}

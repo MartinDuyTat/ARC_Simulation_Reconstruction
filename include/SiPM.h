@@ -82,6 +82,10 @@ class SiPM {
    * Get the detector tilt, in radiations
    */
   double GetDetectorTilt() const;
+  /**
+   * Get the detector X size
+   */
+  double GetDetectorSizeX() const;
  private:
   /**
    * Size of detector in x direction

@@ -41,22 +41,26 @@ int main(int argc, char *argv[]) {
   const std::string RunMode(argv[1]);
   const int Seed = Settings::GetInt("General/Seed");
   gRandom->SetSeed(Seed);
-  std::cout << "Generating tracks and photons...\n";
+  std::cout << "Generating tracks...\n";
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
   const int CellsPerRow = 2*Settings::GetDouble("ARCGeometry/CellsPerRow") - 1;
   const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/CellsPerRow;
   const int Column = std::stoi(std::string(argv[1]));
   const int Row = std::stoi(std::string(argv[2]));
+  std::cout << "Tracks ready\n";
   std::unique_ptr<RadiatorCell> radiatorCell = nullptr;
   const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
   if(BarrelOrEndcap == "Barrel") {
     if(Row == 2 && Column == Settings::GetDouble("ARCGeometry/CellsPerRow")) {
+      std::cout << "HalfRadiatorCell ready\n";
       radiatorCell = std::make_unique<HalfRadiatorCell>(Column, Row, HexagonSize);
     } else {
+      std::cout << "BarrelRadiatorCell ready\n";
       radiatorCell = std::make_unique<BarrelRadiatorCell>(Column, Row, HexagonSize);
     }
   } else if(BarrelOrEndcap == "EndCap") {
+    std::cout << "EndCapRadiatorCell ready\n";
     radiatorCell = std::make_unique<EndCapRadiatorCell>(Column, Row, HexagonSize);
   } else {
     return 0;

@@ -110,6 +110,10 @@ class RadiatorCell {
    * Set the detector tilt, in radians
    */
   void SetDetectorTilt(double Angle);
+  /**
+   * Function that checks if the detector is contained inside the radiator cell
+   */
+  bool IsDetectorInsideCell() const;
  protected:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
