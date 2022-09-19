@@ -31,7 +31,7 @@ namespace ResolutionUtilities {
 	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
 	     const Tracks &Particles,
-	     int Seed,
+	     std::size_t Seed,
 	     bool IncludeCentrePenalty);
   /**
    * Load fit results and plot the fit projections

@@ -12,8 +12,8 @@
 #include"RadiatorCell.h"
 #include"Settings.h"
 
-BarrelRadiatorCell::BarrelRadiatorCell(int CellColumnNumber,
-				       int CellRowNumber,
+BarrelRadiatorCell::BarrelRadiatorCell(std::size_t CellColumnNumber,
+				       std::size_t CellRowNumber,
 				       double HexagonSize):
   RadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize),
   m_Position(GetCellPosition(CellColumnNumber, CellRowNumber)) {
@@ -27,11 +27,14 @@ bool BarrelRadiatorCell::IsInsideCell(const Vector &Position) const {
   // Get x and y coordinates after mapping everything to first quadrant
   const double x = TMath::Abs(Position.X());
   // Need a stretching factor in y direction because of the curvature
-  const double Radius = m_Position.Z() - m_CoolingThickness;
+  /*const double Radius = m_Position.Z() - m_CoolingThickness;
   const double TanTheta = Position.Y()/(Radius + m_CoolingThickness);
   const double SecTheta = TMath::Sqrt(1 + TanTheta*TanTheta);
   const double Stretch = SecTheta*(1 + m_CoolingThickness/Radius);
-  const double y = TMath::Abs(Position.Y())/Stretch;
+  const double y = TMath::Abs(Position.Y())/Stretch;*/
+  const double Radius = m_Position.Z() + Position.Z();
+  const double Theta = TMath::Abs(Position.Y())/Radius;
+  const double y = Radius*TMath::Sin(Theta);
   // First part is checking the sloped part, the other is the vertical part
   return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
 }
@@ -132,9 +135,9 @@ BarrelRadiatorCell::DrawRadiatorGeometry() const {
   return Objects;
 }
 
-Vector BarrelRadiatorCell::GetCellPosition(int CellColumnNumber,
-					   int CellRowNumber) const {
-  if(CellColumnNumber > 9 || CellColumnNumber < 0) {
+Vector BarrelRadiatorCell::GetCellPosition(std::size_t CellColumnNumber,
+					   std::size_t CellRowNumber) const {
+  if(CellColumnNumber > 9) {
     throw std::invalid_argument("Invalid cell column number: "
 				+ std::to_string(CellColumnNumber));
   }
@@ -144,10 +147,10 @@ Vector BarrelRadiatorCell::GetCellPosition(int CellColumnNumber,
     return Vector(0.0, 0.0, ZPosition);
   }
   if(CellRowNumber == 1) {
-    const double XPosition = m_HexagonSize*CellColumnNumber;
+    const double XPosition = m_HexagonSize*static_cast<double>(CellColumnNumber);
     return Vector(XPosition, 0.0, ZPosition);
   } else if(CellRowNumber == 2) {
-    const double XPosition = m_HexagonSize*(CellColumnNumber - 0.5);
+    const double XPosition = m_HexagonSize*(static_cast<double>(CellColumnNumber) - 0.5);
     return Vector(XPosition, 0.0, ZPosition);
   } else {
     throw std::invalid_argument("Invalid cell row number: "

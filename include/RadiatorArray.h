@@ -25,7 +25,7 @@ class RadiatorArray {
   /**
    * Operator overload to get the individual radiator cells
    */
-  virtual const RadiatorCell* operator()(int i, int j) = 0;
+  virtual const RadiatorCell* operator()(std::size_t i, std::size_t j) = 0;
   /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
@@ -44,7 +44,7 @@ class RadiatorArray {
   /**
    * Number of cells in theta direction along the main row
    */
-  const int m_NumberMainRowCells;
+  const std::size_t m_NumberMainRowCells;
   /**
    * The horizontal distance between two hexagons
    */

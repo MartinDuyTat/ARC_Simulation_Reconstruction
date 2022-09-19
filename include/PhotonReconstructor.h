@@ -70,7 +70,7 @@ namespace PhotonReconstructor {
 			    double DetectionMirrorPerpDist,
 			    double EmissionMirrorDist,
 			    const QuarticSolution &quarticSolution,
-			    int SolutionNumber);
+			    std::size_t SolutionNumber);
 }
 
 #endif

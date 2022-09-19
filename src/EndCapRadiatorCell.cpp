@@ -10,8 +10,8 @@
 #include"BarrelRadiatorCell.h"
 #include"Utilities.h"
 
-EndCapRadiatorCell::EndCapRadiatorCell(int CellColumnNumber,
-				       int CellRowNumber,
+EndCapRadiatorCell::EndCapRadiatorCell(std::size_t CellColumnNumber,
+				       std::size_t CellRowNumber,
 				       double HexagonSize):
   RadiatorCell::RadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize, "EndCap"),
   m_HexagonDistY(m_HexagonSize*TMath::Sqrt(3)/2.0),
@@ -139,8 +139,8 @@ const Vector& EndCapRadiatorCell::GetRadiatorPosition() const {
   return m_Position;
 }
 
-Vector EndCapRadiatorCell::GetCellPosition(int CellColumnNumber,
-					   int CellRowNumber) const {
+Vector EndCapRadiatorCell::GetCellPosition(std::size_t CellColumnNumber,
+					   std::size_t CellRowNumber) const {
   if(std::find(m_ValidCells.begin(),
 	       m_ValidCells.end(),
 	       std::make_pair(CellColumnNumber, CellRowNumber)) ==
@@ -150,12 +150,12 @@ Vector EndCapRadiatorCell::GetCellPosition(int CellColumnNumber,
   }
   const double ZPosition = Settings::GetDouble("ARCGeometry/BarrelZ")
                          + m_CoolingThickness;
-  const double YPosition = m_HexagonDistY*(CellRowNumber - 1);
+  const double YPosition = m_HexagonDistY*static_cast<double>(CellRowNumber - 1);
   if(CellRowNumber%2 == 1) {
-    const double XPosition = m_HexagonSize*CellColumnNumber;
+    const double XPosition = m_HexagonSize*static_cast<double>(CellColumnNumber);
     return Vector(XPosition, YPosition, ZPosition);
   } else {
-    const double XPosition = m_HexagonSize*(CellColumnNumber - 0.5);
+    const double XPosition = m_HexagonSize*(static_cast<double>(CellColumnNumber) - 0.5);
     return Vector(XPosition, YPosition, ZPosition);
   }
 }

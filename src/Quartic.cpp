@@ -1,4 +1,5 @@
 #include"Quartic.h"
+#include"TMath.h"
 
 namespace Quartic {
 
@@ -20,8 +21,8 @@ namespace Quartic {
       a/=3;
       q = -2*sqrt(q);
       x[0] = q*cos(t/3)-a;
-      x[1] = q*cos((t+M_2PI)/3)-a;
-      x[2] = q*cos((t-M_2PI)/3)-a;
+      x[1] = q*cos((t+TMath::TwoPi())/3)-a;
+      x[2] = q*cos((t-TMath::TwoPi())/3)-a;
       return 3;
     } else {
       double A = -std::cbrt(fabs(r) + sqrt(r2 - q3));

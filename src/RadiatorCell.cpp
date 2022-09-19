@@ -9,8 +9,8 @@
 #include"Settings.h"
 #include"Photon.h"
 
-RadiatorCell::RadiatorCell(int CellColumnNumber,
-			   int CellRowNumber,
+RadiatorCell::RadiatorCell(std::size_t CellColumnNumber,
+			   std::size_t CellRowNumber,
 			   double HexagonSize,
 			   const std::string &Prefix):
   m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
@@ -89,7 +89,7 @@ double RadiatorCell::GetHexagonSize() const {
   return m_HexagonSize;
 }
 
-std::pair<int, int> RadiatorCell::GetCellNumber() const {
+std::pair<std::size_t, std::size_t> RadiatorCell::GetCellNumber() const {
   return m_CellNumber;
 }
 

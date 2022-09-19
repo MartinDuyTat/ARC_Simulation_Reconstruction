@@ -84,14 +84,15 @@ namespace ResolutionUtilities {
       TMath::Sqrt(Total.x2/Total.N - (Total.x/Total.N)*(Total.x/Total.N)
 	        + 0.0003*0.0003);
     const double MeanNumberPhotons =
-      static_cast<double>(Total.N)/Particles.size();
+      static_cast<double>(Total.N)/static_cast<double>(Particles.size());
     if(MeanNumberPhotons <= 1.0) {
       return 1000.0;
     } else {
       const auto NumberParticles = Particles.size();
       auto GetFinalResolution = [&] (bool IncludeCentrePenalty) {
         // Penalty when hitting the upper wall
-        const double WallPenalty = (10.0*PhotonsHitWallTracks)/NumberParticles;
+        const double WallPenalty = (10.0*static_cast<double>(PhotonsHitWallTracks))/
+	                           static_cast<double>(NumberParticles);
         const double ResolutionWithPenalty = Resolution/TMath::Sqrt(MeanNumberPhotons)
 	                                   + WallPenalty;
 	if(IncludeCentrePenalty) {
@@ -115,7 +116,7 @@ namespace ResolutionUtilities {
 	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
 	     const Tracks &Particles,
-	     int Seed,
+	     std::size_t Seed,
 	     bool IncludeCentrePenalty) {
     radiatorCell.SetMirrorCurvature(MirrorCurvature);
     radiatorCell.SetMirrorXPosition(MirrorXPosition);
@@ -145,7 +146,7 @@ namespace ResolutionUtilities {
       Result.push_back(Value);
     }
     File.close();
-    const int Seed = Settings::GetInt("General/Seed");
+    const std::size_t Seed = Settings::GetSizeT("General/Seed");
     auto MinimiseFunctionMirrorCurvature = [&] (double *x, double*) {
       return fcn(x[0], Result[1], Result[2], Result[3], Result[4],
 	         radiatorCell, Particles, Seed, false);
@@ -234,7 +235,7 @@ namespace ResolutionUtilities {
 	     int Column,
 	     int Row) {
     ResolutionOptimizable resolutionOptimisable(radiatorCell, Particles);
-    const int NumberAgents = Settings::GetInt("Optimisation/NumberAgents");
+    const std::size_t NumberAgents = Settings::GetSizeT("Optimisation/NumberAgents");
     de::DifferentialEvolution de(resolutionOptimisable, NumberAgents);
     const int Iterations = Settings::GetInt("Optimisation/Iterations");
     de.Optimize(Iterations, true);

@@ -20,7 +20,7 @@ class BarrelRadiatorCell: public RadiatorCell {
    * @param CellRowNumber The row number of this cell
    * @param HexagonSize The length between two opposide edges (not points) of the hexagons
    */
-  BarrelRadiatorCell(int CellColumnNumber, int CellRowNumber, double HexagonSize);
+  BarrelRadiatorCell(std::size_t CellColumnNumber, std::size_t CellRowNumber, double HexagonSize);
   /**
    * Get the radiator cell position in the global coordinates
    */
@@ -43,7 +43,7 @@ class BarrelRadiatorCell: public RadiatorCell {
   /**
    * Helper function to get cell position based on cell number
    */
-  Vector GetCellPosition(int CellColumnNumber, int CellRowNumber) const;
+  Vector GetCellPosition(std::size_t CellColumnNumber, std::size_t CellRowNumber) const;
 };
 
 #endif

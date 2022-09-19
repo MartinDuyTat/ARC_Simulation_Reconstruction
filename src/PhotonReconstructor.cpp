@@ -123,7 +123,7 @@ namespace PhotonReconstructor {
 			    double DetMirrorPerpDist,
 			    double EmMirrorDist,
 			    const QuarticSolution &quarticSolution,
-			    int SolutionNumber) {
+			    std::size_t SolutionNumber) {
     Vector Reflection = EmPoint*(quarticSolution.m_CosBeta[SolutionNumber]/EmMirrorDist);
     Reflection += (quarticSolution.m_SinBeta[SolutionNumber]/DetMirrorPerpDist)
                   *(DetPoint - EmPoint*(DetMirrorParaDist/EmMirrorDist));

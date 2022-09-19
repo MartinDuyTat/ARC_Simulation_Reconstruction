@@ -10,7 +10,7 @@
 #include"Settings.h"
 
 void EventDisplay::DrawEventDisplay(const std::string &Filename) {
-  gStyle->SetLineScalePS(0.01);
+  gStyle->SetLineScalePS(0.01f);
   TCanvas c("c", "", Settings::GetInt("EventDisplay/CanvasWidth"),
 	             Settings::GetInt("EventDisplay/CanvasHeight"));
   gPad->DrawFrame(-Settings::GetDouble("ARCGeometry/Length")/2.0,

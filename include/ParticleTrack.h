@@ -48,7 +48,6 @@ class ParticleTrack {
     TrackerVolume,
     EntranceWindow,
     MissedEntranceWindow,
-    MissedRadiator,
     Radiator,
     Mirror,
     MissedMirror};
@@ -69,9 +68,17 @@ class ParticleTrack {
    */
   void ConvertToRadiatorCoordinates();
   /**
+   * Convert back to global coordinates
+   */
+  void ConvertBackToGlobalCoordinates();
+  /**
    * Track particle through radiator cell
    */
   void TrackThroughRadiatorCell();
+  /**
+   * Helper function to track particle through gas until it hits the correct mirror
+   */
+  void TrackThroughGasToMirror();
   /**
    * Generate Cherenkov photon from aerogel
    */
@@ -147,11 +154,19 @@ class ParticleTrack {
   /**
    * Get the column number of the radiator
    */
-  double GetRadiatorColumnNumber() const;
+  std::size_t GetRadiatorColumnNumber() const;
   /**
    * Get the row number of the radiator
    */
-  double GetRadiatorRowNumber() const;
+  std::size_t GetRadiatorRowNumber() const;
+  /**
+   * Set the rotation angle in phi relative to the global detector coordinates
+   */
+  void SetPhiRotated(double Phi);
+  /**
+   * Get a pointer to the radiator cell
+   */
+  const RadiatorCell* GetRadiatorCell() const;
  private:
   /**
    * Particle momentum, in GeV
@@ -222,10 +237,9 @@ class ParticleTrack {
    */
   void SwapXZ(Vector &Vec) const;
   /**
-   * Helper function to track particle through gas until it hits the correct mirror
-   * If it ends up outside the cell in the theta direction, move to the next radiator cell
+   * Helper function to swap x and z directions of all vectors (where relevant)
    */
-  void TrackThroughGasToMirror();
+  void SwapXZ();
   /**
    * Helper function to swap radiator cell if particle is outside in the theta direction
    * @return Returns true if swapping radiator cell was successful (no edges hit)
@@ -235,6 +249,10 @@ class ParticleTrack {
    * Helper function to change coordinate origin
    */
   void ChangeCoordinateOrigin(const Vector &Shift);
+  /**
+   * The rotation in phi relative to the global detector coordinates
+   */
+  double m_PhiRotated;
 };
 
 #endif

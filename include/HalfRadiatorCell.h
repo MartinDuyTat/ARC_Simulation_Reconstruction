@@ -13,7 +13,7 @@ class HalfRadiatorCell: public BarrelRadiatorCell {
   /**
    * Default constructor that simply calls the parent constructor
    */
-  HalfRadiatorCell(int CellColumnNumber, int CellRowNumber, double HexagonSize);
+  HalfRadiatorCell(std::size_t CellColumnNumber, std::size_t CellRowNumber, double HexagonSize);
   /**
    * Function that checks if the position is inside the radiator
    */

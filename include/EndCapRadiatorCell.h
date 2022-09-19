@@ -14,7 +14,7 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * Default constructor that calls parent constructor
    */
-  EndCapRadiatorCell(int CellColumnNumber, int CellRowNumber, double HexagonSize);
+  EndCapRadiatorCell(std::size_t CellColumnNumber, std::size_t CellRowNumber, double HexagonSize);
   /**
    * Function that checks if the position is inside the radiator
    */
@@ -31,7 +31,7 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * All the cell numbers that are valid for the end cap
    */
-  static constexpr std::array<std::pair<int, int>, 21> m_ValidCells{{
+  static constexpr std::array<std::pair<std::size_t, std::size_t>, 21> m_ValidCells{{
     {2, 1}, {3, 1}, {4, 1}, {5, 1}, {6, 1}, {7, 1},
     {2, 2}, {3, 2}, {4, 2}, {5, 2}, {6, 2}, {7, 2},
     {3, 3}, {4, 3}, {5, 3}, {6, 3}, {7, 3},
@@ -41,7 +41,7 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * All the cell numbers that are invalid, but next to valid cells for the end cap
    */
-  static constexpr std::array<std::pair<int, int>, 21> m_NotValidCells{{
+  static constexpr std::array<std::pair<std::size_t, std::size_t>, 21> m_NotValidCells{{
     {8, 1}, {8, 2}, {8, 3}, {8, 4}, {7, 5},
     {0, 1}, {1, 1}, {1, 2}
   }};
@@ -61,7 +61,7 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * Helper function to get cell position based on cell number
    */
-  Vector GetCellPosition(int CellColumnNumber, int CellRowNumber) const;
+  Vector GetCellPosition(std::size_t CellColumnNumber, std::size_t CellRowNumber) const;
 };
 
 #endif

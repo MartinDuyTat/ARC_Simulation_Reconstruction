@@ -60,6 +60,15 @@ int Settings::GetInt(const std::string &Setting) {
   return std::stoi(GetString(Setting));
 }
 
+std::size_t Settings::GetSizeT(const std::string &Setting) {
+  const int Integer = std::stoi(GetString(Setting));
+  if(Integer < 0) {
+    throw std::runtime_error("Cannot load negative integer into std::size_t");
+  } else {
+    return static_cast<std::size_t>(Integer);
+  }
+}
+
 bool Settings::GetBool(const std::string &Setting) {
   return GetString(Setting) == "true";
 }

@@ -39,13 +39,14 @@ int main(int argc, char *argv[]) {
     std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
   }
   const std::string RunMode(argv[1]);
-  const int Seed = Settings::GetInt("General/Seed");
+  const std::size_t Seed = Settings::GetSizeT("General/Seed");
   gRandom->SetSeed(Seed);
   std::cout << "Generating tracks...\n";
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
-  const int CellsPerRow = 2*Settings::GetDouble("ARCGeometry/CellsPerRow") - 1;
-  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/CellsPerRow;
+  const std::size_t CellsPerRow = 2*Settings::GetSizeT("ARCGeometry/CellsPerRow") - 1;
+  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/
+                             static_cast<double>(CellsPerRow);
   const int Column = std::stoi(std::string(argv[1]));
   const int Row = std::stoi(std::string(argv[2]));
   std::cout << "Tracks ready\n";
@@ -69,9 +70,9 @@ int main(int argc, char *argv[]) {
   const double z_min = CellPosition.X() - HexagonSize/2.0;
   const double z_max = CellPosition.X() + HexagonSize/2.0;
   Tracks Particles;
-  const double TotalNumberTracks = Settings::GetInt("General/NumberTracks");
+  const std::size_t TotalNumberTracks = Settings::GetSizeT("General/NumberTracks");
   Particles.reserve(TotalNumberTracks);
-  int NumberTracks = 0;
+  std::size_t NumberTracks = 0;
   while(NumberTracks < TotalNumberTracks) {
     auto GetMomentum = [=] () {
       if(BarrelOrEndcap == "Barrel") {

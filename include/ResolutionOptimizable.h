@@ -37,7 +37,7 @@ class ResolutionOptimizable: public de::IOptimizable {
   /**
    * Find the number of free parameters
    */
-  unsigned int NumberOfParameters() const override;
+  std::size_t NumberOfParameters() const override;
   /**
    * Set up the parameter space
    */
@@ -66,7 +66,7 @@ class ResolutionOptimizable: public de::IOptimizable {
   /**
    * The seed used for each iteration
    */
-  const int m_Seed;
+  const std::size_t m_Seed;
   /**
    * Free parameter names
    */

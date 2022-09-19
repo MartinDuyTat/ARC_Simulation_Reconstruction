@@ -4,7 +4,8 @@
 #include"Settings.h"
 
 RadiatorArray::RadiatorArray():
-  m_NumberMainRowCells(Settings::GetInt("ARCGeometry/CellsPerRow")),
-  m_xHexDist(Settings::GetDouble("ARCGeometry/Length")/(2*m_NumberMainRowCells - 1)),
+  m_NumberMainRowCells(Settings::GetSizeT("ARCGeometry/CellsPerRow")),
+  m_xHexDist(Settings::GetDouble("ARCGeometry/Length")/
+	     static_cast<double>(2*m_NumberMainRowCells - 1)),
   m_yHexDist(m_xHexDist*TMath::Sqrt(3)/2.0) {
 }

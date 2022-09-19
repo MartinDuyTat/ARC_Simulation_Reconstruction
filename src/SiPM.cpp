@@ -76,10 +76,10 @@ void SiPM::PlotHits(const std::string &Filename,
       std::cout << "Warning! Detector hit with unknown origin\n";
     }
   }
-  TGraph Graph_Aerogel(xHits_Aerogel.size(),
+  TGraph Graph_Aerogel(static_cast<int>(xHits_Aerogel.size()),
 		       xHits_Aerogel.data(),
 		       yHits_Aerogel.data());
-  TGraph Graph_Gas(xHits_Gas.size(),
+  TGraph Graph_Gas(static_cast<int>(xHits_Gas.size()),
 		   xHits_Gas.data(),
 		   yHits_Gas.data());
   TCanvas c("c", "", 1200, 1200);
@@ -89,8 +89,8 @@ void SiPM::PlotHits(const std::string &Filename,
   Graph_Gas.SetMarkerColor(kRed);
   Graph_Aerogel.SetTitle("Photon hits;x (cm); y (cm)");
   Graph_Aerogel.Draw("AP");
-  gPad->SetLeftMargin(0.15);
-  gPad->SetBottomMargin(0.15);
+  gPad->SetLeftMargin(0.15f);
+  gPad->SetBottomMargin(0.15f);
   Graph_Aerogel.GetXaxis()->SetLimits((m_DetectorPositionX
 				       - m_DetectorSizeX/2.0)*100.0,
 				      (m_DetectorPositionX

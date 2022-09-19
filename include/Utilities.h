@@ -35,6 +35,6 @@ namespace Utilities {
    * @param v The vector we want to swap
    */
   Vector SwapXZForEndCap(const RadiatorCell *radiatorCell, Vector v);
-};
+}
 
 #endif

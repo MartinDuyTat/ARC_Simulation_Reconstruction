@@ -15,7 +15,7 @@ ResolutionOptimizable::ResolutionOptimizable(RadiatorCell &radiatorCell,
   IOptimizable(),
   m_RadiatorCell(&radiatorCell),
   m_Particles(&Particles),
-  m_Seed(Settings::GetInt("General/Seed")) {
+  m_Seed(Settings::GetSizeT("General/Seed")) {
   for(std::size_t i = 0; i < m_Parameters.size(); i++) {
     std::string ParameterName = "Optimisation/" + std::string(m_Parameters[i]) + "_";
     if(Settings::GetBool(ParameterName + "IsFixed")) {
@@ -47,7 +47,7 @@ double ResolutionOptimizable::EvaluateCost(std::vector<double> x) const {
   return Resolution;
 }
 
-unsigned int ResolutionOptimizable::NumberOfParameters() const {
+std::size_t ResolutionOptimizable::NumberOfParameters() const {
   return m_Parameters.size() - m_FixedParameters.size();
 }
 

@@ -28,8 +28,8 @@ class RadiatorCell {
    * @param HexagonSize The length between two opposide edges (not points) of the hexagons
    * @param Prefix Prefix in the names of cells in options file
    */
-  RadiatorCell(int CellColumnNumber,
-	       int CellRowNumber,
+  RadiatorCell(std::size_t CellColumnNumber,
+	       std::size_t CellRowNumber,
 	       double HexagonSize,
 	       const std::string &Prefix = "");
   /**
@@ -84,7 +84,7 @@ class RadiatorCell {
   /**
    * Get cell number
    */
-  std::pair<int, int> GetCellNumber() const;
+  std::pair<std::size_t, std::size_t> GetCellNumber() const;
   /**
    * Get the detector
    */
@@ -144,7 +144,7 @@ class RadiatorCell {
    * For a single central cell, it is assigned number (0, 0)
    * For an array of radiator cells, numbering starts from (0, 1) from the middle of the main row
    */
-  const std::pair<int, int> m_CellNumber;
+  const std::pair<std::size_t, std::size_t> m_CellNumber;
   /**
    * The SiPM in the radiator cell
    */

@@ -18,8 +18,8 @@ EndCapRadiatorArray::EndCapRadiatorArray():
   constexpr std::size_t NumberCells = EndCapRadiatorCell::m_ValidCells.size();
   m_Cells.reserve(NumberCells);
   for(std::size_t i = 0; i < NumberCells; i++) {
-    const int CellColumnNumber = EndCapRadiatorCell::m_ValidCells[i].first;
-    const int CellRowNumber = EndCapRadiatorCell::m_ValidCells[i].second;
+    const std::size_t CellColumnNumber = EndCapRadiatorCell::m_ValidCells[i].first;
+    const std::size_t CellRowNumber = EndCapRadiatorCell::m_ValidCells[i].second;
     m_Cells.emplace_back(std::make_unique<EndCapRadiatorCell>(CellColumnNumber,
 							      CellRowNumber,
 							      m_xHexDist));
@@ -30,7 +30,7 @@ std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 EndCapRadiatorArray::DrawRadiatorArray() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorArrayObjects;
   for(const auto &Cell : m_Cells) {
-    if(Cell->GetCellNumber().second == Settings::GetInt("EventDisplay/RowToDraw")) {
+    if(Cell->GetCellNumber().second == Settings::GetSizeT("EventDisplay/RowToDraw")) {
       auto RadiatorObjects = Cell->DrawRadiatorGeometry();
       RadiatorArrayObjects.insert(RadiatorArrayObjects.end(),
 				  std::make_move_iterator(RadiatorObjects.begin()),
@@ -40,7 +40,7 @@ EndCapRadiatorArray::DrawRadiatorArray() const {
   return RadiatorArrayObjects;
 }
 
-const RadiatorCell* EndCapRadiatorArray::operator()(int i, int j) {
+const RadiatorCell* EndCapRadiatorArray::operator()(std::size_t i, std::size_t j) {
   const auto iter = std::find(EndCapRadiatorCell::m_ValidCells.begin(),
 			      EndCapRadiatorCell::m_ValidCells.end(),
 			      std::make_pair(i, j));
@@ -58,13 +58,16 @@ const RadiatorCell* EndCapRadiatorArray::operator()(int i, int j) {
 				  + ") does not exist");
     }
   } else {
-    const std::size_t Index = iter - EndCapRadiatorCell::m_ValidCells.begin();
-    return m_Cells[Index].get();
+    const auto Index = iter - EndCapRadiatorCell::m_ValidCells.begin();
+    return m_Cells[static_cast<std::size_t>(Index)].get();
   }
 }
 
 const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
-  if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
+  const auto Location = particleTrack.GetParticleLocation();
+  if(Location != ParticleTrack::Location::EntranceWindow &&
+     Location != ParticleTrack::Location::MissedEntranceWindow &&
+     Location != ParticleTrack::Location::Radiator) {
     throw std::runtime_error("Cannot find radiator since track is not at entrance window");
   }
   // If track hits the other end cap, reflect
@@ -90,7 +93,7 @@ const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTra
   // Loop from the bottom row until we find the correct row
   const double x = particleTrack.GetPosition().X();
   const double y = particleTrack.GetPosition().Y();
-  int CellRowNumber = 1;
+  std::size_t CellRowNumber = 1;
   while(true) {
     if(IsBelowThisRow(CellRowNumber + 1, x, y)) {
       break;
@@ -98,14 +101,14 @@ const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTra
       CellRowNumber++;
     }
   }
-  int CellColumnNumber;
+  std::size_t CellColumnNumber;
   if(CellRowNumber%2 == 1) {
-    CellColumnNumber = (x + m_xHexDist/2.0)/m_xHexDist;
+    CellColumnNumber = static_cast<std::size_t>((x + m_xHexDist/2.0)/m_xHexDist);
   } else {
-    CellColumnNumber = x/m_xHexDist + 1;
+    CellColumnNumber = static_cast<std::size_t>(x/m_xHexDist) + 1;
   }
   if(IsReflected) {
-    constexpr std::array<std::pair<int, int>, 4> ReflectCells{{
+    constexpr std::array<std::pair<std::size_t, std::size_t>, 4> ReflectCells{{
       {2, 2}, {3, 3}, {5, 4}, {6, 5}}};
     if(CellRowNumber == 1) {
       particleTrack.ReflectY();
@@ -121,9 +124,9 @@ const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTra
   return (*this)(CellColumnNumber, CellRowNumber);
 }
 
-bool EndCapRadiatorArray::IsBelowThisRow(int Row, double x, double y) const {
+bool EndCapRadiatorArray::IsBelowThisRow(std::size_t Row, double x, double y) const {
   // Shift y coordinate so that we're comparing with the main row
-  const double y_shift = y - (Row - 1)*m_yHexDist;
+  const double y_shift = y - static_cast<double>(Row - 1)*m_yHexDist;
   if(Row%2 == 1) {
     return IsBelowOddRow(x, y_shift);
   } else {
@@ -133,9 +136,9 @@ bool EndCapRadiatorArray::IsBelowThisRow(int Row, double x, double y) const {
 
 bool EndCapRadiatorArray::IsBelowOddRow(double x, double y) const {
   // Count half-hexagon lengths along x
-  const int xUnits = x/(m_xHexDist/2.0);
+  const int xUnits = static_cast<int>(x/(m_xHexDist/2.0));
   // Shift x coordinate
-  const double x_shift = x - xUnits*m_xHexDist/2.0;
+  const double x_shift = x - static_cast<double>(xUnits)*m_xHexDist/2.0;
   if(xUnits%2 == 0) {
     // If hexagon slope is upwards
     return x_shift > TMath::Sqrt(3)*y + m_xHexDist;
@@ -147,9 +150,9 @@ bool EndCapRadiatorArray::IsBelowOddRow(double x, double y) const {
 
 bool EndCapRadiatorArray::IsBelowEvenRow(double x, double y) const {
   // Count half-hexagon lengths along x
-  const int xUnits = x/(m_xHexDist/2.0);
+  const int xUnits = static_cast<int>(x/(m_xHexDist/2.0));
   // Shift x coordinate
-  const double x_shift = x - xUnits*m_xHexDist/2.0;
+  const double x_shift = x - static_cast<double>(xUnits)*m_xHexDist/2.0;
   if(xUnits%2 == 0) {
     // If hexagon slope is downwards
     return x_shift < -m_xHexDist/2.0 - TMath::Sqrt(3)*y;

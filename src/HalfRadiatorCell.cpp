@@ -5,8 +5,8 @@
 #include"HalfRadiatorCell.h"
 #include"Settings.h"
 
-HalfRadiatorCell::HalfRadiatorCell(int CellColumnNumber,
-				   int CellRowNumber,
+HalfRadiatorCell::HalfRadiatorCell(std::size_t CellColumnNumber,
+				   std::size_t CellRowNumber,
 				   double HexagonSize):
   BarrelRadiatorCell(CellColumnNumber, CellRowNumber, HexagonSize) {
 }

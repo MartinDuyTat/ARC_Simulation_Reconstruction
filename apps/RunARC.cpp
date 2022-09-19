@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   }
   const std::string RunMode(argv[1]);
   if(Settings::Exists("General/Seed")) {
-    gRandom->SetSeed(Settings::GetInt("General/Seed"));
+    gRandom->SetSeed(Settings::GetSizeT("General/Seed"));
   }
   EventDisplay eventDisplay;
   const TrackingVolume InnerTracker;
@@ -74,6 +74,16 @@ int main(int argc, char *argv[]) {
     particleTrack.FindRadiator(*radiatorArray);
     particleTrack.ConvertToRadiatorCoordinates();
     particleTrack.TrackThroughRadiatorCell();
+    std::size_t Counter = 0;
+    while(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+      particleTrack.ConvertBackToGlobalCoordinates();
+      if(!particleTrack.FindRadiator(*radiatorArray) || Counter > 10) {
+	return 0;
+      }
+      particleTrack.ConvertToRadiatorCoordinates();
+      particleTrack.TrackThroughGasToMirror();
+      Counter++;
+    }
     auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
     auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
     std::vector<PhotonHit> photonHits;
@@ -96,10 +106,15 @@ int main(int argc, char *argv[]) {
     TTree CherenkovTree("CherenkovTree", "");
     double CherenkovAngle_Reco_TrueEmissionPoint[200], CherenkovAngle_Reco[200],
            CherenkovAngle_True[200], PhotonEnergy[200];
+    double OuterTracker_x, OuterTracker_y, OuterTracker_z;
+    double BeforeRadiator_x, BeforeRadiator_y, BeforeRadiator_z;
     double Entrance_x, Entrance_y, Entrance_z;
+    double MirrorHit_x, MirrorHit_y, MirrorHit_z;
+    double RadiatorPosition_x, RadiatorPosition_y, RadiatorPosition_z;
     double CosTheta, Phi;
     int NumberPhotons = 0;
-    int RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
+    std::size_t RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
+    std::size_t FinalRadiatorRowNumber, FinalRadiatorColumnNumber;
     ParticleTrack::Location ParticleLocation;
     Photon::Status PhotonStatus[200];
     CherenkovTree.Branch("NumberPhotons", &NumberPhotons);
@@ -112,26 +127,52 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("CherenkovAngle_True",
 			 &CherenkovAngle_True,
 			 "CherenkovAngle_True[NumberPhotons]/D");
-    CherenkovTree.Branch("PhotonEnergy", &PhotonEnergy, "PhotonEnergy[NumberPhotons]/D");
-    CherenkovTree.Branch("RadiatorRowNumber",&RadiatorRowNumber);
-    CherenkovTree.Branch("RadiatorColumnNumber", &RadiatorColumnNumber);
-    CherenkovTree.Branch("TrackNumber", &TrackNumber);
+    CherenkovTree.Branch("PhotonEnergy",
+			 &PhotonEnergy,
+			 "PhotonEnergy[NumberPhotons]/D");
+    CherenkovTree.Branch("FinalRadiatorColumnNumber",
+			 &FinalRadiatorColumnNumber,
+			 "FinalRadiatorColumnNumber/l");
+    CherenkovTree.Branch("FinalRadiatorRowNumber",
+			 &FinalRadiatorRowNumber,
+			 "FinalRadiatorRowNumber/l");
+    CherenkovTree.Branch("RadiatorRowNumber",
+			 &RadiatorRowNumber,
+			 "RadiatorRowNumber/l");
+    CherenkovTree.Branch("RadiatorColumnNumber",
+			 &RadiatorColumnNumber,
+			 "RadiatorColumnNumber/l");
+    CherenkovTree.Branch("TrackNumber",
+			 &TrackNumber,
+			 "TrackNumber/l");
     CherenkovTree.Branch("ParticleLocation", &ParticleLocation, "ParticleLocation/I");
     CherenkovTree.Branch("PhotonStatus", &PhotonStatus, "PhotonStatus[NumberPhotons]/I");
     CherenkovTree.Branch("Entrance_x", &Entrance_x);
     CherenkovTree.Branch("Entrance_y", &Entrance_y);
     CherenkovTree.Branch("Entrance_z", &Entrance_z);
+    CherenkovTree.Branch("MirrorHit_x", &MirrorHit_x);
+    CherenkovTree.Branch("MirrorHit_y", &MirrorHit_y);
+    CherenkovTree.Branch("MirrorHit_z", &MirrorHit_z);
+    CherenkovTree.Branch("OuterTracker_x", &OuterTracker_x);
+    CherenkovTree.Branch("OuterTracker_y", &OuterTracker_y);
+    CherenkovTree.Branch("OuterTracker_z", &OuterTracker_z);
+    CherenkovTree.Branch("BeforeRadiator_x", &BeforeRadiator_x);
+    CherenkovTree.Branch("BeforeRadiator_y", &BeforeRadiator_y);
+    CherenkovTree.Branch("BeforeRadiator_z", &BeforeRadiator_z);
+    CherenkovTree.Branch("RadiatorPosition_x", &RadiatorPosition_x);
+    CherenkovTree.Branch("RadiatorPosition_y", &RadiatorPosition_y);
+    CherenkovTree.Branch("RadiatorPosition_z", &RadiatorPosition_z);
     CherenkovTree.Branch("CosTheta", &CosTheta);
     CherenkovTree.Branch("Phi", &Phi);
-    const int NumberTracks = Settings::GetInt("General/NumberTracks");
+    const std::size_t NumberTracks = Settings::GetSizeT("General/NumberTracks");
     const bool DrawAllTracks = Settings::GetBool("General/DrawAllTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
     const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
-    for(int i = 0; i < NumberTracks; i++) {
+    for(std::size_t i = 0; i < NumberTracks; i++) {
       NumberPhotons = 0;
       TrackNumber = i;
-      RadiatorRowNumber = -1;
-      RadiatorColumnNumber = -1;
+      RadiatorRowNumber = static_cast<std::size_t>(-1);
+      RadiatorColumnNumber = static_cast<std::size_t>(-1);
       auto GetMomentum = [&] () {
 	if(BarrelOrEndcap == "Barrel") {
 	  return Utilities::GenerateRandomBarrelTrack(CosTheta, Phi);
@@ -146,14 +187,60 @@ int main(int argc, char *argv[]) {
       const int ParticleID = Settings::GetInt("Particle/ID");;
       ParticleTrack particleTrack(ParticleID, Momentum, Position);
       particleTrack.TrackThroughTracker(InnerTracker);
+      auto OuterTrackerPosition = particleTrack.GetPosition();
+      OuterTracker_x = OuterTrackerPosition.X();
+      OuterTracker_y = OuterTrackerPosition.Y();
+      OuterTracker_z = OuterTrackerPosition.Z();
       if(!particleTrack.FindRadiator(*radiatorArray)) {
 	continue;
       }
+      auto BeforeRadiatorPosition = particleTrack.GetPosition();
+      BeforeRadiator_x = BeforeRadiatorPosition.X();
+      BeforeRadiator_y = BeforeRadiatorPosition.Y();
+      BeforeRadiator_z = BeforeRadiatorPosition.Z();
       Phi = particleTrack.GetPosition().Phi();
+      particleTrack.ConvertToRadiatorCoordinates();
       RadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
       RadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
+      auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
+      Entrance_x = EntranceWindowPosition.X();
+      Entrance_y = EntranceWindowPosition.Y();
+      Entrance_z = EntranceWindowPosition.Z();
+      if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
+	ParticleLocation = particleTrack.GetParticleLocation();
+	CherenkovTree.Fill();
+	continue;
+      }
+      particleTrack.TrackThroughRadiatorCell();
+      ParticleLocation = particleTrack.GetParticleLocation();
+      bool ParticleAtMirror = true;
+      std::size_t Counter = 0;
+      while(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+	particleTrack.ConvertBackToGlobalCoordinates();
+	if(!particleTrack.FindRadiator(*radiatorArray) || Counter > 10) {
+	  ParticleAtMirror = false;
+	  break;
+	}
+	Phi = particleTrack.GetPosition().Phi();
+	particleTrack.ConvertToRadiatorCoordinates();
+	particleTrack.TrackThroughGasToMirror();
+	Counter++;
+      }
+      if(!ParticleAtMirror) {
+	continue;
+      }
+      auto MirrorHitPosition = particleTrack.GetPosition();
+      MirrorHit_x = MirrorHitPosition.X();
+      MirrorHit_y = MirrorHitPosition.Y();
+      MirrorHit_z = MirrorHitPosition.Z();
+      auto RadiatorPosition = particleTrack.GetRadiatorCell()->GetRadiatorPosition();
+      RadiatorPosition_x = RadiatorPosition.X();
+      RadiatorPosition_y = RadiatorPosition.Y();
+      RadiatorPosition_z = RadiatorPosition.Z();
+      FinalRadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
+      FinalRadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
       auto IsTrackDraw = [&] () {
-	if(RadiatorRowNumber != Settings::GetInt("EventDisplay/RowToDraw")) {
+	if(FinalRadiatorRowNumber != Settings::GetSizeT("EventDisplay/RowToDraw")) {
 	  return false;
 	}
 	if(DrawAllTracks) {
@@ -166,23 +253,6 @@ int main(int argc, char *argv[]) {
 	return true;
       };
       const bool DrawThisTrack = IsTrackDraw();
-      particleTrack.ConvertToRadiatorCoordinates();
-      auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
-      Entrance_x = EntranceWindowPosition.X();
-      Entrance_y = EntranceWindowPosition.Y();
-      Entrance_z = EntranceWindowPosition.Z();
-      if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
-	ParticleLocation = particleTrack.GetParticleLocation();
-	CherenkovTree.Fill();
-	continue;
-      }
-      particleTrack.TrackThroughRadiatorCell();
-      if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
-	ParticleLocation = particleTrack.GetParticleLocation();
-	CherenkovTree.Fill();
-	continue;
-      }
-      ParticleLocation = particleTrack.GetParticleLocation();
       if(DrawThisTrack) {
 	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
       }
@@ -216,10 +286,14 @@ int main(int argc, char *argv[]) {
       CherenkovTree.Fill();
     }
     std::string EventDisplayFilename("EventDisplay");
-    if(Settings::GetInt("EventDisplay/RowToDraw") == 1) {
-      EventDisplayFilename += "_MainRow";
-    } else if(Settings::GetInt("EventDisplay/RowToDraw") == 2) {
-      EventDisplayFilename += "_UpperRow";
+    if(Settings::GetString("General/BarrelOrEndcap") != "Barrel") {
+      EventDisplayFilename += "_EndCap";
+    } else {
+      if(Settings::GetInt("EventDisplay/RowToDraw") == 1) {
+	EventDisplayFilename += "_MainRow";
+      } else if(Settings::GetInt("EventDisplay/RowToDraw") == 2) {
+	EventDisplayFilename += "_UpperRow";
+      }
     }
     EventDisplayFilename += ".pdf";
     eventDisplay.DrawEventDisplay(EventDisplayFilename);

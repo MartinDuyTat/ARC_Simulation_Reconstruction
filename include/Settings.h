@@ -39,6 +39,10 @@ class Settings {
    */
   static int GetInt(const std::string &Setting);
   /**
+   * Get unsigned integer setting
+   */
+  static std::size_t GetSizeT(const std::string &Setting);
+  /**
    * Get bool setting (if string is "true" this evaluates to true)
    */
   static bool GetBool(const std::string &Setting);

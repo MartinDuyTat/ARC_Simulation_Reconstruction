@@ -33,7 +33,7 @@ class EndCapRadiatorArray: public RadiatorArray {
   /**
    * Operator overload to get the individual radiator cells
    */
-  virtual const RadiatorCell* operator()(int i, int j) override;
+  virtual const RadiatorCell* operator()(std::size_t i, std::size_t j) override;
   /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
@@ -45,7 +45,7 @@ class EndCapRadiatorArray: public RadiatorArray {
    * @param x Position along the z direction of the barrel, or x in local coordinates
    * @param y Position along the curved direction, or y in location coordinates
    */
-  bool IsBelowThisRow(int Row, double x, double y) const;
+  bool IsBelowThisRow(std::size_t Row, double x, double y) const;
   /**
    * Check if particle track hits below a row with odd row number
    * It is assumed the y cooridnate has been shifted so it's inside the main row

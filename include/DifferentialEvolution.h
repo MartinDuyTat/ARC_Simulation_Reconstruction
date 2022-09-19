@@ -56,7 +56,7 @@ namespace de
         };
 
         virtual double EvaluateCost(std::vector<double> inputs) const = 0;
-        virtual unsigned int NumberOfParameters() const = 0;
+        virtual std::size_t NumberOfParameters() const = 0;
         virtual std::vector<Constraints> GetConstraints() const = 0;
         virtual ~IOptimizable() {}
     };
@@ -77,8 +77,8 @@ namespace de
          * Optimization iteration is defined as processing of single population with SelectionAndCorssing method.
          */
         DifferentialEvolution(  const IOptimizable& costFunction,
-                                unsigned int populationSize,
-                                int randomSeed = 123,
+                                std::size_t populationSize,
+                                std::size_t randomSeed = 123,
                                 bool shouldCheckConstraints = true,
                                 std::function<void(const DifferentialEvolution&)> callback = nullptr,
                                 std::function<bool(const DifferentialEvolution&)> terminationCondition = nullptr) :
@@ -115,7 +115,7 @@ namespace de
 
             for (auto& agent : m_population)
             {
-                for (unsigned int i = 0; i < m_numberOfParameters; i++)
+                for (std::size_t i = 0; i < m_numberOfParameters; i++)
                 {
                     if (m_constraints[i].isConstrained)
                     {
@@ -131,7 +131,7 @@ namespace de
             }
 
             // Initialize minimum cost, best agent and best agent index
-            for (unsigned int i = 0; i < m_populationSize; i++)
+            for (std::size_t i = 0; i < m_populationSize; i++)
             {
                 m_minCostPerAgent[i] = m_cost.EvaluateCost(m_population[i]);
 
@@ -145,36 +145,38 @@ namespace de
 
         void SelectionAndCorssing()
         {
-            std::uniform_real_distribution<double> distribution(0, m_populationSize);
+            std::uniform_real_distribution<double>
+	      distribution(0, static_cast<double>(m_populationSize));
 
             double minCost = m_minCostPerAgent[0];
-            int bestAgentIndex = 0;
+            std::size_t bestAgentIndex = 0;
 
-            for (unsigned int x = 0; x < m_populationSize; x++)
+            for (std::size_t x = 0; x < m_populationSize; x++)
             {
                 // For x in population select 3 random agents (a, b, c) different from x
-                unsigned int a = x;
-                unsigned int b = x;
-                unsigned int c = x;
+                std::size_t a = x;
+                std::size_t b = x;
+                std::size_t c = x;
 
                 // Agents must be different from each other and from x
                 while (a == x || b == x || c == x || a == b || a == c || b == c)
                 {
-                    a = distribution(m_generator);
-                    b = distribution(m_generator);
-                    c = distribution(m_generator);
+                    a = static_cast<std::size_t>(distribution(m_generator));
+                    b = static_cast<std::size_t>(distribution(m_generator));
+                    c = static_cast<std::size_t>(distribution(m_generator));
                 }
 
                 // Form intermediate solution z
                 std::vector<double> z(m_numberOfParameters);
-                for (unsigned int i = 0; i < m_numberOfParameters; i ++)
+                for (std::size_t i = 0; i < m_numberOfParameters; i ++)
                 {
                     z[i] = m_population[a][i] + m_F * (m_population[b][i] - m_population[c][i]);
                 }
 
                 // Chose random R
-                std::uniform_real_distribution<double> distributionParam(0, m_numberOfParameters);
-                unsigned int R = distributionParam(m_generator);
+                std::uniform_real_distribution<double>
+		  distributionParam(0, static_cast<double>(m_numberOfParameters));
+                std::size_t R = static_cast<std::size_t>(distributionParam(m_generator));
 
                 // Chose random r for each dimension
                 std::vector<double> r(m_numberOfParameters);
@@ -187,7 +189,7 @@ namespace de
                 std::vector<double> newX(m_numberOfParameters);
 
                 // Execute crossing
-                for (unsigned int i = 0; i < m_numberOfParameters; i++)
+                for (std::size_t i = 0; i < m_numberOfParameters; i++)
                 {
                     if (r[i] < m_CR || i == R)
                     {
@@ -241,7 +243,7 @@ namespace de
         std::vector<std::pair<std::vector<double>, double>> GetPopulationWithCosts() const
         {
             std::vector<std::pair<std::vector<double>, double>> toRet;
-            for (unsigned int i = 0; i < m_populationSize; i++)
+            for (std::size_t i = 0; i < m_populationSize; i++)
             {
                 toRet.push_back(std::make_pair(m_population[i], m_minCostPerAgent[i]));
             }
@@ -278,7 +280,7 @@ namespace de
                     std::cout << "Current minimal cost: " << m_minCost*1000.0;
 		    std::cout << "e-3" << "\t\t";
                     std::cout << "Best agent: ";
-                    for (unsigned int i = 0; i < m_numberOfParameters; i++)
+                    for (std::size_t i = 0; i < m_numberOfParameters; i++)
                     {
                         std::cout<< m_population[m_bestAgentIndex][i] << " ";
                     }
@@ -312,7 +314,7 @@ namespace de
     private:
         bool CheckConstraints(std::vector<double> agent)
         {
-            for (unsigned int i = 0; i < agent.size(); i++)
+            for (std::size_t i = 0; i < agent.size(); i++)
             {
                 if (!m_constraints[i].Check(agent[i]))
                 {
@@ -324,14 +326,14 @@ namespace de
         }
 
         const IOptimizable& m_cost;
-        unsigned int m_populationSize;
+        std::size_t m_populationSize;
         double m_F;
         double m_CR;
 
-        int m_bestAgentIndex;
+        std::size_t m_bestAgentIndex;
         double m_minCost;
 
-        unsigned int m_numberOfParameters;
+        std::size_t m_numberOfParameters;
 
         bool m_shouldCheckConstraints;
 

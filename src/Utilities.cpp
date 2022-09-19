@@ -69,6 +69,6 @@ namespace Utilities {
       v.SetZ(Temp);
     }
     return v;
-  };
+  }
 
 }
