@@ -19,18 +19,26 @@ class RadiatorArray {
    */
   RadiatorArray();
   /**
+   * Delete copy constructor
+   */
+  RadiatorArray(const RadiatorArray &radiatorArray) = delete;
+  /**
    * Need virtual destructor because of polymorphism
    */
   virtual ~RadiatorArray() = default;
   /**
+   * Function to get a non-constant RadiatorCell object
+   */
+  RadiatorCell* GetRadiatorCell(std::size_t i, std::size_t j);
+  /**
    * Operator overload to get the individual radiator cells
    */
-  virtual const RadiatorCell* operator()(std::size_t i, std::size_t j) = 0;
+  const RadiatorCell* operator()(std::size_t i, std::size_t j) const;
   /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) = 0;
+  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) const = 0;
   /**
    * Draw all the radiator cells
    */
@@ -53,6 +61,11 @@ class RadiatorArray {
    * The vertical distance between two hexagons
    */
   const double m_yHexDist;
+ private:
+  /**
+   * Helper function to find the index for the radiator cell
+   */
+  virtual int FindRadiatorIndex(std::size_t i, std::size_t j) const = 0;
 };
 
 #endif

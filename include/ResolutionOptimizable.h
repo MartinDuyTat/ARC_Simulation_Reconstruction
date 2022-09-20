@@ -13,6 +13,7 @@
 #include"Photon.h"
 #include"DifferentialEvolution.h"
 #include"ParticleTrack.h"
+#include"RadiatorArray.h"
 
 using Tracks = std::vector<ParticleTrack>;
 
@@ -21,9 +22,11 @@ class ResolutionOptimizable: public de::IOptimizable {
   /**
    * Constructor that saves the radiator configuration, tracks and photons
    * @param radiatorCell The radiator configuration
+   * @param radiatorArray The full radiator array
    * @param ParticlesPhotons The generated particles and photons
    */
   ResolutionOptimizable(RadiatorCell &radiatorCell,
+			const RadiatorArray &radiatorArray,
 			const Tracks &Particles);
   /**
    * Function that evaluates the resolution
@@ -51,6 +54,10 @@ class ResolutionOptimizable: public de::IOptimizable {
    * The radiator cell we want to optimise
    */
   RadiatorCell *m_RadiatorCell;
+  /**
+   * The full radiator array
+   */
+  const RadiatorArray *m_RadiatorArray;
   /**
    * The generated tracks and photons used to calculate resolution
    */

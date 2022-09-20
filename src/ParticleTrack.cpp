@@ -22,6 +22,7 @@ ParticleTrack::ParticleTrack(int ParticleID,
   m_Position(Position),
   m_InitialPosition(Position),
   m_ParticleID(ParticleID),
+  m_RadiatorCell(nullptr),
   m_Location(Location::TrackerVolume),
   m_CoordinateSystem(CoordinateSystem::GlobalDetector),
   m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
@@ -57,7 +58,7 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   m_Location = Location::EntranceWindow;
 }
 
-bool ParticleTrack::FindRadiator(RadiatorArray &radiatorArray) {
+bool ParticleTrack::FindRadiator(const RadiatorArray &radiatorArray) {
   m_RadiatorCell = radiatorArray.FindRadiator(*this);
   if(m_RadiatorCell) {
     return true;
@@ -109,6 +110,9 @@ void ParticleTrack::ConvertBackToGlobalCoordinates() {
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {
+  if(!m_RadiatorCell) {
+    throw std::runtime_error("No radiator cell to track through");
+  }
   if(m_Location != Location::EntranceWindow) {
     throw std::runtime_error("Particle not at entrance window");
   }

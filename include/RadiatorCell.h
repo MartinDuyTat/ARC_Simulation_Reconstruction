@@ -33,6 +33,10 @@ class RadiatorCell {
 	       double HexagonSize,
 	       const std::string &Prefix = "");
   /**
+   * Delete copy constructor
+   */
+  RadiatorCell(const RadiatorCell &radiatorCell) = delete;
+  /**
    * Need virtual destructor because of polymorphism
    */
   virtual ~RadiatorCell() = default;

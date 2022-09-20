@@ -26,19 +26,19 @@ class EndCapRadiatorArray: public RadiatorArray {
    */
   EndCapRadiatorArray();
   /**
+   * Delete copy constructor
+   */
+  EndCapRadiatorArray(const EndCapRadiatorArray &radiatorCell) = delete;
+  /**
    * Draw all the radiator cells
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
   DrawRadiatorArray() const override;
   /**
-   * Operator overload to get the individual radiator cells
-   */
-  virtual const RadiatorCell* operator()(std::size_t i, std::size_t j) override;
-  /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) override;
+  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) const override;
   /**
    * Check if particle track hits below a particular row
    * @param Row The row number
@@ -61,6 +61,10 @@ class EndCapRadiatorArray: public RadiatorArray {
    */
   bool IsBelowEvenRow(double x, double y) const;
  private:
+  /**
+   * Helper function to find the index for the radiator cell
+   */
+  virtual int FindRadiatorIndex(std::size_t i, std::size_t j) const override;
 };
 
 #endif

@@ -20,93 +20,62 @@
 #include"DifferentialEvolution.h"
 #include"ResolutionOptimizable.h"
 #include"Settings.h"
+#include"RadiatorArray.h"
+#include"Utilities.h"
 
 namespace ResolutionUtilities {
+  using Utilities::ResolutionStruct;
 
   double CalculateResolution(const Tracks &Particles,
+			     const RadiatorCell *radiatorCell,
+			     const RadiatorArray &radiatorArray,
 			     bool IncludeCentrePenalty) {
-    // Struct containing sum of Cherenkov angle, sum of square of Cherenkov
-    // angle and total number of photons
-    struct ResolutionStruct {
-      // x is the Cherenkov angle, x2 is the Cherenkov angle squared
-      // CentreHitDistance is the distance between photon hit and detector centre
-      double x = 0.0;
-      double x2 = 0.0;
-      int N = 0;
-      bool HitTopWall = false;
-      Vector CentreHitDistance{0.0, 0.0, 0.0};
-    };
-    // Lambda for tracking photons and calculating the Cherenkov angles
-    auto TrackPhotons = [] (auto particleTrack) {
-      particleTrack.TrackThroughRadiatorCell();
-      auto Photons = particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror ?
-                     std::vector<Photon>() : particleTrack.GeneratePhotonsFromGas();
-      ResolutionStruct resolutionStruct;
-      for(auto Photon : Photons) {
-	auto photonHit = PhotonMapper::TracePhoton(Photon);
-	if(Photon.m_Status == Photon::Status::DetectorHit) {
-	  auto reconstructedPhoton =
-	    PhotonReconstructor::ReconstructPhoton(particleTrack,
-						   *photonHit,
-						   Photon::Radiator::Gas);
-	  const double CherenkovAngle = TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
-	  resolutionStruct.x += CherenkovAngle;
-	  resolutionStruct.x2 += CherenkovAngle*CherenkovAngle;
-	  resolutionStruct.N++;
-	  resolutionStruct.CentreHitDistance += photonHit->m_CentreHitDistance;
-	} else if(Photon.m_Status == Photon::Status::WallMiss ||
-		  Photon.m_Status == Photon::Status::Backwards ||
-		  Photon.m_Status == Photon::Status::DetectorMiss) {
-	  resolutionStruct.HitTopWall = true;
-	}
-      }
-      return resolutionStruct;
-    };
     // Put it all together
     ResolutionStruct Total{};
     std::size_t PhotonsHitWallTracks = 0;
+    bool TooFewPhotons = false;
     #pragma omp parallel for num_threads(8)
     for(std::size_t i = 0; i < Particles.size(); i++) {
-    ResolutionStruct resolutionStruct = TrackPhotons(Particles[i]);
+    ResolutionStruct resolutionStruct =
+      Utilities::TrackPhotons(Particles[i], *radiatorCell, radiatorArray);
+    if(!resolutionStruct.HitCorrectCell) {
+      continue;
+    }
     #pragma omp critical (Update)
     {
       if(resolutionStruct.HitTopWall) {
 	PhotonsHitWallTracks++;
       }
+      if(resolutionStruct.N <= 1) {
+        TooFewPhotons = true;
+      }
       Total.x += resolutionStruct.x;
-      Total.x2 += resolutionStruct.x2;
-      Total.N += resolutionStruct.N;
+      Total.N++;
       Total.CentreHitDistance += resolutionStruct.CentreHitDistance;
     }
     }
-    // 0.0003 is the pixel size angular resolution
-    const double Resolution =
-      TMath::Sqrt(Total.x2/Total.N - (Total.x/Total.N)*(Total.x/Total.N)
-	        + 0.0003*0.0003);
-    const double MeanNumberPhotons =
-      static_cast<double>(Total.N)/static_cast<double>(Particles.size());
-    if(MeanNumberPhotons <= 1.0) {
+    if(TooFewPhotons) {
       return 1000.0;
-    } else {
-      const auto NumberParticles = Particles.size();
-      auto GetFinalResolution = [&] (bool IncludeCentrePenalty) {
-        // Penalty when hitting the upper wall
-        const double WallPenalty = (10.0*static_cast<double>(PhotonsHitWallTracks))/
-	                           static_cast<double>(NumberParticles);
-        const double ResolutionWithPenalty = Resolution/TMath::Sqrt(MeanNumberPhotons)
-	                                   + WallPenalty;
-	if(IncludeCentrePenalty) {
-          // Penalty when far from the mirror centre
-          const Vector AverageRingPosition = Total.CentreHitDistance*(1.0/Total.N);
-          const double CentrePenalty = 0.01*TMath::Sqrt(AverageRingPosition.Mag2());
-          return ResolutionWithPenalty + CentrePenalty;
-        } else {
-          return ResolutionWithPenalty;
-        }
-      };
-      const double FinalResolution = GetFinalResolution(IncludeCentrePenalty);
-      return FinalResolution;
-    } 
+    }
+    // 0.0003 is the pixel size angular resolution
+    const double Resolution = Total.x/static_cast<double>(Total.N) + 0.0003*0.0003;
+    const auto NumberParticles = Particles.size();
+    auto GetFinalResolution = [&] (bool IncludeCentrePenalty) {
+      // Penalty when hitting the upper wall
+      const double WallPenalty = (10.0*static_cast<double>(PhotonsHitWallTracks))/
+                                 static_cast<double>(NumberParticles);
+      const double ResolutionWithPenalty = Resolution + WallPenalty;
+      if(IncludeCentrePenalty) {
+        // Penalty when far from the mirror centre
+        const Vector AverageRingPosition = Total.CentreHitDistance/Total.N;
+        const double CentrePenalty = 0.01*TMath::Sqrt(AverageRingPosition.Mag2());
+        return ResolutionWithPenalty + CentrePenalty;
+      } else {
+        return ResolutionWithPenalty;
+      }
+    };
+    const double FinalResolution = GetFinalResolution(IncludeCentrePenalty);
+    return FinalResolution;
   }
 
   double fcn(double MirrorCurvature,
@@ -115,6 +84,7 @@ namespace ResolutionUtilities {
 	     double DetectorPosition,
 	     double DetectorTilt,
 	     RadiatorCell &radiatorCell,
+	     const RadiatorArray &radiatorArray,
 	     const Tracks &Particles,
 	     std::size_t Seed,
 	     bool IncludeCentrePenalty) {
@@ -128,11 +98,14 @@ namespace ResolutionUtilities {
     }
     gRandom->SetSeed(Seed);
     const double Resolution = CalculateResolution(Particles,
+	                                          &radiatorCell,
+	                                          radiatorArray,
 	                                          IncludeCentrePenalty);
     return Resolution;
   }
 
   void PlotProjections(RadiatorCell &radiatorCell,
+	               const RadiatorArray &radiatorArray,
                        const Tracks &Particles) {
     std::string ResultFilename = Settings::GetString("Optimisation/Filename");
     std::ifstream File(ResultFilename);
@@ -149,23 +122,23 @@ namespace ResolutionUtilities {
     const std::size_t Seed = Settings::GetSizeT("General/Seed");
     auto MinimiseFunctionMirrorCurvature = [&] (double *x, double*) {
       return fcn(x[0], Result[1], Result[2], Result[3], Result[4],
-	         radiatorCell, Particles, Seed, false);
+	         radiatorCell, radiatorArray, Particles, Seed, false);
     };
     auto MinimiseFunctionXPosition = [&] (double *x, double*) {
       return fcn(Result[0], x[0], Result[2], Result[3], Result[4],
-	         radiatorCell, Particles, Seed, false);
+	         radiatorCell, radiatorArray, Particles, Seed, false);
     };
     auto MinimiseFunctionZPosition = [&] (double *x, double*) {
       return fcn(Result[0], Result[1], x[0], Result[3], Result[4],
-	         radiatorCell, Particles, Seed, false);
+	         radiatorCell, radiatorArray, Particles, Seed, false);
     };
     auto MinimiseFunctionDetPosition = [&] (double *x, double*) {
       return fcn(Result[0], Result[1], Result[2], x[0], Result[4],
-	         radiatorCell, Particles, Seed, false);
+	         radiatorCell, radiatorArray, Particles, Seed, false);
     };
     auto MinimiseFunctionDetTilt = [&] (double *x, double*) {
       return fcn(Result[0], Result[1], Result[2], Result[3], x[0],
-	         radiatorCell, Particles, Seed, false);
+	         radiatorCell, radiatorArray, Particles, Seed, false);
     };
     std::string Name1("Optimisation/MirrorCurvaturePlot_");
     double Curvature_min = Settings::GetDouble(Name1 + "min");
@@ -231,10 +204,11 @@ namespace ResolutionUtilities {
   }
 
   void DoFit(RadiatorCell &radiatorCell,
+	     const RadiatorArray &radiatorArray,
 	     const Tracks &Particles,
-	     int Column,
-	     int Row) {
-    ResolutionOptimizable resolutionOptimisable(radiatorCell, Particles);
+	     std::size_t Column,
+	     std::size_t Row) {
+    ResolutionOptimizable resolutionOptimisable(radiatorCell, radiatorArray, Particles);
     const std::size_t NumberAgents = Settings::GetSizeT("Optimisation/NumberAgents");
     de::DifferentialEvolution de(resolutionOptimisable, NumberAgents);
     const int Iterations = Settings::GetInt("Optimisation/Iterations");

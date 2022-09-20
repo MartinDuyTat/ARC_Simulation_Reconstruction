@@ -22,6 +22,10 @@ class BarrelRadiatorCell: public RadiatorCell {
    */
   BarrelRadiatorCell(std::size_t CellColumnNumber, std::size_t CellRowNumber, double HexagonSize);
   /**
+   * Delete copy constructor
+   */
+  BarrelRadiatorCell(const BarrelRadiatorCell &radiatorCell) = delete;
+  /**
    * Get the radiator cell position in the global coordinates
    */
   virtual const Vector& GetRadiatorPosition() const override;

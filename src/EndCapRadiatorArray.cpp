@@ -40,30 +40,7 @@ EndCapRadiatorArray::DrawRadiatorArray() const {
   return RadiatorArrayObjects;
 }
 
-const RadiatorCell* EndCapRadiatorArray::operator()(std::size_t i, std::size_t j) {
-  const auto iter = std::find(EndCapRadiatorCell::m_ValidCells.begin(),
-			      EndCapRadiatorCell::m_ValidCells.end(),
-			      std::make_pair(i, j));
-  if(iter == EndCapRadiatorCell::m_ValidCells.end()) {
-    const auto iter2 = std::find(EndCapRadiatorCell::m_NotValidCells.begin(),
-				 EndCapRadiatorCell::m_NotValidCells.end(),
-				 std::make_pair(i, j));
-    if(iter2 != EndCapRadiatorCell::m_NotValidCells.end()) {
-      return nullptr;
-    } else {
-      throw std::invalid_argument("Radiator ("
-				  + std::to_string(i)
-				  + ", "
-				  + std::to_string(j)
-				  + ") does not exist");
-    }
-  } else {
-    const auto Index = iter - EndCapRadiatorCell::m_ValidCells.begin();
-    return m_Cells[static_cast<std::size_t>(Index)].get();
-  }
-}
-
-const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTrack) {
+const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTrack) const {
   const auto Location = particleTrack.GetParticleLocation();
   if(Location != ParticleTrack::Location::EntranceWindow &&
      Location != ParticleTrack::Location::MissedEntranceWindow &&
@@ -159,5 +136,28 @@ bool EndCapRadiatorArray::IsBelowEvenRow(double x, double y) const {
   } else {
     // If hexagon slope is upwards
     return x_shift > TMath::Sqrt(3)*y + m_xHexDist;
+  }
+}
+
+int EndCapRadiatorArray::FindRadiatorIndex(std::size_t i, std::size_t j) const {
+  const auto iter = std::find(EndCapRadiatorCell::m_ValidCells.begin(),
+			      EndCapRadiatorCell::m_ValidCells.end(),
+			      std::make_pair(i, j));
+  if(iter == EndCapRadiatorCell::m_ValidCells.end()) {
+    const auto iter2 = std::find(EndCapRadiatorCell::m_NotValidCells.begin(),
+				 EndCapRadiatorCell::m_NotValidCells.end(),
+				 std::make_pair(i, j));
+    if(iter2 != EndCapRadiatorCell::m_NotValidCells.end()) {
+      return -1;
+    } else {
+      throw std::invalid_argument("Radiator ("
+				  + std::to_string(i)
+				  + ", "
+				  + std::to_string(j)
+				  + ") does not exist");
+    }
+  } else {
+    const auto Index = iter - EndCapRadiatorCell::m_ValidCells.begin();
+    return static_cast<int>(Index);
   }
 }

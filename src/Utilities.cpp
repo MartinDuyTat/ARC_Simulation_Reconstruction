@@ -6,6 +6,10 @@
 #include"Settings.h"
 #include"RadiatorCell.h"
 #include"BarrelRadiatorCell.h"
+#include"ParticleTrack.h"
+#include"RadiatorArray.h"
+#include"PhotonMapper.h"
+#include"PhotonReconstructor.h"
 
 namespace Utilities {
 
@@ -69,6 +73,59 @@ namespace Utilities {
       v.SetZ(Temp);
     }
     return v;
+  }
+
+  ResolutionStruct TrackPhotons(ParticleTrack particleTrack,
+				const RadiatorCell &radiatorCell,
+				const RadiatorArray &radiatorArray) {
+    if(!particleTrack.FindRadiator(radiatorArray)) {
+      return ResolutionStruct{};
+    }
+    particleTrack.ConvertToRadiatorCoordinates();
+    particleTrack.TrackThroughRadiatorCell();
+    std::size_t Counter = 0;
+    while(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+      particleTrack.ConvertBackToGlobalCoordinates();
+      if(!particleTrack.FindRadiator(radiatorArray) || Counter > 10) {
+	return ResolutionStruct{};
+      }
+      particleTrack.ConvertToRadiatorCoordinates();
+      particleTrack.TrackThroughGasToMirror();
+      Counter++;
+    }
+    if(particleTrack.GetRadiatorCell() != &radiatorCell) {
+      return ResolutionStruct{};
+    }
+    auto Photons = particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror ?
+    std::vector<Photon>() : particleTrack.GeneratePhotonsFromGas();
+    ResolutionStruct resolutionStruct;
+    resolutionStruct.HitCorrectCell = true;
+    std::vector<double> CherenkovAngles;
+    CherenkovAngles.reserve(Photons.size());
+    for(auto Photon : Photons) {
+      auto photonHit = PhotonMapper::TracePhoton(Photon);
+      if(Photon.m_Status == Photon::Status::DetectorHit) {
+	auto reconstructedPhoton =
+	  PhotonReconstructor::ReconstructPhoton(particleTrack,
+						 *photonHit,
+						 Photon::Radiator::Gas);
+	const double CherenkovAngle = TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
+	CherenkovAngles.push_back(CherenkovAngle);
+	resolutionStruct.N++;
+	resolutionStruct.CentreHitDistance += photonHit->m_CentreHitDistance;
+      } else if(Photon.m_Status == Photon::Status::WallMiss ||
+		Photon.m_Status == Photon::Status::Backwards ||
+		Photon.m_Status == Photon::Status::DetectorMiss) {
+	resolutionStruct.HitTopWall = true;
+      }
+    }
+    if(resolutionStruct.N > 0) {
+      resolutionStruct.x = TMath::RMS(CherenkovAngles.begin(),
+				      CherenkovAngles.end());
+      resolutionStruct.x /= TMath::Sqrt(resolutionStruct.N);
+      resolutionStruct.CentreHitDistance /= resolutionStruct.N;
+    }
+    return resolutionStruct;
   }
 
 }

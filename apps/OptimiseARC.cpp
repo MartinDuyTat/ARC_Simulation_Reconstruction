@@ -16,8 +16,10 @@
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 #include"Settings.h"
-#include"BarrelRadiatorCell.h"
-#include"EndCapRadiatorCell.h"
+#include"RadiatorArray.h"
+#include"BarrelRadiatorArray.h"
+#include"EndCapRadiatorArray.h"
+#include"RadiatorCell.h"
 #include"HalfRadiatorCell.h"
 #include"TrackingVolume.h"
 #include"ParticleTrack.h"
@@ -44,31 +46,21 @@ int main(int argc, char *argv[]) {
   std::cout << "Generating tracks...\n";
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
-  const std::size_t CellsPerRow = 2*Settings::GetSizeT("ARCGeometry/CellsPerRow") - 1;
-  const double HexagonSize = Settings::GetDouble("ARCGeometry/Length")/
-                             static_cast<double>(CellsPerRow);
-  const int Column = std::stoi(std::string(argv[1]));
-  const int Row = std::stoi(std::string(argv[2]));
+  const std::size_t Column = static_cast<std::size_t>(std::stoi(std::string(argv[1])));
+  const std::size_t Row = static_cast<std::size_t>(std::stoi(std::string(argv[2])));
   std::cout << "Tracks ready\n";
-  std::unique_ptr<RadiatorCell> radiatorCell = nullptr;
+  std::unique_ptr<RadiatorArray> radiatorArray;
   const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
   if(BarrelOrEndcap == "Barrel") {
-    if(Row == 2 && Column == Settings::GetDouble("ARCGeometry/CellsPerRow")) {
-      std::cout << "HalfRadiatorCell ready\n";
-      radiatorCell = std::make_unique<HalfRadiatorCell>(Column, Row, HexagonSize);
-    } else {
-      std::cout << "BarrelRadiatorCell ready\n";
-      radiatorCell = std::make_unique<BarrelRadiatorCell>(Column, Row, HexagonSize);
-    }
+    radiatorArray = std::make_unique<BarrelRadiatorArray>();
   } else if(BarrelOrEndcap == "EndCap") {
-    std::cout << "EndCapRadiatorCell ready\n";
-    radiatorCell = std::make_unique<EndCapRadiatorCell>(Column, Row, HexagonSize);
+    radiatorArray = std::make_unique<EndCapRadiatorArray>();
   } else {
     return 0;
   }
-  const Vector CellPosition = radiatorCell->GetRadiatorPosition();
-  const double z_min = CellPosition.X() - HexagonSize/2.0;
-  const double z_max = CellPosition.X() + HexagonSize/2.0;
+  RadiatorCell *radiatorCell = radiatorArray->GetRadiatorCell(Column, Row);
+  const double z_min = Settings::GetDouble("Particle/z_min");
+  const double z_max = Settings::GetDouble("Particle/z_max");
   Tracks Particles;
   const std::size_t TotalNumberTracks = Settings::GetSizeT("General/NumberTracks");
   Particles.reserve(TotalNumberTracks);
@@ -86,11 +78,6 @@ int main(int argc, char *argv[]) {
     const Vector Momentum = GetMomentum();
     ParticleTrack particleTrack(ParticleID, Momentum, Vector(0.0, 0.0, 0.0));
     particleTrack.TrackThroughTracker(InnerTracker);
-    particleTrack.SetRadiator(radiatorCell.get());
-    particleTrack.ConvertToRadiatorCoordinates();
-    if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
-      continue;
-    }
     Particles.push_back(particleTrack);
     NumberTracks++;
   }
@@ -102,7 +89,8 @@ int main(int argc, char *argv[]) {
 	std::cin >> xx;
       }
       double Value = ResolutionUtilities::fcn(x[0], x[1], x[2], x[3], x[4],
-					      *radiatorCell, Particles, Seed, false);
+					      *radiatorCell, *radiatorArray,
+					      Particles, Seed, false);
       std::cout << "fcn = " << Value << "\n";
       std::cout << "Calculate new value?(y/n)\n";
       std::string Answer;
@@ -114,12 +102,12 @@ int main(int argc, char *argv[]) {
   }
   if(Settings::GetBool("Optimisation/DoFit")) {
     std::cout << "Differential evolution ready, sending off agents...\n";
-    ResolutionUtilities::DoFit(*radiatorCell, Particles, Column, Row);
+    ResolutionUtilities::DoFit(*radiatorCell, *radiatorArray, Particles, Column, Row);
     std::cout << "ARC is optimised!\n";
   }
   if(Settings::GetBool("Optimisation/PlotProjections")) {
     std::cout << "Plotting...\n";
-    ResolutionUtilities::PlotProjections(*radiatorCell, Particles);
+    ResolutionUtilities::PlotProjections(*radiatorCell, *radiatorArray, Particles);
     std::cout << "Resolution projections plotted\n";
   }
   return 0;

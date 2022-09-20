@@ -58,7 +58,7 @@ class ParticleTrack {
   /**
    * Find the correct radiator that the particle goes through
    */
-  bool FindRadiator(RadiatorArray &radiatorArray);
+  bool FindRadiator(const RadiatorArray &radiatorArray);
   /**
    * Set radiator
    */

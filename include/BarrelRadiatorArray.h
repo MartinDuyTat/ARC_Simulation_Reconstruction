@@ -26,19 +26,19 @@ class BarrelRadiatorArray: public RadiatorArray {
    */
   BarrelRadiatorArray();
   /**
+   * Delete copy constructor
+   */
+  BarrelRadiatorArray(const BarrelRadiatorArray &radiatorCell) = delete;
+  /**
    * Draw all the radiator cells
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
   DrawRadiatorArray() const override;
   /**
-   * Operator overload to get the individual radiator cells
-   */
-  virtual const RadiatorCell* operator()(std::size_t i, std::size_t j) override;
-  /**
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) override;
+  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) const override;
   /**
    * Check if particle track hits below the main row
    * @param x Position along the z direction of the barrel, or x in local coordinates
@@ -71,6 +71,10 @@ class BarrelRadiatorArray: public RadiatorArray {
    * The azimuthal rotation between each two rows
    */
   const double m_DeltaPhi;
+  /**
+   * Helper function to find the index for the radiator cell
+   */
+  virtual int FindRadiatorIndex(std::size_t i, std::size_t j) const override;
 };
 
 #endif

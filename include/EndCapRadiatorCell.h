@@ -16,6 +16,10 @@ class EndCapRadiatorCell: public RadiatorCell {
    */
   EndCapRadiatorCell(std::size_t CellColumnNumber, std::size_t CellRowNumber, double HexagonSize);
   /**
+   * Delete copy constructor
+   */
+  EndCapRadiatorCell(const EndCapRadiatorCell &radiatorCell) = delete;
+  /**
    * Function that checks if the position is inside the radiator
    */
   virtual bool IsInsideCell(const Vector &Position) const override;

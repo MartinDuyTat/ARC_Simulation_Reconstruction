@@ -9,6 +9,8 @@
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 #include"RadiatorCell.h"
+#include"RadiatorArray.h"
+#include"ParticleTrack.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -35,6 +37,36 @@ namespace Utilities {
    * @param v The vector we want to swap
    */
   Vector SwapXZForEndCap(const RadiatorCell *radiatorCell, Vector v);
+  // Struct containing sum of Cherenkov angle, sum of square of Cherenkov
+  // angle and total number of photons
+  struct ResolutionStruct {
+    /**
+     * The Cherenkov angle
+     */
+    double x = 0.0;
+    /**
+     * The number of photons
+     */
+    int N = 0;
+    /**
+     * Set to true if particle hits the top wall of the radiator cell
+     */
+    bool HitTopWall = false;
+    /**
+     * Set to true if the particle hits the correct cell
+     */
+    bool HitCorrectCell = false;
+    /**
+     * The average photon hit position
+     */
+    Vector CentreHitDistance{0.0, 0.0, 0.0};
+  };
+  /**
+   * Track photons through radiator cells and return the information about resolutions
+   */
+  ResolutionStruct TrackPhotons(ParticleTrack particleTrack,
+				const RadiatorCell &radiatorCell,
+				const RadiatorArray &radiatorArray);
 }
 
 #endif
