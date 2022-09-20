@@ -26,15 +26,13 @@ const Vector& BarrelRadiatorCell::GetRadiatorPosition() const {
 bool BarrelRadiatorCell::IsInsideCell(const Vector &Position) const {
   // Get x and y coordinates after mapping everything to first quadrant
   const double x = TMath::Abs(Position.X());
-  // Need a stretching factor in y direction because of the curvature
-  /*const double Radius = m_Position.Z() - m_CoolingThickness;
-  const double TanTheta = Position.Y()/(Radius + m_CoolingThickness);
-  const double SecTheta = TMath::Sqrt(1 + TanTheta*TanTheta);
-  const double Stretch = SecTheta*(1 + m_CoolingThickness/Radius);
-  const double y = TMath::Abs(Position.Y())/Stretch;*/
-  const double Radius = m_Position.Z() + Position.Z();
-  const double Theta = TMath::Abs(Position.Y())/Radius;
-  const double y = Radius*TMath::Sin(Theta);
+  // For the y coordinate we need to first project it down to the barrel
+  const double BarrelRadius = m_Position.Z();
+  const double Radius = TMath::Sqrt(TMath::Power(Position.Y(), 2)
+				  + TMath::Power(Position.Z() + BarrelRadius, 2));
+  const double ProjectedY = Position.Y()*BarrelRadius/Radius;
+  // Then we need to convert the projected y coordinate to an arc length
+  const double y = TMath::Abs(BarrelRadius*TMath::Sin(ProjectedY/BarrelRadius));
   // First part is checking the sloped part, the other is the vertical part
   return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
 }

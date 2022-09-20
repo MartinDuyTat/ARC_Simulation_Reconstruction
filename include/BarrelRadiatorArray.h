@@ -49,8 +49,9 @@ class BarrelRadiatorArray: public RadiatorArray {
    * Check if particle track hits above the upper row
    * @param x Position along the z direction of the barrel, or x in local coordinates
    * @param y Position along the curved direction, or y in location coordinates
+   * @param Radius The radial coordinate of the particle in global coordinates
    */
-  bool IsAboveUpperRow(double x, double y) const;
+  bool IsAboveUpperRow(double x, double y, double Radius) const;
   /**
    * Check if particle track hits above the main row
    * @param x Position along the z direction of the barrel, or x in local coordinates
@@ -62,6 +63,14 @@ class BarrelRadiatorArray: public RadiatorArray {
    * Flag that is true if the full geometry is included, otherwise a single cell in the middle is used
    */
   const bool m_FullArray;
+  /**
+   * Radius of the barrel
+   */
+  const double m_BarrelRadius;
+  /**
+   * The azimuthal rotation between each two rows
+   */
+  const double m_DeltaPhi;
 };
 
 #endif

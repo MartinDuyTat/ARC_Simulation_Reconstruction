@@ -13,7 +13,10 @@
 
 BarrelRadiatorArray::BarrelRadiatorArray():
   RadiatorArray::RadiatorArray(),
-  m_FullArray(Settings::GetBool("General/FullArray")) {
+  m_FullArray(Settings::GetBool("General/FullArray")),
+  m_BarrelRadius(Settings::GetDouble("ARCGeometry/Radius") +
+		 Settings::GetDouble("RadiatorCell/CoolingThickness")),
+  m_DeltaPhi(2.0*m_yHexDist/m_BarrelRadius) {
   if(m_FullArray) {
     m_Cells.reserve(2*m_NumberMainRowCells);
     for(std::size_t i = 0; i < m_NumberMainRowCells; i++) {
@@ -98,7 +101,8 @@ const RadiatorCell* BarrelRadiatorArray::FindRadiator(ParticleTrack &particleTra
       return nullptr;
     }
     // Account for curvature when calculating y coordinate (azimuthal)
-    double y = TMath::ATan2(Position.Y(), Position.X())*Radius;
+    double ProjectedY = Position.Y()*m_BarrelRadius/Radius;
+    double y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
     // First check if track is on the correct side and not hitting endcap
     bool IsReflected = false;
     if(x < 0.0) {
@@ -107,24 +111,25 @@ const RadiatorCell* BarrelRadiatorArray::FindRadiator(ParticleTrack &particleTra
       x = particleTrack.GetPosition().Z();
     }
     // Make sure track is not below the main row
-    const double DeltaPhi = 2.0*m_yHexDist/Settings::GetDouble("ARCGeometry/Radius");
     while(IsBelowMainRow(x, y)) {
-      particleTrack.MapPhi(+DeltaPhi);
+      particleTrack.MapPhi(+m_DeltaPhi);
       Position = particleTrack.GetPosition();
-      y = TMath::ATan2(Position.Y(), Position.X())*Radius;
+      ProjectedY = Position.Y()*m_BarrelRadius/Radius;
+      y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
     }
     // Make sure track is not above the upper row
-    while(IsAboveUpperRow(x, y)) {
-      particleTrack.MapPhi(-DeltaPhi);
+    while(IsAboveUpperRow(x, y, m_BarrelRadius)) {
+      particleTrack.MapPhi(-m_DeltaPhi);
       Position = particleTrack.GetPosition();
-      y = TMath::ATan2(Position.Y(), Position.X())*Radius;
+      ProjectedY = Position.Y()*m_BarrelRadius/Radius;
+      y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
     }
     if(IsAboveMainRow(x, y)) {
       // Particle hits the upper row
       const std::size_t xIndex = static_cast<std::size_t>(x/m_xHexDist) + 1;
       const std::size_t yIndex = 2;
-      particleTrack.MapPhi(-DeltaPhi/2.0);
-      particleTrack.SetPhiRotated(-DeltaPhi/2.0);
+      particleTrack.MapPhi(-m_DeltaPhi/2.0);
+      particleTrack.SetPhiRotated(-m_DeltaPhi/2.0);
       return (*this)(xIndex, yIndex);
     } else {
       // Particle hits the main row
@@ -154,9 +159,9 @@ bool BarrelRadiatorArray::IsBelowMainRow(double x, double y) const {
   }
 }
 
-bool BarrelRadiatorArray::IsAboveUpperRow(double x, double y) const {
+bool BarrelRadiatorArray::IsAboveUpperRow(double x, double y, double Radius) const {
   // The boundary on the top is just the boundary below, but shifted
-  const double y_shift = y - 2*m_yHexDist;
+  const double y_shift = y - m_DeltaPhi*Radius;
   return !IsBelowMainRow(x, y_shift);
 }
 
