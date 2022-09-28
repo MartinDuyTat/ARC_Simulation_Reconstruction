@@ -7,7 +7,9 @@ namespace ParticleMass {
   
   double GetMass(int PID) {
     static const std::map<int, double> Mass{
-      {211, 0.139568}
+      {211, 0.139568},
+      {321, 0.493677},
+      {2212, 0.93827208816}
     };
     auto iter = Mass.find(PID);
     if(iter == Mass.end()) {

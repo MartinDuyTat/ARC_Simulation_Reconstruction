@@ -104,8 +104,8 @@ int main(int argc, char *argv[]) {
     std::cout << "Run mode: Cherenkov angle resolution\n";
     TFile CherenkovFile("CherenkovFile.root", "RECREATE");
     TTree CherenkovTree("CherenkovTree", "");
-    double CherenkovAngle_Reco_TrueEmissionPoint[200], CherenkovAngle_Reco[200],
-           CherenkovAngle_True[200], PhotonEnergy[200];
+    double CherenkovAngle_Reco_TrueEmissionPoint[2000], CherenkovAngle_Reco[2000],
+           CherenkovAngle_True[2000], PhotonEnergy[2000];
     double OuterTracker_x, OuterTracker_y, OuterTracker_z;
     double BeforeRadiator_x, BeforeRadiator_y, BeforeRadiator_z;
     double Entrance_x, Entrance_y, Entrance_z;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
     std::size_t RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
     std::size_t FinalRadiatorRowNumber, FinalRadiatorColumnNumber;
     ParticleTrack::Location ParticleLocation;
-    Photon::Status PhotonStatus[200];
+    Photon::Status PhotonStatus[2000];
     CherenkovTree.Branch("NumberPhotons", &NumberPhotons);
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint",
 			 &CherenkovAngle_Reco_TrueEmissionPoint,
@@ -256,8 +256,14 @@ int main(int argc, char *argv[]) {
       if(DrawThisTrack) {
 	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
       }
-      auto Photons = particleTrack.GeneratePhotonsFromGas();
+      const bool Aerogel = Settings::GetString("General/GasOrAerogel") == "Aerogel";
+      auto Photons = Aerogel ?
+                     particleTrack.GeneratePhotonsFromAerogel() :
+                     particleTrack.GeneratePhotonsFromGas();
       for(auto &Photon : Photons) {
+	if(NumberPhotons >= 2000) {
+	  std::cout << "Warning! Number of photons is greater than 2000\n";
+	}
 	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.m_CosCherenkovAngle);
 	auto photonHit = PhotonMapper::TracePhoton(Photon);
 	if(DrawThisTrack) {
@@ -270,10 +276,13 @@ int main(int argc, char *argv[]) {
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] = -1.0;
 	  CherenkovAngle_Reco[NumberPhotons] = -1.0;
 	} else {
+	  auto Radiator = Aerogel ?
+	                  Photon::Radiator::Aerogel :
+	                  Photon::Radiator::Gas;
 	  auto reconstructedPhoton =
 	    PhotonReconstructor::ReconstructPhoton(particleTrack,
 						   *photonHit,
-						   Photon::Radiator::Gas);
+						   Radiator);
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint);
 	  CherenkovAngle_Reco[NumberPhotons] =

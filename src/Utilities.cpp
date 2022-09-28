@@ -83,14 +83,25 @@ namespace Utilities {
     }
     particleTrack.ConvertToRadiatorCoordinates();
     particleTrack.TrackThroughRadiatorCell();
+    if(particleTrack.GetParticleLocation() == ParticleTrack::Location::MissedMirror) {
+      return ResolutionStruct{0.0, 0, true, true};
+    }
     std::size_t Counter = 0;
     while(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+      bool IsEdgeCell = particleTrack.GetRadiatorCell()->IsEdgeCell();
       particleTrack.ConvertBackToGlobalCoordinates();
       if(!particleTrack.FindRadiator(radiatorArray) || Counter > 10) {
-	return ResolutionStruct{};
+	if(IsEdgeCell) {
+	  return ResolutionStruct{0.0, 0, true, true};
+	} else {
+	  return ResolutionStruct{};
+	}
       }
       particleTrack.ConvertToRadiatorCoordinates();
       particleTrack.TrackThroughGasToMirror();
+      if(particleTrack.GetParticleLocation() == ParticleTrack::Location::MissedMirror) {
+	return ResolutionStruct{0.0, 0, true, true};
+      }
       Counter++;
     }
     if(particleTrack.GetRadiatorCell() != &radiatorCell) {
@@ -110,6 +121,9 @@ namespace Utilities {
 						 *photonHit,
 						 Photon::Radiator::Gas);
 	const double CherenkovAngle = TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
+	if(CherenkovAngle < 0.0) {
+	  continue;
+	}
 	CherenkovAngles.push_back(CherenkovAngle);
 	resolutionStruct.N++;
 	resolutionStruct.CentreHitDistance += photonHit->m_CentreHitDistance;

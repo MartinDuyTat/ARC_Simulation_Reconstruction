@@ -28,7 +28,8 @@ ParticleTrack::ParticleTrack(int ParticleID,
   m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
   m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")),
   m_Mass(ParticleMass::GetMass(m_ParticleID)),
-  m_PhiRotated(0.0) {
+  m_PhiRotated(0.0),
+  m_PhotonMultiplier(Settings::GetDouble("General/PhotonMultiplier")) {
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -142,8 +143,13 @@ void ParticleTrack::TrackThroughGasToMirror() {
                  + m_Position.Mag2()
                  - MirrorRadius*MirrorRadius
                  - 2*m_Position.Dot(MirrorCentre);
-  const double s1 = b + TMath::Sqrt(b*b - c);
-  const double s2 = b - TMath::Sqrt(b*b - c);
+  const double Discriminant = b*b - c;
+  if(Discriminant < 0) {
+    m_Location = Location::MissedMirror;
+    return;
+  }
+  const double s1 = b + TMath::Sqrt(Discriminant);
+  const double s2 = b - TMath::Sqrt(Discriminant);
   // Pick forwards moving particle solution
   const double s = std::max(s1, s2);
   m_Position += Direction*s;
@@ -182,12 +188,15 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
     throw std::runtime_error("Cannot generate photons from tracks not at the mirror");
   }
   const double RadiatorDistance = TMath::Sqrt((m_AerogelExit - m_AerogelEntry).Mag2());
-  const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Aerogel, 1239.8/400.0);
+  const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Aerogel,
+						    1239.841987427/400.0);
   const std::size_t PhotonYield =static_cast<std::size_t>(
     std::round(GetPhotonYield(RadiatorDistance, Beta(), IndexRefraction)));
   std::vector<Photon> Photons;
   for(std::size_t i = 0; i < PhotonYield; i++) {
-    Photons.push_back(GeneratePhoton(m_AerogelEntry, m_AerogelExit, Photon::Radiator::Aerogel));
+    Photons.push_back(GeneratePhoton(m_AerogelEntry,
+				     m_AerogelExit,
+				     Photon::Radiator::Aerogel));
   }
   return Photons;
 }
@@ -208,11 +217,24 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   return Photons;
 }
 
-double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator, double Energy) const {
+double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator,
+					 double Energy) const {
   switch(Radiator) {
     case Photon::Radiator::Aerogel:
-      // TODO: Add aerogel dispersion
-      return 1.03;
+      {
+	auto GetIndex = [] (double eph) {
+	  const double InsideSqrt = 46.41/(113.8 - eph*eph) +
+	                            228.7/(328.5 - eph*eph);
+	  return 1.0 + 0.03*2.1467*(TMath::Sqrt(1.0 + InsideSqrt) - 1.0);
+	};
+	if(m_ChromaticDispersion) {
+	  // Equation from Roger Forty via email
+	  return GetIndex(Energy);
+	} else {
+	  const double eph = 1239.841987427/400.0;
+	  return GetIndex(eph);
+	}
+      }
     case Photon::Radiator::Gas:
       {
 	auto GetIndex = [] (double L) {
@@ -299,7 +321,8 @@ double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
   } else {
     const double Efficiency = 0.60*0.90*0.80;
     const double DeltaE = 2.55;
-    return x*DeltaE*37000.0*(1.0 - 1.0/TMath::Power(Beta*n, 2))*Efficiency;
+    const double SinThetaC2 = (1.0 - 1.0/TMath::Power(Beta*n, 2));
+    return x*DeltaE*37000.0*SinThetaC2*Efficiency*m_PhotonMultiplier;
   }
 }
 

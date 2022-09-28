@@ -36,25 +36,28 @@ namespace ResolutionUtilities {
     bool TooFewPhotons = false;
     #pragma omp parallel for num_threads(8)
     for(std::size_t i = 0; i < Particles.size(); i++) {
-    ResolutionStruct resolutionStruct =
-      Utilities::TrackPhotons(Particles[i], *radiatorCell, radiatorArray);
-    if(!resolutionStruct.HitCorrectCell) {
-      continue;
-    }
-    #pragma omp critical (Update)
-    {
+      ResolutionStruct resolutionStruct =
+        Utilities::TrackPhotons(Particles[i], *radiatorCell, radiatorArray);
+      if(!resolutionStruct.HitCorrectCell) {
+        continue;
+      }
+      #pragma omp critical (Update)
+      {
       if(resolutionStruct.HitTopWall) {
 	PhotonsHitWallTracks++;
-      }
-      if(resolutionStruct.N <= 1) {
+      } else if(resolutionStruct.N <= 1) {
         TooFewPhotons = true;
+      } else {
+        Total.x += resolutionStruct.x;
+        Total.N++;
+        Total.CentreHitDistance += resolutionStruct.CentreHitDistance;
       }
-      Total.x += resolutionStruct.x;
-      Total.N++;
-      Total.CentreHitDistance += resolutionStruct.CentreHitDistance;
-    }
+      }
     }
     if(TooFewPhotons) {
+      return 1000.0;
+    }
+    if(Total.N == 0) {
       return 1000.0;
     }
     // 0.0003 is the pixel size angular resolution

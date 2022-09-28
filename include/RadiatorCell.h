@@ -118,6 +118,10 @@ class RadiatorCell {
    * Function that checks if the detector is contained inside the radiator cell
    */
   bool IsDetectorInsideCell() const;
+  /**
+   * Checks if the cell is at the edge (near the end cap)
+   */
+  bool IsEdgeCell() const;
  protected:
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates

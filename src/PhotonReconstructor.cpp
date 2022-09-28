@@ -39,9 +39,12 @@ namespace PhotonReconstructor {
     // in units of mirror curvature
     const double DetectionMirrorParaDist = EmissionPoint.Dot(DetectionPoint)
                                            /(EmissionMirrorDist*Curvature*Curvature);
-    const double DetectionMirrorPerpDist = TMath::Sqrt(
-					   DetectionPoint.Mag2()/(Curvature*Curvature)
-					 - TMath::Power(DetectionMirrorParaDist, 2));
+    const double InsideSqrt = DetectionPoint.Mag2()/(Curvature*Curvature)
+                            - TMath::Power(DetectionMirrorParaDist, 2);
+    if(InsideSqrt < 0.0) {
+      return -2.0;
+    }
+    const double DetectionMirrorPerpDist = TMath::Sqrt(InsideSqrt);
     auto quarticSolution = SolveQuartic(EmissionMirrorDist,
 					DetectionMirrorParaDist,
 					DetectionMirrorPerpDist);

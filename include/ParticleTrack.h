@@ -253,6 +253,10 @@ class ParticleTrack {
    * The rotation in phi relative to the global detector coordinates
    */
   double m_PhiRotated;
+  /**
+   * The multiplication factor in the photon yield calculation
+   */
+  const double m_PhotonMultiplier;
 };
 
 #endif

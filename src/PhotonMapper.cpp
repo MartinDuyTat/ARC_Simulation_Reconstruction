@@ -17,6 +17,9 @@ namespace PhotonMapper {
     const Vector MirrorCentreMinusPosition = MirrorCentre - photon.m_Position;
     const double b = -photon.m_Direction.Dot(MirrorCentreMinusPosition);
     const double c = (MirrorCentreMinusPosition).Mag2() - R*R;
+    if(b*b - c < 0.0) {
+      return -100.0;
+    }
     const double Discriminant = TMath::Sqrt(b*b - c);
     const double s1 = -b + Discriminant;
     const double s2 = -b - Discriminant;
