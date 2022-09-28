@@ -19,11 +19,11 @@ namespace PhotonReconstructor {
 				      const PhotonHit &photonHit,
 				      bool TrueEmissionPoint,
 				      Photon::Radiator Radiator) {
-    const RadiatorCell *radiatorCell = photonHit.m_Photon->m_RadiatorCell;
+    const RadiatorCell *radiatorCell = photonHit.m_Photon->GetRadiatorCell();
     auto MirrorCentre = radiatorCell->GetMirrorCentre();
     auto GetEmissionPoint = [&]() {
       if(TrueEmissionPoint) {
-	return photonHit.m_Photon->m_EmissionPoint;
+	return photonHit.m_Photon->GetEmissionPoint();
       } else {
 	return (Particle.GetExitPoint(Radiator)
 	      + Particle.GetEntryPoint(Radiator))*0.5;

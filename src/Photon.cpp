@@ -4,6 +4,7 @@
 #include<vector>
 #include<utility>
 #include<string>
+#include<stdexcept>
 #include"TLine.h"
 #include"Photon.h"
 #include"RadiatorCell.h"
@@ -73,19 +74,72 @@ Photon::DrawPhotonPath() const {
   return PhotonLine;
 }
 
-Photon::Photon(const Photon &photon):
-  m_Position(photon.m_Position),
-  m_EmissionPoint(photon.m_EmissionPoint),
-  m_Direction(photon.m_Direction),
-  m_Energy(photon.m_Energy),
-  m_Radiator(photon.m_Radiator),
-  m_CosCherenkovAngle(photon.m_CosCherenkovAngle),
-  m_Status(photon.m_Status),
-  m_AerogelTravelDistance(photon.m_AerogelTravelDistance),
-  m_RadiatorCell(photon.m_RadiatorCell) {
-  if(photon.m_MirrorHitPosition) {
-    m_MirrorHitPosition = std::make_unique<Vector>(*photon.m_MirrorHitPosition);
-  } else {
-    m_MirrorHitPosition = nullptr;
+const Vector& Photon::GetPosition() const {
+  return m_Position;
+}
+
+void Photon::PropagatePhoton(const Vector &Displacement) {
+  m_Position += Displacement;
+}
+
+const Vector& Photon::GetDirection() const {
+  return m_Direction;
+}
+
+void Photon::KickPhoton(const Vector &Kick) {
+  m_Direction += Kick;
+}
+
+Photon::Status Photon::GetStatus() const {
+  return m_Status;
+}
+
+const RadiatorCell* Photon::GetRadiatorCell() const {
+  return m_RadiatorCell;
+}
+
+const Vector& Photon::GetEmissionPoint() const {
+  return m_EmissionPoint;
+}
+
+void Photon::UpdatePhotonStatus(Photon::Status status) {
+  if(m_Status == status) {
+    throw std::runtime_error("New photon status must be different");
   }
+  m_Status = status;
+}
+
+double Photon::GetEnergy() const {
+  return m_Energy;
+}
+
+void Photon::AddAerogelTravelDistance(double Distance) {
+  if(Distance < 0.0) {
+    throw std::runtime_error("Aerogel travel distance cannot be negative");
+  }
+  m_AerogelTravelDistance += Distance;
+}
+
+double Photon::GetAerogelTravelDistance() const {
+  return m_AerogelTravelDistance;
+}
+
+const Vector* Photon::GetMirrorHitPosition() const {
+  return m_MirrorHitPosition.get();
+}
+
+void Photon::RegisterMirrorHitPosition(const Vector &MirrorHitPosition) {
+  if(m_MirrorHitPosition) {
+    throw std::runtime_error("Mirror hit position already exists");
+  } else {
+    m_MirrorHitPosition = std::make_unique<Vector>(MirrorHitPosition);
+  }
+}
+
+Photon::Radiator Photon::GetRadiator() const {
+  return m_Radiator;
+}
+
+double Photon::GetCosCherenkovAngle() const {
+  return m_CosCherenkovAngle;
 }

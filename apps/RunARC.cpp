@@ -264,13 +264,13 @@ int main(int argc, char *argv[]) {
 	if(NumberPhotons >= 2000) {
 	  std::cout << "Warning! Number of photons is greater than 2000\n";
 	}
-	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.m_CosCherenkovAngle);
+	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.GetCosCherenkovAngle());
 	auto photonHit = PhotonMapper::TracePhoton(Photon);
 	if(DrawThisTrack) {
 	  eventDisplay.AddObject(Photon.DrawPhotonPath());
 	}
-	if(!Photon.m_MirrorHitPosition) {
-	  if(DrawMissPhoton && Photon.m_Status == Photon::Status::MirrorMiss) {
+	if(!Photon.GetMirrorHitPosition()) {
+	  if(DrawMissPhoton && Photon.GetStatus() == Photon::Status::MirrorMiss) {
 	    eventDisplay.AddObject(Photon.DrawPhotonPath());
 	  }
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] = -1.0;
@@ -288,8 +288,8 @@ int main(int argc, char *argv[]) {
 	  CherenkovAngle_Reco[NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
 	}
-	PhotonEnergy[NumberPhotons] = Photon.m_Energy;
-	PhotonStatus[NumberPhotons] = Photon.m_Status;
+	PhotonEnergy[NumberPhotons] = Photon.GetEnergy();
+	PhotonStatus[NumberPhotons] = Photon.GetStatus();
 	NumberPhotons++;
       }
       CherenkovTree.Fill();

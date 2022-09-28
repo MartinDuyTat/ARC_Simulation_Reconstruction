@@ -82,7 +82,7 @@ double RadiatorCell::GetMirrorCurvature() const {
 }
 
 bool RadiatorCell::IsInsideCell(const Photon &photon) const {
-  return IsInsideCell(photon.m_Position);
+  return IsInsideCell(photon.GetPosition());
 }
 
 double RadiatorCell::GetHexagonSize() const {

@@ -35,29 +35,29 @@ PhotonHit SiPM::AddPhotonHit(Photon &photon) const {
   const Vector DetectorCentre(m_DetectorPositionX,
 			      0.0,
 			      m_DetectorPositionZ);
-  const Vector PhotonXZPosition(photon.m_Position.X(),
+  const Vector PhotonXZPosition(photon.GetPosition().X(),
 				0.0,
-				photon.m_Position.Z());
-  PhotonHit photonHit{photon.m_Position,
+				photon.GetPosition().Z());
+  PhotonHit photonHit{photon.GetPosition(),
                       &photon,
                       PhotonXZPosition - DetectorCentre};
-  if(photon.m_Status != Photon::Status::MirrorHit) {
+  if(photon.GetStatus() != Photon::Status::MirrorHit) {
     return photonHit;
   }
-  const double PhotonLambda = 1239.8/photon.m_Energy;
+  const double PhotonLambda = 1239.8/photon.GetEnergy();
   if(PhotonLambda < m_Lambda[0] || PhotonLambda > m_Lambda[15]) {
     std::cout << "Warning! Generated photon outside energy range of SiPM!\n";
   }
   if(!IsDetectorHit(photon)) {
-    photon.m_Status = Photon::Status::DetectorMiss;
+    photon.UpdatePhotonStatus(Photon::Status::DetectorMiss);
     return photonHit;
   }
   const double RandomNumber = gRandom->Uniform(0.0, m_MaxPDE);
   const double Efficiency = m_Interpolator.Eval(PhotonLambda)*0.90*0.80;
   if(RandomNumber <= Efficiency) {
-    photon.m_Status = Photon::Status::DetectorHit;
+    photon.UpdatePhotonStatus(Photon::Status::DetectorHit);
   } else {
-    photon.m_Status = Photon::Status::EfficiencyMiss;
+    photon.UpdatePhotonStatus(Photon::Status::EfficiencyMiss);
   }
   return photonHit;
 }
@@ -66,10 +66,10 @@ void SiPM::PlotHits(const std::string &Filename,
 		    const std::vector<PhotonHit> &photonHits) const {
   std::vector<double> xHits_Aerogel, yHits_Aerogel, xHits_Gas, yHits_Gas;
   for(const auto &PhotonHit : photonHits) {
-    if(PhotonHit.m_Photon->m_Radiator == Photon::Radiator::Aerogel) {
+    if(PhotonHit.m_Photon->GetRadiator() == Photon::Radiator::Aerogel) {
       xHits_Aerogel.push_back(PhotonHit.m_HitPosition.X()*100.0);
       yHits_Aerogel.push_back(PhotonHit.m_HitPosition.Y()*100.0);
-    } else if(PhotonHit.m_Photon->m_Radiator == Photon::Radiator::Gas) {
+    } else if(PhotonHit.m_Photon->GetRadiator() == Photon::Radiator::Gas) {
       xHits_Gas.push_back(PhotonHit.m_HitPosition.X()*100.0);
       yHits_Gas.push_back(PhotonHit.m_HitPosition.Y()*100.0);
     } else {
@@ -140,18 +140,18 @@ std::unique_ptr<TObject> SiPM::DrawSiPM(const Vector &RadiatorPosition) const {
 }
 
 bool SiPM::IsDetectorHit(const Photon &photon) const {
-  if(!photon.m_RadiatorCell->IsInsideCell(photon)) {
+  if(!photon.GetRadiatorCell()->IsInsideCell(photon)) {
     return false;
   }
-  const double photon_x = photon.m_Position.X();
-  const double photon_z = photon.m_Position.Z();
+  const double photon_x = photon.GetPosition().X();
+  const double photon_z = photon.GetPosition().Z();
   const double XDist = TMath::Sqrt((photon_x - m_DetectorPositionX)*
 				   (photon_x - m_DetectorPositionX)
 				 + (photon_z - m_DetectorPositionZ)*
 				   (photon_z - m_DetectorPositionZ));
   if(XDist > m_DetectorSizeX/2.0) {
     return false;
-  } else if(TMath::Abs(photon.m_Position.Y() - m_DetectorPositionY)
+  } else if(TMath::Abs(photon.GetPosition().Y() - m_DetectorPositionY)
 	    > m_DetectorSizeY/2.0) {
     return false;
   } else {

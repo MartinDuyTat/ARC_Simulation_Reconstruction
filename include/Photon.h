@@ -18,7 +18,8 @@ using Vector = ROOT::Math::XYZVector;
 
 class RadiatorCell;
 
-struct Photon {
+class Photon {
+ public:
   /**
    * Enum class classifying which radiator the photon was emitted from
    */
@@ -62,13 +63,80 @@ struct Photon {
 	 Radiator radiator,
 	 const RadiatorCell *radiatorCell);
   /**
-   * Copy constructor
+   * We don't need copy constructor
    */
-  Photon(const Photon &photon);
+  Photon(const Photon &photon) = delete;
+  /**
+   * The move constructor is default
+   */
+  Photon(Photon &&photon) = default;
   /**
    * Draw photon path
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawPhotonPath() const;
+  /**
+   * Get the photon position
+   */
+  const Vector& GetPosition() const;
+  /**
+   * Propagate the photon
+   * @param Displacement The displace that the photon is propagated
+   */
+  void PropagatePhoton(const Vector &Displacement);
+  /**
+   * Get the photon direction
+   */
+  const Vector& GetDirection() const;
+  /**
+   * Change the photon direction
+   * @param Kick The kick given to the photon to change its direction
+   */
+  void KickPhoton(const Vector &Kick);
+  /**
+   * Get the photon status
+   */
+  Status GetStatus() const;
+  /**
+   * Get the radiator cell that the photon belongs to
+   */
+  const RadiatorCell* GetRadiatorCell() const;
+  /**
+   * Get the emission point
+   */
+  const Vector& GetEmissionPoint() const;
+  /**
+   * Update photon status
+   */
+  void UpdatePhotonStatus(Status status);
+  /**
+   * Get the photon energy
+   */
+  double GetEnergy() const;
+  /**
+   * Add travel distance through aerogel
+   */
+  void AddAerogelTravelDistance(double Distance);
+  /**
+   * Get travel distance through aerogel
+   */
+  double GetAerogelTravelDistance() const;
+  /**
+   * Get mirror hit position, or nullptr if the photon didn't hit the mirror
+   */
+  const Vector* GetMirrorHitPosition() const;
+  /**
+   * Register mirror hit position
+   */
+  void RegisterMirrorHitPosition(const Vector &MirrorHitPosition);
+  /**
+   * Get the radiator that the photon was generated in
+   */
+  Radiator GetRadiator() const;
+  /**
+   * Get the cosine of the Cherenkov angle
+   */
+  double GetCosCherenkovAngle() const;
+ private:
   /**
    * Photon position in local cell coordinates, in m
    */

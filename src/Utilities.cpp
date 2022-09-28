@@ -113,9 +113,9 @@ namespace Utilities {
     resolutionStruct.HitCorrectCell = true;
     std::vector<double> CherenkovAngles;
     CherenkovAngles.reserve(Photons.size());
-    for(auto Photon : Photons) {
+    for(auto &Photon : Photons) {
       auto photonHit = PhotonMapper::TracePhoton(Photon);
-      if(Photon.m_Status == Photon::Status::DetectorHit) {
+      if(Photon.GetStatus() == Photon::Status::DetectorHit) {
 	auto reconstructedPhoton =
 	  PhotonReconstructor::ReconstructPhoton(particleTrack,
 						 *photonHit,
@@ -127,9 +127,9 @@ namespace Utilities {
 	CherenkovAngles.push_back(CherenkovAngle);
 	resolutionStruct.N++;
 	resolutionStruct.CentreHitDistance += photonHit->m_CentreHitDistance;
-      } else if(Photon.m_Status == Photon::Status::WallMiss ||
-		Photon.m_Status == Photon::Status::Backwards ||
-		Photon.m_Status == Photon::Status::DetectorMiss) {
+      } else if(Photon.GetStatus() == Photon::Status::WallMiss ||
+		Photon.GetStatus() == Photon::Status::Backwards ||
+		Photon.GetStatus() == Photon::Status::DetectorMiss) {
 	resolutionStruct.HitTopWall = true;
       }
     }
