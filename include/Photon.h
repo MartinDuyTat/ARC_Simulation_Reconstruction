@@ -13,12 +13,13 @@
 #include"TLine.h"
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
+#include"Particle.h"
 
 using Vector = ROOT::Math::XYZVector;
 
 class RadiatorCell;
 
-class Photon {
+class Photon: public Particle {
  public:
   /**
    * Enum class classifying which radiator the photon was emitted from
@@ -45,7 +46,8 @@ class Photon {
     DetectorMiss,
     AerogelScattered,
     WallMiss,
-    Backwards
+    Backwards,
+    Outside
   };
   /**
    * Construct a photon with position, direction and energy
@@ -63,6 +65,10 @@ class Photon {
 	 Radiator radiator,
 	 const RadiatorCell *radiatorCell);
   /**
+   * Need virtual constructor since it's a virtual class
+   */
+  ~Photon() = default;
+  /**
    * We don't need copy constructor
    */
   Photon(const Photon &photon) = delete;
@@ -74,10 +80,6 @@ class Photon {
    * Draw photon path
    */
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawPhotonPath() const;
-  /**
-   * Get the photon position
-   */
-  const Vector& GetPosition() const;
   /**
    * Propagate the photon
    * @param Displacement The displace that the photon is propagated
@@ -96,10 +98,6 @@ class Photon {
    * Get the photon status
    */
   Status GetStatus() const;
-  /**
-   * Get the radiator cell that the photon belongs to
-   */
-  const RadiatorCell* GetRadiatorCell() const;
   /**
    * Get the emission point
    */
@@ -136,15 +134,45 @@ class Photon {
    * Get the cosine of the Cherenkov angle
    */
   double GetCosCherenkovAngle() const;
- private:
   /**
-   * Photon position in local cell coordinates, in m
+   * Convert to local radiator coordinates
    */
-  Vector m_Position;
+  virtual void ConvertToRadiatorCoordinates() override;
+  /**
+   * Convert back to global coordinates
+   */
+  virtual void ConvertBackToGlobalCoordinates() override;
+  /**
+   * Rotate around the phi direction to map particle to a valid radiator cell
+   * @param DeltaPhi Angle that is rotated in phi
+   */
+  virtual void MapPhi(double DeltaPhi) override;
+  /**
+   * Reflect everything in the z-direction since radiator cells are symmetric
+   */
+  virtual void ReflectZ() override;
+  /**
+   * Reflect everything in the y-direction
+   */
+  virtual void ReflectY() override;
+  /**
+   * Check if particle is at the radiator so that we can search for the radiator cell
+   */
+  virtual bool IsAtRadiator() const override;
+ protected:
+  /**
+   * Helper function to swap x and z directions of all vectors (where relevant)
+   */
+  virtual void SwapXZ() override;
+  /**
+   * Helper function to change coordinate origin
+   */
+  virtual void ChangeCoordinateOrigin(const Vector &Shift) override;
+ private:
   /**
    * Emission point
    */
-  const Vector m_EmissionPoint;
+  Vector m_EmissionPoint;
   /**
    * Photon direction vector
    */
@@ -173,10 +201,6 @@ class Photon {
    * Hit position of the mirror, or nullptr if the photon missed the mirror
    */
   std::unique_ptr<Vector> m_MirrorHitPosition;
-  /**
-   * Pointer to the radiator cell that this photon is inside
-   */
-  const RadiatorCell *m_RadiatorCell;
 };
 
 #endif

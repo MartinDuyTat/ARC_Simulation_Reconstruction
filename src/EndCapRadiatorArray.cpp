@@ -11,7 +11,7 @@
 #include"RadiatorCell.h"
 #include"EndCapRadiatorCell.h"
 #include"Settings.h"
-#include"ParticleTrack.h"
+#include"Particle.h"
 
 EndCapRadiatorArray::EndCapRadiatorArray():
   RadiatorArray::RadiatorArray() {
@@ -40,36 +40,33 @@ EndCapRadiatorArray::DrawRadiatorArray() const {
   return RadiatorArrayObjects;
 }
 
-const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTrack) const {
-  const auto Location = particleTrack.GetParticleLocation();
-  if(Location != ParticleTrack::Location::EntranceWindow &&
-     Location != ParticleTrack::Location::MissedEntranceWindow &&
-     Location != ParticleTrack::Location::Radiator) {
+const RadiatorCell* EndCapRadiatorArray::FindRadiator(Particle &particle) const {
+  if(!particle.IsAtRadiator()) {
     throw std::runtime_error("Cannot find radiator since track is not at entrance window");
   }
   // If track hits the other end cap, reflect
-  if(particleTrack.GetPosition().Z() < 0.0) {
-    particleTrack.ReflectZ();
+  if(particle.GetPosition().Z() < 0.0) {
+    particle.ReflectZ();
   }
   // If track hits the lower half, rotate by 180 degrees
-  if(particleTrack.GetPosition().Phi() < 0.0) {
-    particleTrack.MapPhi(TMath::Pi());
+  if(particle.GetPosition().Phi() < 0.0) {
+    particle.MapPhi(TMath::Pi());
   }
   // Rotate by 60 degrees until the track is in the interval [0, 60] degrees
-  while(particleTrack.GetPosition().Phi() > TMath::Pi()/3.0) {
-    particleTrack.MapPhi(-TMath::Pi()/3.0);
+  while(particle.GetPosition().Phi() > TMath::Pi()/3.0) {
+    particle.MapPhi(-TMath::Pi()/3.0);
   }
   bool IsReflected = false;
   // Reflect if particle is on the other side of the symmetry line
-  if(particleTrack.GetPosition().Phi() > TMath::Pi()/6.0) {
-    particleTrack.MapPhi(-TMath::Pi()/6.0);
-    particleTrack.ReflectY();
-    particleTrack.MapPhi(TMath::Pi()/6.0);
+  if(particle.GetPosition().Phi() > TMath::Pi()/6.0) {
+    particle.MapPhi(-TMath::Pi()/6.0);
+    particle.ReflectY();
+    particle.MapPhi(TMath::Pi()/6.0);
     IsReflected = true;
   }
   // Loop from the bottom row until we find the correct row
-  const double x = particleTrack.GetPosition().X();
-  const double y = particleTrack.GetPosition().Y();
+  const double x = particle.GetPosition().X();
+  const double y = particle.GetPosition().Y();
   std::size_t CellRowNumber = 1;
   while(true) {
     if(IsBelowThisRow(CellRowNumber + 1, x, y)) {
@@ -88,14 +85,14 @@ const RadiatorCell* EndCapRadiatorArray::FindRadiator(ParticleTrack &particleTra
     constexpr std::array<std::pair<std::size_t, std::size_t>, 4> ReflectCells{{
       {2, 2}, {3, 3}, {5, 4}, {6, 5}}};
     if(CellRowNumber == 1) {
-      particleTrack.ReflectY();
+      particle.ReflectY();
     } else if(std::find(ReflectCells.begin(),
 			ReflectCells.end(),
 			std::make_pair(CellColumnNumber, CellRowNumber))
 	      != ReflectCells.end()) {
-      particleTrack.MapPhi(-TMath::Pi()/6.0);
-      particleTrack.ReflectY();
-      particleTrack.MapPhi(TMath::Pi()/6.0);
+      particle.MapPhi(-TMath::Pi()/6.0);
+      particle.ReflectY();
+      particle.MapPhi(TMath::Pi()/6.0);
     }
   }
   return (*this)(CellColumnNumber, CellRowNumber);

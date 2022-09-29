@@ -14,10 +14,11 @@
 #include"Photon.h"
 #include"TrackingVolume.h"
 #include"RadiatorArray.h"
+#include"Particle.h"
 
 using Vector = ROOT::Math::XYZVector;
 
-class ParticleTrack {
+class ParticleTrack: public Particle {
  public:
   /**
    * Construct a charged particle with momentum and ID at the interaction point
@@ -29,11 +30,9 @@ class ParticleTrack {
 		const Vector &Momentum,
 		const Vector &Position = Vector(0.0, 0.0, 0.0));
   /**
-   * Enum with the two coordinate systems used
-   * GlobalDetector: z along symmetry axis, x is up, y is out of the plane (only used to generate charged tracks)
-   * LocalRadiator: z axis in the radial direction, x in the theta direction and y in the phi direction
+   * Need virtual constructor since it's a virtual class
    */
-  enum class CoordinateSystem{GlobalDetector, LocalRadiator};
+  ~ParticleTrack() = default;
   /**
    * Enum class with the location of the particle
    * TrackerVolume: Inside the tracker volume, where the IP is
@@ -66,11 +65,7 @@ class ParticleTrack {
   /**
    * Convert to local radiator coordinates
    */
-  void ConvertToRadiatorCoordinates();
-  /**
-   * Convert back to global coordinates
-   */
-  void ConvertBackToGlobalCoordinates();
+  virtual void ConvertToRadiatorCoordinates() override;
   /**
    * Track particle through radiator cell
    */
@@ -127,10 +122,6 @@ class ParticleTrack {
    */
   std::unique_ptr<TLine> DrawParticleTrack() const;
   /**
-   * Get particle position
-   */
-  const Vector& GetPosition() const;
-  /**
    * Get particle location
    */
   Location GetParticleLocation() const;
@@ -142,15 +133,15 @@ class ParticleTrack {
    * Rotate around the phi direction to map particle to a valid radiator cell
    * @param DeltaPhi Angle that is rotated in phi
    */
-  void MapPhi(double DeltaPhi);
+  virtual void MapPhi(double DeltaPhi) override;
   /**
    * Reflect everything in the z-direction since radiator cells are symmetric
    */
-  void ReflectZ();
+  virtual void ReflectZ() override;
   /**
    * Reflect everything in the y-direction
    */
-  void ReflectY();
+  virtual void ReflectY() override;
   /**
    * Get the column number of the radiator
    */
@@ -160,22 +151,14 @@ class ParticleTrack {
    */
   std::size_t GetRadiatorRowNumber() const;
   /**
-   * Set the rotation angle in phi relative to the global detector coordinates
+   * Check if particle is at the radiator so that we can search for the radiator cell
    */
-  void SetPhiRotated(double Phi);
-  /**
-   * Get a pointer to the radiator cell
-   */
-  const RadiatorCell* GetRadiatorCell() const;
+  virtual bool IsAtRadiator() const override;
  private:
   /**
    * Particle momentum, in GeV
    */
   Vector m_Momentum;
-  /**
-   * Particle position, in m
-   */
-  Vector m_Position;
   /**
    * Initial particle position in the global coordinate system, in m
    */
@@ -184,10 +167,6 @@ class ParticleTrack {
    * Particle ID
    */
   int m_ParticleID;
-  /**
-   * Pointer to the radiator cell that track enters
-   */
-  const RadiatorCell *m_RadiatorCell;
   /**
    * Flag that keeps track of where the particle is
    */
@@ -213,10 +192,6 @@ class ParticleTrack {
    */
   Vector m_EntranceWindowPosition;
   /**
-   * Which coordinate system the momentum and position is given in
-   */
-  CoordinateSystem m_CoordinateSystem;
-  /**
    * Flag that is true if emission point of photon is random
    */
   bool m_RandomEmissionPoint;
@@ -233,26 +208,13 @@ class ParticleTrack {
    */
   double GetPhotonYield(double x, double Beta, double n) const;
   /**
-   * Helper function to swap x and z directions (so that z points up in the dell
-   */
-  void SwapXZ(Vector &Vec) const;
-  /**
    * Helper function to swap x and z directions of all vectors (where relevant)
    */
-  void SwapXZ();
-  /**
-   * Helper function to swap radiator cell if particle is outside in the theta direction
-   * @return Returns true if swapping radiator cell was successful (no edges hit)
-   */
-  //bool SwapRadiatorCell();
+  virtual void SwapXZ() override;
   /**
    * Helper function to change coordinate origin
    */
-  void ChangeCoordinateOrigin(const Vector &Shift);
-  /**
-   * The rotation in phi relative to the global detector coordinates
-   */
-  double m_PhiRotated;
+  virtual void ChangeCoordinateOrigin(const Vector &Shift) override;
   /**
    * The multiplication factor in the photon yield calculation
    */

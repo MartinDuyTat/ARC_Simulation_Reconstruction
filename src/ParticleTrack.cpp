@@ -18,17 +18,14 @@
 ParticleTrack::ParticleTrack(int ParticleID,
 			     const Vector &Momentum,
 			     const Vector &Position):
+  Particle::Particle(Position, Particle::CoordinateSystem::GlobalDetector),
   m_Momentum(Momentum),
-  m_Position(Position),
   m_InitialPosition(Position),
   m_ParticleID(ParticleID),
-  m_RadiatorCell(nullptr),
   m_Location(Location::TrackerVolume),
-  m_CoordinateSystem(CoordinateSystem::GlobalDetector),
   m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
   m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")),
   m_Mass(ParticleMass::GetMass(m_ParticleID)),
-  m_PhiRotated(0.0),
   m_PhotonMultiplier(Settings::GetDouble("General/PhotonMultiplier")) {
 }
 
@@ -73,41 +70,13 @@ void ParticleTrack::SetRadiator(const RadiatorCell *radiatorCell) {
 }
 
 void ParticleTrack::ConvertToRadiatorCoordinates() {
-  // Check if coordinate system if correct
-  if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
-    throw std::runtime_error("Particle position is already in local radiator coordinates");
-  }
-  // For barrel, rotate around y-axis so that z axis now points towards the high pT cell
-  if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
-    SwapXZ();
-  }
-  ChangeCoordinateOrigin(m_RadiatorCell->GetRadiatorPosition());
-  m_CoordinateSystem = CoordinateSystem::LocalRadiator;
+  Particle::ConvertToRadiatorCoordinates();
   // Check if particle is within acceptance
   if(!m_RadiatorCell->IsInsideCell(m_Position) || m_Momentum.Z() < 0.0) {
     m_Location = Location::MissedEntranceWindow;
   }
   // Save the entrance window position
   m_EntranceWindowPosition = m_Position;
-}
-
-void ParticleTrack::ConvertBackToGlobalCoordinates() {
-  // Check if coordinate system if correct
-  if(m_CoordinateSystem == CoordinateSystem::GlobalDetector) {
-    throw std::runtime_error("Particle position is already in global detector coordinates");
-  }
-  // Shift coordinates so that the origin is at the global detector origin
-  ChangeCoordinateOrigin(-m_RadiatorCell->GetRadiatorPosition());
-  // For barrel, rotate around y-axis so that z axis now points along the barrel
-  if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
-    SwapXZ();
-  }
-  m_CoordinateSystem = CoordinateSystem::GlobalDetector;
-  // Remove the radiator cell
-  m_RadiatorCell = nullptr;
-  // Rotate back in phi (for upper row cells)
-  MapPhi(-m_PhiRotated);
-  m_PhiRotated = 0.0;
 }
 
 void ParticleTrack::TrackThroughRadiatorCell() {
@@ -160,7 +129,7 @@ void ParticleTrack::TrackThroughGasToMirror() {
 }
 
 void ParticleTrack::ChangeCoordinateOrigin(const Vector &Shift) {
-  m_Position -= Shift;
+  Particle::ChangeCoordinateOrigin(Shift);
   m_AerogelEntry -= Shift;
   m_AerogelExit -= Shift;
   m_GasEntry -= Shift;
@@ -327,12 +296,8 @@ double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
 }
 
 void ParticleTrack::MapPhi(double DeltaPhi) {
-  // Check if coordinate system if correct
-  if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
-    throw std::runtime_error("Cannot rotate in phi with local coordinates");
-  }
+  Particle::MapPhi(DeltaPhi);
   const ROOT::Math::RotationZ RotateZ(DeltaPhi);
-  m_Position = RotateZ(m_Position);
   m_InitialPosition = RotateZ(m_InitialPosition);
   m_Momentum = RotateZ(m_Momentum);
   m_AerogelEntry = RotateZ(m_AerogelEntry);
@@ -342,7 +307,7 @@ void ParticleTrack::MapPhi(double DeltaPhi) {
 }
 
 void ParticleTrack::ReflectZ() {
-  m_Position.SetZ(-m_Position.Z());
+  Particle::ReflectZ();
   m_InitialPosition.SetZ(-m_InitialPosition.Z());
   m_Momentum.SetZ(-m_Momentum.Z());
   m_AerogelEntry.SetZ(-m_AerogelEntry.Z());
@@ -352,7 +317,7 @@ void ParticleTrack::ReflectZ() {
 }
 
 void ParticleTrack::ReflectY() {
-  m_Position.SetY(-m_Position.Y());
+  Particle::ReflectY();
   m_InitialPosition.SetY(-m_InitialPosition.Y());
   m_Momentum.SetY(-m_Momentum.Y());
   m_AerogelEntry.SetY(-m_AerogelEntry.Y());
@@ -361,20 +326,14 @@ void ParticleTrack::ReflectY() {
   m_GasExit.SetY(-m_GasExit.Y());
 }
 
-void ParticleTrack::SwapXZ(Vector &Vec) const {
-  const double Temp = Vec.X();
-  Vec.SetX(Vec.Z());
-  Vec.SetZ(Temp);
-}
-
 void ParticleTrack::SwapXZ() {
-  SwapXZ(m_Position);
-  SwapXZ(m_Momentum);
-  SwapXZ(m_InitialPosition);
-  SwapXZ(m_AerogelEntry);
-  SwapXZ(m_AerogelExit);
-  SwapXZ(m_GasEntry);
-  SwapXZ(m_GasExit);
+  Particle::SwapXZ();
+  Particle::SwapXZ(m_Momentum);
+  Particle::SwapXZ(m_InitialPosition);
+  Particle::SwapXZ(m_AerogelEntry);
+  Particle::SwapXZ(m_AerogelExit);
+  Particle::SwapXZ(m_GasEntry);
+  Particle::SwapXZ(m_GasExit);
 }
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
@@ -387,10 +346,6 @@ std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
 	      CurrentPositionSwapped.Z());
   Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
-}
-
-const Vector& ParticleTrack::GetPosition() const {
-  return m_Position;
 }
 
 ParticleTrack::Location ParticleTrack::GetParticleLocation() const {
@@ -409,10 +364,12 @@ std::size_t ParticleTrack::GetRadiatorRowNumber() const {
   return m_RadiatorCell->GetCellNumber().second;
 }
 
-void ParticleTrack::SetPhiRotated(double Phi) {
-  m_PhiRotated = Phi;
-}
-
-const RadiatorCell* ParticleTrack::GetRadiatorCell() const {
-  return m_RadiatorCell;
+bool ParticleTrack::IsAtRadiator() const {
+  if(m_Location != Location::EntranceWindow &&
+     m_Location != Location::MissedEntranceWindow &&
+     m_Location != Location::Radiator) {
+    return false;
+  } else {
+    return true;
+  }
 }

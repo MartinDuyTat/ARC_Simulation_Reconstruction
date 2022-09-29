@@ -17,7 +17,7 @@
 
 using Vector = ROOT::Math::XYZVector;
 
-class ParticleTrack;
+class Particle;
 
 class EndCapRadiatorArray: public RadiatorArray {
  public:
@@ -38,7 +38,7 @@ class EndCapRadiatorArray: public RadiatorArray {
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) const override;
+  virtual const RadiatorCell* FindRadiator(Particle &particle) const override;
   /**
    * Check if particle track hits below a particular row
    * @param Row The row number

@@ -8,7 +8,7 @@
 #include"RadiatorCell.h"
 #include"HalfRadiatorCell.h"
 #include"Settings.h"
-#include"ParticleTrack.h"
+#include"Particle.h"
 #include"BarrelRadiatorCell.h"
 
 BarrelRadiatorArray::BarrelRadiatorArray():
@@ -48,19 +48,16 @@ BarrelRadiatorArray::DrawRadiatorArray() const {
   return RadiatorArrayObjects;
 }
 
-const RadiatorCell* BarrelRadiatorArray::FindRadiator(ParticleTrack &particleTrack) const {
-  const auto Location = particleTrack.GetParticleLocation();
-  if(Location != ParticleTrack::Location::EntranceWindow &&
-     Location != ParticleTrack::Location::MissedEntranceWindow &&
-     Location != ParticleTrack::Location::Radiator) {
-    throw std::runtime_error("Cannot find radiator since track is not at entrance window");
+const RadiatorCell* BarrelRadiatorArray::FindRadiator(Particle &particle) const {
+  if(!particle.IsAtRadiator()) {
+    throw std::runtime_error("Cannot find radiator since track is not at radiator");
   }
   if(m_FullArray) {
-    auto Position = particleTrack.GetPosition();
+    auto Position = particle.GetPosition();
     if(TMath::Abs(Position.Phi()) > TMath::Pi()/2.0) {
-      particleTrack.MapPhi(TMath::Pi());
+      particle.MapPhi(TMath::Pi());
     }
-    Position = particleTrack.GetPosition();
+    Position = particle.GetPosition();
     double x = Position.Z();
     const double Radius = TMath::Sqrt(Position.X()*Position.X() +
 				      Position.Y()*Position.Y());
@@ -74,21 +71,21 @@ const RadiatorCell* BarrelRadiatorArray::FindRadiator(ParticleTrack &particleTra
     // First check if track is on the correct side and not hitting endcap
     bool IsReflected = false;
     if(x < 0.0) {
-      particleTrack.ReflectZ();
+      particle.ReflectZ();
       IsReflected = true;
-      x = particleTrack.GetPosition().Z();
+      x = particle.GetPosition().Z();
     }
     // Make sure track is not below the main row
     while(IsBelowMainRow(x, y)) {
-      particleTrack.MapPhi(+m_DeltaPhi);
-      Position = particleTrack.GetPosition();
+      particle.MapPhi(+m_DeltaPhi);
+      Position = particle.GetPosition();
       ProjectedY = Position.Y()*m_BarrelRadius/Radius;
       y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
     }
     // Make sure track is not above the upper row
     while(IsAboveUpperRow(x, y, m_BarrelRadius)) {
-      particleTrack.MapPhi(-m_DeltaPhi);
-      Position = particleTrack.GetPosition();
+      particle.MapPhi(-m_DeltaPhi);
+      Position = particle.GetPosition();
       ProjectedY = Position.Y()*m_BarrelRadius/Radius;
       y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
     }
@@ -96,15 +93,15 @@ const RadiatorCell* BarrelRadiatorArray::FindRadiator(ParticleTrack &particleTra
       // Particle hits the upper row
       const std::size_t xIndex = static_cast<std::size_t>(x/m_xHexDist) + 1;
       const std::size_t yIndex = 2;
-      particleTrack.MapPhi(-m_DeltaPhi/2.0);
-      particleTrack.SetPhiRotated(-m_DeltaPhi/2.0);
+      particle.MapPhi(-m_DeltaPhi/2.0);
+      particle.SetPhiRotated(-m_DeltaPhi/2.0);
       return (*this)(xIndex, yIndex);
     } else {
       // Particle hits the main row
       const std::size_t xIndex = static_cast<std::size_t>((x + m_xHexDist/2.0)/m_xHexDist);
       const std::size_t yIndex = 1;
       if(xIndex == 0 && yIndex == 1 && IsReflected) {
-	particleTrack.ReflectZ();
+	particle.ReflectZ();
       }
       return (*this)(xIndex, yIndex);
     }

@@ -6,6 +6,7 @@ add_library(ARC_Simulation_Reconstruction
 	    EventDisplay.cpp
 	    HalfRadiatorCell.cpp
 	    Quartic.cpp
+	    Particle.cpp
 	    ParticleTrack.cpp
 	    ParticleMass.cpp
 	    Photon.cpp

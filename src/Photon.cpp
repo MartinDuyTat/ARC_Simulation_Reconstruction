@@ -6,6 +6,8 @@
 #include<string>
 #include<stdexcept>
 #include"TLine.h"
+#include"Math/RotationY.h"
+#include"Math/RotationZ.h"
 #include"Photon.h"
 #include"RadiatorCell.h"
 #include"BarrelRadiatorCell.h"
@@ -17,16 +19,15 @@ Photon::Photon(const Vector &Position,
 	       double CosCherenkovAngle,
 	       Radiator radiator,
 	       const RadiatorCell *radiatorCell):
-               m_Position(Position),
-	       m_EmissionPoint(Position),
-	       m_Direction(Direction),
-	       m_Energy(Energy),
-	       m_Radiator(radiator),
-	       m_CosCherenkovAngle(CosCherenkovAngle),
-	       m_Status(Status::Emitted),
-	       m_AerogelTravelDistance(0.0),
-	       m_MirrorHitPosition(nullptr),
-               m_RadiatorCell(radiatorCell) {
+  Particle(Position, Particle::CoordinateSystem::LocalRadiator, radiatorCell),
+  m_EmissionPoint(Position),
+  m_Direction(Direction),
+  m_Energy(Energy),
+  m_Radiator(radiator),
+  m_CosCherenkovAngle(CosCherenkovAngle),
+  m_Status(Status::Emitted),
+  m_AerogelTravelDistance(0.0),
+  m_MirrorHitPosition(nullptr) {
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
@@ -74,10 +75,6 @@ Photon::DrawPhotonPath() const {
   return PhotonLine;
 }
 
-const Vector& Photon::GetPosition() const {
-  return m_Position;
-}
-
 void Photon::PropagatePhoton(const Vector &Displacement) {
   m_Position += Displacement;
 }
@@ -92,10 +89,6 @@ void Photon::KickPhoton(const Vector &Kick) {
 
 Photon::Status Photon::GetStatus() const {
   return m_Status;
-}
-
-const RadiatorCell* Photon::GetRadiatorCell() const {
-  return m_RadiatorCell;
 }
 
 const Vector& Photon::GetEmissionPoint() const {
@@ -142,4 +135,52 @@ Photon::Radiator Photon::GetRadiator() const {
 
 double Photon::GetCosCherenkovAngle() const {
   return m_CosCherenkovAngle;
+}
+
+void Photon::ConvertToRadiatorCoordinates() {
+  Particle::ConvertToRadiatorCoordinates();
+  // Check if particle is within acceptance
+  if(!m_RadiatorCell->IsInsideCell(m_Position)) {
+    m_Status = Status::Outside;
+  }
+}
+
+void Photon::ConvertBackToGlobalCoordinates() {
+  Particle::ConvertBackToGlobalCoordinates();
+  // Photon doesn't hit any mirror
+  m_MirrorHitPosition = nullptr;
+}
+
+void Photon::MapPhi(double DeltaPhi) {
+  Particle::MapPhi(DeltaPhi);
+  const ROOT::Math::RotationZ RotateZ(DeltaPhi);
+  m_EmissionPoint = RotateZ(m_EmissionPoint);
+  m_Direction = RotateZ(m_Direction);
+}
+
+void Photon::ReflectZ() {
+  Particle::ReflectZ();
+  m_EmissionPoint.SetZ(-m_EmissionPoint.Z());
+  m_Direction.SetZ(m_Direction.Z());
+}
+
+void Photon::ReflectY() {
+  Particle::ReflectY();
+  m_EmissionPoint.SetY(-m_EmissionPoint.Y());
+  m_Direction.SetY(m_Direction.Y());
+}
+
+void Photon::SwapXZ() {
+  Particle::SwapXZ();
+  Particle::SwapXZ(m_EmissionPoint);
+  Particle::SwapXZ(m_Direction);
+}
+
+bool Photon::IsAtRadiator() const {
+  return m_Status == Status::MirrorMiss;
+}
+
+void Photon::ChangeCoordinateOrigin(const Vector &Shift) {
+  Particle::ChangeCoordinateOrigin(Shift);
+  m_EmissionPoint -= Shift;
 }

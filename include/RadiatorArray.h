@@ -10,7 +10,7 @@
 #include<memory>
 #include"RadiatorCell.h"
 
-class ParticleTrack;
+class Particle;
 
 class RadiatorArray {
  public:
@@ -38,7 +38,7 @@ class RadiatorArray {
    * Check which radiator the particle goes through
    * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  virtual const RadiatorCell* FindRadiator(ParticleTrack &particleTrack) const = 0;
+  virtual const RadiatorCell* FindRadiator(Particle &particle) const = 0;
   /**
    * Draw all the radiator cells
    */
