@@ -8,6 +8,7 @@
 #include"Photon.h"
 #include"Settings.h"
 #include"SiPM.h"
+#include"RadiatorArray.h"
 
 namespace PhotonMapper {
 
@@ -29,20 +30,17 @@ namespace PhotonMapper {
   void TracePhotonToMirror(Photon &photon) {
     const double s = PhotonMirrorDistance(photon);
     photon.PropagatePhoton(s*photon.GetDirection());
-    const Vector Mirror = photon.GetPosition();
-    auto MirrorCentre = photon.GetRadiatorCell()->GetMirrorCentre();
-    const auto Curvature = photon.GetRadiatorCell()->GetMirrorCurvature();
-    const Vector Normal = (Mirror - MirrorCentre)/Curvature;
-    photon.KickPhoton(-2*photon.GetDirection().Dot(Normal)*Normal);
     const double MaxHeight = photon.GetRadiatorCell()->GetRadiatorThickness()
                            - 2*photon.GetRadiatorCell()->GetVesselThickness()
                            - photon.GetRadiatorCell()->GetCoolingThickness();
+    auto MirrorCentre = photon.GetRadiatorCell()->GetMirrorCentre();
+    const auto Curvature = photon.GetRadiatorCell()->GetMirrorCurvature();
     if(photon.GetPosition().Z() > MaxHeight) {
       photon.UpdatePhotonStatus(Photon::Status::WallMiss);
     } else if(s < 0.0) {
       photon.UpdatePhotonStatus(Photon::Status::Backwards);
     } else if((photon.GetPosition() - MirrorCentre).Mag2() - Curvature*Curvature > 1e-6) {
-      photon.UpdatePhotonStatus(Photon::Status::MirrorMiss);
+      photon.UpdatePhotonStatus(Photon::Status::OutsideMirrorRadius);
     } else if(photon.GetRadiatorCell()->IsInsideCell(photon)) {
       photon.UpdatePhotonStatus(Photon::Status::MirrorHit);
       photon.RegisterMirrorHitPosition(photon.GetPosition());
@@ -52,6 +50,11 @@ namespace PhotonMapper {
   }
 
   PhotonHit TracePhotonToDetector(Photon &photon) {
+    const Vector Mirror = photon.GetPosition();
+    auto MirrorCentre = photon.GetRadiatorCell()->GetMirrorCentre();
+    const auto Curvature = photon.GetRadiatorCell()->GetMirrorCurvature();
+    const Vector Normal = (Mirror - MirrorCentre)/Curvature;
+    photon.KickPhoton(-2*photon.GetDirection().Dot(Normal)*Normal);
     const auto Position = photon.GetPosition();
     const auto Direction = photon.GetDirection();
     auto Detector = photon.GetRadiatorCell()->GetDetector();
@@ -78,8 +81,23 @@ namespace PhotonMapper {
     return photonHit;
   }
 
-  std::unique_ptr<PhotonHit> TracePhoton(Photon &photon) {
+  std::unique_ptr<PhotonHit> TracePhoton(Photon &photon,
+					 const RadiatorArray &radiatorArray) {
     TracePhotonToMirror(photon);
+    std::size_t Counter = 0;
+    while(photon.GetStatus() == Photon::Status::MirrorMiss && Counter < 10) {
+      photon.UpdatePhotonStatus(Photon::Status::Emitted);
+      photon.ConvertBackToGlobalCoordinates();
+      if(photon.FindRadiator(radiatorArray)) {
+	photon.ConvertToRadiatorCoordinates();
+	photon.PutPhotonToEmissionPoint();
+	TracePhotonToMirror(photon);
+      } else {
+	photon.UpdatePhotonStatus(Photon::Status::MirrorMiss);
+	break;
+      }
+      Counter++;
+    }
     if(photon.GetMirrorHitPosition()) {
       PhotonHit photonHit = TracePhotonToDetector(photon);
       return std::make_unique<PhotonHit>(photonHit);

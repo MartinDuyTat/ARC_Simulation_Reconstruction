@@ -10,6 +10,7 @@
 #include"RadiatorCell.h"
 #include"Photon.h"
 #include"SiPM.h"
+#include"RadiatorArray.h"
 
 namespace PhotonMapper {
   /**
@@ -27,7 +28,8 @@ namespace PhotonMapper {
   /**
    * Trace photon from emission point to detector and register detector hit
    */
-  std::unique_ptr<PhotonHit> TracePhoton(Photon &photon);
+  std::unique_ptr<PhotonHit> TracePhoton(Photon &photon,
+					 const RadiatorArray &radiatorArray);
   /**
    * Check if photon has been scattered in the aerogel
    */

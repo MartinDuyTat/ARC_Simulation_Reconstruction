@@ -47,7 +47,8 @@ class Photon: public Particle {
     AerogelScattered,
     WallMiss,
     Backwards,
-    Outside
+    OutsideCell,
+    OutsideMirrorRadius
   };
   /**
    * Construct a photon with position, direction and energy
@@ -159,6 +160,10 @@ class Photon: public Particle {
    * Check if particle is at the radiator so that we can search for the radiator cell
    */
   virtual bool IsAtRadiator() const override;
+  /**
+   * Set photon position back to the emission point
+   */
+  void PutPhotonToEmissionPoint();
  protected:
   /**
    * Helper function to swap x and z directions of all vectors (where relevant)

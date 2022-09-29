@@ -12,6 +12,7 @@
 using Vector = ROOT::Math::XYZVector;
 
 class RadiatorCell;
+class RadiatorArray;
 
 class Particle {
  public:
@@ -34,6 +35,10 @@ class Particle {
    * Need virtual constructor since it's a virtual class
    */
   ~Particle() = default;
+  /**
+   * Find the correct radiator that the particle goes through
+   */
+  bool FindRadiator(const RadiatorArray &radiatorArray);
   /**
    * Convert to local radiator coordinates
    */
@@ -71,6 +76,14 @@ class Particle {
    * Check if particle is at the radiator so that we can search for the radiator cell
    */
   virtual bool IsAtRadiator() const = 0;
+  /**
+   * Get the column number of the radiator
+   */
+  std::size_t GetRadiatorColumnNumber() const;
+  /**
+   * Get the row number of the radiator
+   */
+  std::size_t GetRadiatorRowNumber() const;
  protected:
   /**
    * Particle position, in m

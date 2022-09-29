@@ -82,7 +82,8 @@ namespace Utilities {
       return ResolutionStruct{};
     }
     particleTrack.ConvertToRadiatorCoordinates();
-    particleTrack.TrackThroughRadiatorCell();
+    particleTrack.TrackThroughAerogel();
+    particleTrack.TrackThroughGasToMirror();
     if(particleTrack.GetParticleLocation() == ParticleTrack::Location::MissedMirror) {
       return ResolutionStruct{0.0, 0, true, true};
     }
@@ -114,7 +115,7 @@ namespace Utilities {
     std::vector<double> CherenkovAngles;
     CherenkovAngles.reserve(Photons.size());
     for(auto &Photon : Photons) {
-      auto photonHit = PhotonMapper::TracePhoton(Photon);
+      auto photonHit = PhotonMapper::TracePhoton(Photon, radiatorArray);
       if(Photon.GetStatus() == Photon::Status::DetectorHit) {
 	auto reconstructedPhoton =
 	  PhotonReconstructor::ReconstructPhoton(particleTrack,

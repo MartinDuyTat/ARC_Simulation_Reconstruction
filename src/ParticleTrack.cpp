@@ -56,15 +56,6 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   m_Location = Location::EntranceWindow;
 }
 
-bool ParticleTrack::FindRadiator(const RadiatorArray &radiatorArray) {
-  m_RadiatorCell = radiatorArray.FindRadiator(*this);
-  if(m_RadiatorCell) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 void ParticleTrack::SetRadiator(const RadiatorCell *radiatorCell) {
   m_RadiatorCell = radiatorCell;
 }
@@ -79,7 +70,7 @@ void ParticleTrack::ConvertToRadiatorCoordinates() {
   m_EntranceWindowPosition = m_Position;
 }
 
-void ParticleTrack::TrackThroughRadiatorCell() {
+void ParticleTrack::TrackThroughAerogel() {
   if(!m_RadiatorCell) {
     throw std::runtime_error("No radiator cell to track through");
   }
@@ -94,7 +85,6 @@ void ParticleTrack::TrackThroughRadiatorCell() {
   m_AerogelExit = m_Position;
   m_GasEntry = m_AerogelExit;
   m_Location = Location::Radiator;
-  TrackThroughGasToMirror();
 }
 
 void ParticleTrack::TrackThroughGasToMirror() {
@@ -128,6 +118,20 @@ void ParticleTrack::TrackThroughGasToMirror() {
   }
 }
 
+bool ParticleTrack::TrackToNextCell(const RadiatorArray &radiatorArray) {
+  std::size_t Counter = 0;
+  while(m_Location != Location::Mirror) {
+    ConvertBackToGlobalCoordinates();
+    if(!FindRadiator(radiatorArray) || Counter > 10) {
+      return false;
+    }
+    ConvertToRadiatorCoordinates();
+    TrackThroughGasToMirror();
+    Counter++;
+  }
+  return true;
+}
+
 void ParticleTrack::ChangeCoordinateOrigin(const Vector &Shift) {
   Particle::ChangeCoordinateOrigin(Shift);
   m_AerogelEntry -= Shift;
@@ -137,8 +141,8 @@ void ParticleTrack::ChangeCoordinateOrigin(const Vector &Shift) {
 }
 
 Photon ParticleTrack::GeneratePhotonFromAerogel() const {
-  if(m_Location != Location::Mirror) {
-    throw std::runtime_error("Cannot generate photons from tracks not at the mirror");
+  if(m_Location != Location::Radiator) {
+    throw std::runtime_error("Cannot generate photons before aerogel or after gas");
   }
   Photon photon = GeneratePhoton(m_AerogelEntry, m_AerogelExit, Photon::Radiator::Aerogel);
   return photon;
@@ -153,8 +157,8 @@ Photon ParticleTrack::GeneratePhotonFromGas() const {
 }
 
 std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
-  if(m_Location != Location::Mirror) {
-    throw std::runtime_error("Cannot generate photons from tracks not at the mirror");
+  if(m_Location != Location::Radiator) {
+    throw std::runtime_error("Cannot generate photons before aerogel or after gas");
   }
   const double RadiatorDistance = TMath::Sqrt((m_AerogelExit - m_AerogelEntry).Mag2());
   const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Aerogel,
@@ -246,12 +250,14 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
   Direction = RotateY(Direction);
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
-  return {EmissionPoint,
-          Direction,
-          Energy,
-          CosTheta,
-          Radiator,
-          &(*m_RadiatorCell)};
+  Photon photon(EmissionPoint,
+		Direction,
+		Energy,
+		CosTheta,
+		Radiator,
+		&(*m_RadiatorCell));
+  photon.SetPhiRotated(m_PhiRotated);
+  return photon;
 }
 
 double ParticleTrack::Beta() const {
@@ -354,14 +360,6 @@ ParticleTrack::Location ParticleTrack::GetParticleLocation() const {
 
 const Vector ParticleTrack::GetEntranceWindowPosition() const {
   return m_EntranceWindowPosition;
-}
-
-std::size_t ParticleTrack::GetRadiatorColumnNumber() const {
-  return m_RadiatorCell->GetCellNumber().first;
-}
-
-std::size_t ParticleTrack::GetRadiatorRowNumber() const {
-  return m_RadiatorCell->GetCellNumber().second;
 }
 
 bool ParticleTrack::IsAtRadiator() const {

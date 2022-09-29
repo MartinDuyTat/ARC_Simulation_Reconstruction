@@ -33,6 +33,9 @@ Photon::Photon(const Vector &Position,
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 Photon::DrawPhotonPath() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> PhotonLine;
+  if(!m_RadiatorCell) {
+    return PhotonLine;
+  }
   const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
   const auto EmissionPoint = Utilities::SwapXZForEndCap(m_RadiatorCell,
 							m_EmissionPoint
@@ -141,7 +144,7 @@ void Photon::ConvertToRadiatorCoordinates() {
   Particle::ConvertToRadiatorCoordinates();
   // Check if particle is within acceptance
   if(!m_RadiatorCell->IsInsideCell(m_Position)) {
-    m_Status = Status::Outside;
+    m_Status = Status::OutsideCell;
   }
 }
 
@@ -177,10 +180,14 @@ void Photon::SwapXZ() {
 }
 
 bool Photon::IsAtRadiator() const {
-  return m_Status == Status::MirrorMiss;
+  return m_Status == Status::Emitted;
 }
 
 void Photon::ChangeCoordinateOrigin(const Vector &Shift) {
   Particle::ChangeCoordinateOrigin(Shift);
   m_EmissionPoint -= Shift;
+}
+
+void Photon::PutPhotonToEmissionPoint() {
+  m_Position = m_EmissionPoint;
 }

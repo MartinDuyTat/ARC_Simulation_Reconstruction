@@ -6,6 +6,7 @@
 #include"Math/DisplacementVector3D.h"
 #include"Particle.h"
 #include"RadiatorCell.h"
+#include"RadiatorArray.h"
 #include"Settings.h"
 
 Particle::Particle(const Vector &Position,
@@ -35,6 +36,16 @@ void Particle::SwapXZ(Vector &Vec) const {
   Vec.SetX(Vec.Z());
   Vec.SetZ(Temp);
 }
+
+bool Particle::FindRadiator(const RadiatorArray &radiatorArray) {
+  m_RadiatorCell = radiatorArray.FindRadiator(*this);
+  if(m_RadiatorCell) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void Particle::ConvertToRadiatorCoordinates() {
   // Check if coordinate system if correct
   if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
@@ -77,10 +88,18 @@ void Particle::MapPhi(double DeltaPhi) {
 }
 
 void Particle::ReflectZ() {
+  // Check if coordinate system if correct
+  if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
+    throw std::runtime_error("Cannot reflect z in local coordinates");
+  }
   m_Position.SetZ(-m_Position.Z());
 }
 
 void Particle::ReflectY() {
+  // Check if coordinate system if correct
+  if(m_CoordinateSystem == CoordinateSystem::LocalRadiator) {
+    throw std::runtime_error("Cannot reflect y in local coordinates");
+  }
   m_Position.SetY(-m_Position.Y());
 }
 
@@ -90,4 +109,20 @@ void Particle::SwapXZ() {
 
 void Particle::ChangeCoordinateOrigin(const Vector &Shift) {
   m_Position -= Shift;
+}
+
+std::size_t Particle::GetRadiatorColumnNumber() const {
+  if(m_RadiatorCell) {
+    return m_RadiatorCell->GetCellNumber().first;
+  } else {
+    return static_cast<std::size_t>(-1);;
+  }
+}
+
+std::size_t Particle::GetRadiatorRowNumber() const {
+  if(m_RadiatorCell) {
+    return m_RadiatorCell->GetCellNumber().second;
+  } else {
+    return static_cast<std::size_t>(-1);;
+  }
 }

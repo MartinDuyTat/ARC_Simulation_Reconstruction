@@ -73,28 +73,22 @@ int main(int argc, char *argv[]) {
     particleTrack.TrackThroughTracker(InnerTracker);
     particleTrack.FindRadiator(*radiatorArray);
     particleTrack.ConvertToRadiatorCoordinates();
-    particleTrack.TrackThroughRadiatorCell();
-    std::size_t Counter = 0;
-    while(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
-      particleTrack.ConvertBackToGlobalCoordinates();
-      if(!particleTrack.FindRadiator(*radiatorArray) || Counter > 10) {
-	return 0;
-      }
-      particleTrack.ConvertToRadiatorCoordinates();
-      particleTrack.TrackThroughGasToMirror();
-      Counter++;
+    particleTrack.TrackThroughAerogel();
+    particleTrack.TrackThroughGasToMirror();
+    if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+      particleTrack.TrackToNextCell(*radiatorArray);
     }
     auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
     auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
     std::vector<PhotonHit> photonHits;
     for(auto &photon : PhotonsAerogel) {
-      auto photonHit = PhotonMapper::TracePhoton(photon);
+      auto photonHit = PhotonMapper::TracePhoton(photon, *radiatorArray);
       if(photonHit) {
 	photonHits.push_back(*photonHit);
       }
     }
     for(auto &photon : PhotonsGas) {
-      auto photonHit = PhotonMapper::TracePhoton(photon);
+      auto photonHit = PhotonMapper::TracePhoton(photon, *radiatorArray);
       if(photonHit) {
 	photonHits.push_back(*photonHit);
       }
@@ -167,7 +161,9 @@ int main(int argc, char *argv[]) {
     const std::size_t NumberTracks = Settings::GetSizeT("General/NumberTracks");
     const bool DrawAllTracks = Settings::GetBool("General/DrawAllTracks");
     const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
+    const std::size_t RowToDraw = Settings::GetSizeT("EventDisplay/RowToDraw");
     const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
+    const bool Aerogel = Settings::GetString("General/GasOrAerogel") == "Aerogel";
     for(std::size_t i = 0; i < NumberTracks; i++) {
       NumberPhotons = 0;
       TrackNumber = i;
@@ -211,24 +207,20 @@ int main(int argc, char *argv[]) {
 	CherenkovTree.Fill();
 	continue;
       }
-      particleTrack.TrackThroughRadiatorCell();
+      particleTrack.TrackThroughAerogel();
+      std::vector<Photon> Photons;
+      if(Aerogel) {
+	Photons = particleTrack.GeneratePhotonsFromAerogel();
+      }
+      particleTrack.TrackThroughGasToMirror();
       ParticleLocation = particleTrack.GetParticleLocation();
-      bool ParticleAtMirror = true;
-      std::size_t Counter = 0;
-      while(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
-	particleTrack.ConvertBackToGlobalCoordinates();
-	if(!particleTrack.FindRadiator(*radiatorArray) || Counter > 10) {
-	  ParticleAtMirror = false;
-	  break;
+      if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+	const bool HitMirror = particleTrack.TrackToNextCell(*radiatorArray);
+	if(!HitMirror) {
+	  continue;
 	}
-	Phi = particleTrack.GetPosition().Phi();
-	particleTrack.ConvertToRadiatorCoordinates();
-	particleTrack.TrackThroughGasToMirror();
-	Counter++;
       }
-      if(!ParticleAtMirror) {
-	continue;
-      }
+      Phi = particleTrack.GetPosition().Phi();
       auto MirrorHitPosition = particleTrack.GetPosition();
       MirrorHit_x = MirrorHitPosition.X();
       MirrorHit_y = MirrorHitPosition.Y();
@@ -240,9 +232,6 @@ int main(int argc, char *argv[]) {
       FinalRadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
       FinalRadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
       auto IsTrackDraw = [&] () {
-	if(FinalRadiatorRowNumber != Settings::GetSizeT("EventDisplay/RowToDraw")) {
-	  return false;
-	}
 	if(DrawAllTracks) {
 	  return true;
 	}
@@ -253,20 +242,19 @@ int main(int argc, char *argv[]) {
 	return true;
       };
       const bool DrawThisTrack = IsTrackDraw();
-      if(DrawThisTrack) {
+      if(DrawThisTrack && FinalRadiatorRowNumber == RowToDraw) {
 	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
       }
-      const bool Aerogel = Settings::GetString("General/GasOrAerogel") == "Aerogel";
-      auto Photons = Aerogel ?
-                     particleTrack.GeneratePhotonsFromAerogel() :
-                     particleTrack.GeneratePhotonsFromGas();
+      if(!Aerogel) {
+	Photons = particleTrack.GeneratePhotonsFromGas();
+      }
       for(auto &Photon : Photons) {
 	if(NumberPhotons >= 2000) {
 	  std::cout << "Warning! Number of photons is greater than 2000\n";
 	}
 	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.GetCosCherenkovAngle());
-	auto photonHit = PhotonMapper::TracePhoton(Photon);
-	if(DrawThisTrack) {
+	auto photonHit = PhotonMapper::TracePhoton(Photon, *radiatorArray);
+	if(DrawThisTrack && Photon.GetRadiatorRowNumber() == RowToDraw) {
 	  eventDisplay.AddObject(Photon.DrawPhotonPath());
 	}
 	if(!Photon.GetMirrorHitPosition()) {

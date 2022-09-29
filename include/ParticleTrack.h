@@ -55,10 +55,6 @@ class ParticleTrack: public Particle {
    */
   void TrackThroughTracker(const TrackingVolume &InnerTracker);
   /**
-   * Find the correct radiator that the particle goes through
-   */
-  bool FindRadiator(const RadiatorArray &radiatorArray);
-  /**
    * Set radiator
    */
   void SetRadiator(const RadiatorCell *radiatorCell);
@@ -69,11 +65,15 @@ class ParticleTrack: public Particle {
   /**
    * Track particle through radiator cell
    */
-  void TrackThroughRadiatorCell();
+  void TrackThroughAerogel();
   /**
    * Helper function to track particle through gas until it hits the correct mirror
    */
   void TrackThroughGasToMirror();
+  /**
+   * If particle misses the mirror in this cell, call this function to migrate to next cell
+   */
+  bool TrackToNextCell(const RadiatorArray &radiatorArray);
   /**
    * Generate Cherenkov photon from aerogel
    */
@@ -142,14 +142,6 @@ class ParticleTrack: public Particle {
    * Reflect everything in the y-direction
    */
   virtual void ReflectY() override;
-  /**
-   * Get the column number of the radiator
-   */
-  std::size_t GetRadiatorColumnNumber() const;
-  /**
-   * Get the row number of the radiator
-   */
-  std::size_t GetRadiatorRowNumber() const;
   /**
    * Check if particle is at the radiator so that we can search for the radiator cell
    */
