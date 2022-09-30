@@ -14,20 +14,25 @@
 #include"Utilities.h"
 
 Photon::Photon(const Vector &Position,
+	       const Vector &AssumedPosition,
 	       const Vector &Direction,
+	       const Vector &ParticleDirection,
 	       double Energy,
 	       double CosCherenkovAngle,
 	       Radiator radiator,
 	       const RadiatorCell *radiatorCell):
   Particle(Position, Particle::CoordinateSystem::LocalRadiator, radiatorCell),
+  m_AssumedEmissionPoint(AssumedPosition),
   m_EmissionPoint(Position),
   m_Direction(Direction),
+  m_ParticleDirection(ParticleDirection),
   m_Energy(Energy),
   m_Radiator(radiator),
   m_CosCherenkovAngle(CosCherenkovAngle),
   m_Status(Status::Emitted),
   m_AerogelTravelDistance(0.0),
-  m_MirrorHitPosition(nullptr) {
+  m_MirrorHitPosition(nullptr),
+  m_HasMigrated(false) {
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
@@ -94,8 +99,12 @@ Photon::Status Photon::GetStatus() const {
   return m_Status;
 }
 
-const Vector& Photon::GetEmissionPoint() const {
-  return m_EmissionPoint;
+const Vector& Photon::GetEmissionPoint(bool TrueEmissionPoint) const {
+  if(TrueEmissionPoint) {
+    return m_EmissionPoint;
+  } else {
+    return m_AssumedEmissionPoint;
+  }
 }
 
 void Photon::UpdatePhotonStatus(Photon::Status status) {
@@ -157,26 +166,35 @@ void Photon::ConvertBackToGlobalCoordinates() {
 void Photon::MapPhi(double DeltaPhi) {
   Particle::MapPhi(DeltaPhi);
   const ROOT::Math::RotationZ RotateZ(DeltaPhi);
+  m_AssumedEmissionPoint = RotateZ(m_AssumedEmissionPoint);
   m_EmissionPoint = RotateZ(m_EmissionPoint);
   m_Direction = RotateZ(m_Direction);
+  m_ParticleDirection = RotateZ(m_ParticleDirection);
 }
 
 void Photon::ReflectZ() {
   Particle::ReflectZ();
+  m_AssumedEmissionPoint.SetZ(-m_AssumedEmissionPoint.Z());
   m_EmissionPoint.SetZ(-m_EmissionPoint.Z());
   m_Direction.SetZ(m_Direction.Z());
+  m_ParticleDirection.SetZ(m_ParticleDirection.Z());
 }
+
 
 void Photon::ReflectY() {
   Particle::ReflectY();
+  m_AssumedEmissionPoint.SetY(-m_AssumedEmissionPoint.Y());
   m_EmissionPoint.SetY(-m_EmissionPoint.Y());
   m_Direction.SetY(m_Direction.Y());
+  m_ParticleDirection.SetY(m_ParticleDirection.Y());
 }
 
 void Photon::SwapXZ() {
   Particle::SwapXZ();
+  Particle::SwapXZ(m_AssumedEmissionPoint);
   Particle::SwapXZ(m_EmissionPoint);
   Particle::SwapXZ(m_Direction);
+  Particle::SwapXZ(m_ParticleDirection);
 }
 
 bool Photon::IsAtRadiator() const {
@@ -185,9 +203,22 @@ bool Photon::IsAtRadiator() const {
 
 void Photon::ChangeCoordinateOrigin(const Vector &Shift) {
   Particle::ChangeCoordinateOrigin(Shift);
+  m_AssumedEmissionPoint -= Shift;
   m_EmissionPoint -= Shift;
 }
 
 void Photon::PutPhotonToEmissionPoint() {
   m_Position = m_EmissionPoint;
+}
+
+void Photon::PhotonHasMigrated() {
+  m_HasMigrated = true;
+}
+
+bool Photon::HasPhotonMigrated() const {
+  return m_HasMigrated;
+}
+
+const Vector& Photon::GetParticleDirection() const {
+  return m_ParticleDirection;
 }

@@ -238,6 +238,7 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
   const double RandomFraction = m_RandomEmissionPoint
                               ? gRandom->Uniform(0.005, 0.995) : 0.5;
   const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
+  const Vector AssumedEmissionPoint = 0.5*(Entry + Exit);
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
@@ -251,7 +252,9 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
   const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
   Direction = RotateZ(Direction);
   Photon photon(EmissionPoint,
+		AssumedEmissionPoint,
 		Direction,
+		m_Momentum.Unit(),
 		Energy,
 		CosTheta,
 		Radiator,

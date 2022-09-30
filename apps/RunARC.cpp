@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
     double RadiatorPosition_x, RadiatorPosition_y, RadiatorPosition_z;
     double CosTheta, Phi;
     int NumberPhotons = 0;
+    int HasMigrated[2000];
     std::size_t RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
     std::size_t FinalRadiatorRowNumber, FinalRadiatorColumnNumber;
     ParticleTrack::Location ParticleLocation;
@@ -139,6 +140,9 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("TrackNumber",
 			 &TrackNumber,
 			 "TrackNumber/l");
+    CherenkovTree.Branch("HasMigrated",
+			 &HasMigrated,
+			 "HasMigrated[NumberPhotons]/I");
     CherenkovTree.Branch("ParticleLocation", &ParticleLocation, "ParticleLocation/I");
     CherenkovTree.Branch("PhotonStatus", &PhotonStatus, "PhotonStatus[NumberPhotons]/I");
     CherenkovTree.Branch("Entrance_x", &Entrance_x);
@@ -264,17 +268,13 @@ int main(int argc, char *argv[]) {
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] = -1.0;
 	  CherenkovAngle_Reco[NumberPhotons] = -1.0;
 	} else {
-	  auto Radiator = Aerogel ?
-	                  Photon::Radiator::Aerogel :
-	                  Photon::Radiator::Gas;
 	  auto reconstructedPhoton =
-	    PhotonReconstructor::ReconstructPhoton(particleTrack,
-						   *photonHit,
-						   Radiator);
+	    PhotonReconstructor::ReconstructPhoton(*photonHit);
 	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint);
 	  CherenkovAngle_Reco[NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
+	  HasMigrated[NumberPhotons] = Photon.HasPhotonMigrated() ? 1 : 0;
 	}
 	PhotonEnergy[NumberPhotons] = Photon.GetEnergy();
 	PhotonStatus[NumberPhotons] = Photon.GetStatus();

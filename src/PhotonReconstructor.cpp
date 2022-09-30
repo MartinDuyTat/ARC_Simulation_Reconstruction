@@ -3,7 +3,6 @@
 #include<algorithm>
 #include"PhotonReconstructor.h"
 #include"Photon.h"
-#include"ParticleTrack.h"
 #include"RadiatorCell.h"
 #include"ReconstructedPhoton.h"
 #include"TMath.h"
@@ -15,21 +14,13 @@ using Vector = ROOT::Math::XYZVector;
 
 namespace PhotonReconstructor {
 
-  double ReconstructCosCherenkovAngle(const ParticleTrack &Particle,
-				      const PhotonHit &photonHit,
-				      bool TrueEmissionPoint,
-				      Photon::Radiator Radiator) {
+  double ReconstructCosCherenkovAngle(const PhotonHit &photonHit,
+				      bool TrueEmissionPoint) {
     const RadiatorCell *radiatorCell = photonHit.m_Photon->GetRadiatorCell();
     auto MirrorCentre = radiatorCell->GetMirrorCentre();
-    auto GetEmissionPoint = [&]() {
-      if(TrueEmissionPoint) {
-	return photonHit.m_Photon->GetEmissionPoint();
-      } else {
-	return (Particle.GetExitPoint(Radiator)
-	      + Particle.GetEntryPoint(Radiator))*0.5;
-      }
-    };
-    const Vector EmissionPoint = GetEmissionPoint() - MirrorCentre;
+    const auto Photon = photonHit.m_Photon;
+    const Vector EmissionPoint = Photon->GetEmissionPoint(TrueEmissionPoint)
+                               - MirrorCentre;
     const Vector DetectionPoint = photonHit.m_HitPosition - MirrorCentre;
     const double Curvature = radiatorCell->GetMirrorCurvature();
     // Distance between emission point and mirror centre,
@@ -67,19 +58,17 @@ namespace PhotonReconstructor {
       std::swap(ReflectionPoint, OtherReflectionPoint);
     }
     const Vector ReflectionEmissionPoint = ReflectionPoint - EmissionPoint;
-    const Vector Direction = Particle.GetMomentum().Unit();
+    const Vector Direction = Photon->GetParticleDirection();
     const double CosTheta = ReflectionEmissionPoint.Unit().Dot(Direction);
     return CosTheta;
   }
   
-  ReconstructedPhoton ReconstructPhoton(const ParticleTrack &Particle,
-					const PhotonHit &photonHit,
-					Photon::Radiator Radiator) {
+  ReconstructedPhoton ReconstructPhoton(const PhotonHit &photonHit) {
     ReconstructedPhoton reconstructedPhoton(*photonHit.m_Photon);
     reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint =
-      ReconstructCosCherenkovAngle(Particle, photonHit, true, Radiator);
+      ReconstructCosCherenkovAngle(photonHit, true);
     reconstructedPhoton.m_CosCherenkovAngle =
-      ReconstructCosCherenkovAngle(Particle, photonHit, false, Radiator);
+      ReconstructCosCherenkovAngle(photonHit, false);
     return reconstructedPhoton;
   }
 

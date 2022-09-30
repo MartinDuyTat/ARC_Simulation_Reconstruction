@@ -92,6 +92,7 @@ namespace PhotonMapper {
 	photon.ConvertToRadiatorCoordinates();
 	photon.PutPhotonToEmissionPoint();
 	TracePhotonToMirror(photon);
+	photon.PhotonHasMigrated();
       } else {
 	photon.UpdatePhotonStatus(Photon::Status::MirrorMiss);
 	break;

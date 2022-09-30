@@ -118,9 +118,7 @@ namespace Utilities {
       auto photonHit = PhotonMapper::TracePhoton(Photon, radiatorArray);
       if(Photon.GetStatus() == Photon::Status::DetectorHit) {
 	auto reconstructedPhoton =
-	  PhotonReconstructor::ReconstructPhoton(particleTrack,
-						 *photonHit,
-						 Photon::Radiator::Gas);
+	  PhotonReconstructor::ReconstructPhoton(*photonHit);
 	const double CherenkovAngle = TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
 	if(CherenkovAngle < 0.0) {
 	  continue;

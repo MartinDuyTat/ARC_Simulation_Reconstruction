@@ -53,14 +53,18 @@ class Photon: public Particle {
   /**
    * Construct a photon with position, direction and energy
    * @param Position Position vector
+   * @param AssumedPosition The midpoint of the track in the radiator
    * @param Direction Direction vector
+   * @param ParticleDirection Unit vector in the direction of the particle
    * @param Energy Photon energy
    * @param CosCherenkovAngle Cosine of Cherenkov angle
    * @param radiator Aerogel or gas radiator where this photon was emitted
    * @param radiatorCell The radiator cell where this photon was emitted
    */
   Photon(const Vector &Position,
+	 const Vector &AssumedPosition,
 	 const Vector &Direction,
+	 const Vector &ParticleDirection,
 	 double Energy,
 	 double CosCherenkovAngle,
 	 Radiator radiator,
@@ -102,7 +106,7 @@ class Photon: public Particle {
   /**
    * Get the emission point
    */
-  const Vector& GetEmissionPoint() const;
+  const Vector& GetEmissionPoint(bool TrueEmissionPoint) const;
   /**
    * Update photon status
    */
@@ -164,6 +168,18 @@ class Photon: public Particle {
    * Set photon position back to the emission point
    */
   void PutPhotonToEmissionPoint();
+  /**
+   * Call this function is photon has migrated to a different cell
+   */
+  void PhotonHasMigrated();
+  /**
+   * Get flag that is true if photon migrates
+   */
+  bool HasPhotonMigrated() const;
+  /**
+   * Get the direction of the particle that emitted this photon
+   */
+  const Vector& GetParticleDirection() const;
  protected:
   /**
    * Helper function to swap x and z directions of all vectors (where relevant)
@@ -175,6 +191,10 @@ class Photon: public Particle {
   virtual void ChangeCoordinateOrigin(const Vector &Shift) override;
  private:
   /**
+   * The midpoint of the track inside the radiator, where we assume the photon is emitted
+   */
+  Vector m_AssumedEmissionPoint;
+  /**
    * Emission point
    */
   Vector m_EmissionPoint;
@@ -182,6 +202,10 @@ class Photon: public Particle {
    * Photon direction vector
    */
   Vector m_Direction;
+  /**
+   * Direction of the particle that emitted this photon
+   */
+  Vector m_ParticleDirection;
   /**
    * Photon energy
    */
@@ -206,6 +230,10 @@ class Photon: public Particle {
    * Hit position of the mirror, or nullptr if the photon missed the mirror
    */
   std::unique_ptr<Vector> m_MirrorHitPosition;
+  /**
+   * Flag that is true if photon migrates to a neighbouring cell
+   */
+  bool m_HasMigrated;
 };
 
 #endif
