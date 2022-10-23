@@ -28,17 +28,18 @@ SiPM::SiPM():
   m_DetectorTilt(0.0),
   m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
   m_MaxPDE(0.432),
-  m_SwapXZ(Settings::GetString("General/BarrelOrEndcap") == "EndCap") {
+  m_EndCap(Settings::GetString("General/BarrelOrEndcap") == "EndCap") {
 }
 
 PhotonHit SiPM::AddPhotonHit(Photon &photon) const {
   const Vector DetectorCentre(m_DetectorPositionX,
 			      0.0,
 			      m_DetectorPositionZ);
-  const Vector PhotonXZPosition(photon.GetPosition().X(),
+  const auto PhotonPosition = photon.GetPosition().LocalVector();
+  const Vector PhotonXZPosition(PhotonPosition.X(),
 				0.0,
-				photon.GetPosition().Z());
-  PhotonHit photonHit{photon.GetPosition(),
+				PhotonPosition.Z());
+  PhotonHit photonHit{PhotonPosition,
                       &photon,
                       PhotonXZPosition - DetectorCentre};
   if(photon.GetStatus() != Photon::Status::MirrorHit) {
@@ -111,29 +112,31 @@ void SiPM::PlotHits(const std::string &Filename,
 }
 
 std::unique_ptr<TObject> SiPM::DrawSiPM(const Vector &RadiatorPosition) const {
-  const double RadiatorZ = RadiatorPosition.Z();
-  const double DetectorPositionX = m_DetectorPositionX + RadiatorPosition.X();
+  const double PositionZ = RadiatorPosition.X()
+                         + (m_EndCap ? m_DetectorPositionX : m_DetectorPositionZ);
+  const double PositionX = RadiatorPosition.Z()
+                         + (m_EndCap ? m_DetectorPositionZ : m_DetectorPositionX);
   std::array<double, 5> xPoints, zPoints;
-  const double CosTheta = TMath::Cos(m_DetectorTilt);
-  const double SinTheta = TMath::Sin(m_DetectorTilt);
+  const double DetectorTilt = m_EndCap ? 
+                              -m_DetectorTilt + TMath::Pi()/2.0 :
+                              m_DetectorTilt;
+  const double CosTheta = TMath::Cos(DetectorTilt);
+  const double SinTheta = TMath::Sin(DetectorTilt);
   // Lower left corner
-  xPoints[0] = DetectorPositionX - CosTheta*m_DetectorSizeX/2.0;
-  zPoints[0] = RadiatorZ - 0.002 + m_DetectorPositionZ - SinTheta*m_DetectorSizeX/2.0;
+  xPoints[0] = PositionX - CosTheta*m_DetectorSizeX/2.0;
+  zPoints[0] = PositionZ - 0.002 - SinTheta*m_DetectorSizeX/2.0;
   // Lower right corner
-  xPoints[1] = DetectorPositionX + CosTheta*m_DetectorSizeX/2.0;
-  zPoints[1] = RadiatorZ -0.002 + m_DetectorPositionZ + SinTheta*m_DetectorSizeX/2.0;
+  xPoints[1] = PositionX + CosTheta*m_DetectorSizeX/2.0;
+  zPoints[1] = PositionZ -0.002 + SinTheta*m_DetectorSizeX/2.0;
   // Upper right corner
-  xPoints[2] = DetectorPositionX + CosTheta*m_DetectorSizeX/2.0;
-  zPoints[2] = RadiatorZ - 0.0 + m_DetectorPositionZ + SinTheta*m_DetectorSizeX/2.0;
+  xPoints[2] = PositionX + CosTheta*m_DetectorSizeX/2.0;
+  zPoints[2] = PositionZ - 0.0 + SinTheta*m_DetectorSizeX/2.0;
   // Upper left corner
-  xPoints[3] = DetectorPositionX - CosTheta*m_DetectorSizeX/2.0;
-  zPoints[3] = RadiatorZ - 0.0 + m_DetectorPositionZ - SinTheta*m_DetectorSizeX/2.0;
+  xPoints[3] = PositionX - CosTheta*m_DetectorSizeX/2.0;
+  zPoints[3] = PositionZ - 0.0 - SinTheta*m_DetectorSizeX/2.0;
   // Back to left corner
-  xPoints[4] = DetectorPositionX - CosTheta*m_DetectorSizeX/2.0;
-  zPoints[4] = RadiatorZ - 0.002 + m_DetectorPositionZ - SinTheta*m_DetectorSizeX/2.0;
-  if(m_SwapXZ) {
-    std::swap(xPoints, zPoints);
-  }
+  xPoints[4] = PositionX - CosTheta*m_DetectorSizeX/2.0;
+  zPoints[4] = PositionZ - 0.002 - SinTheta*m_DetectorSizeX/2.0;
   TPolyLine DetectorLine(5, xPoints.data(), zPoints.data());
   DetectorLine.SetFillColor(kBlack);
   return std::make_unique<TPolyLine>(DetectorLine);
@@ -143,15 +146,16 @@ bool SiPM::IsDetectorHit(const Photon &photon) const {
   if(!photon.GetRadiatorCell()->IsInsideCell(photon)) {
     return false;
   }
-  const double photon_x = photon.GetPosition().X();
-  const double photon_z = photon.GetPosition().Z();
+  const auto PhotonPosition = photon.GetPosition().LocalVector();
+  const double photon_x = PhotonPosition.X();
+  const double photon_z = PhotonPosition.Z();
   const double XDist = TMath::Sqrt((photon_x - m_DetectorPositionX)*
 				   (photon_x - m_DetectorPositionX)
 				 + (photon_z - m_DetectorPositionZ)*
 				   (photon_z - m_DetectorPositionZ));
   if(XDist > m_DetectorSizeX/2.0) {
     return false;
-  } else if(TMath::Abs(photon.GetPosition().Y() - m_DetectorPositionY)
+  } else if(TMath::Abs(PhotonPosition.Y() - m_DetectorPositionY)
 	    > m_DetectorSizeY/2.0) {
     return false;
   } else {
@@ -160,16 +164,10 @@ bool SiPM::IsDetectorHit(const Photon &photon) const {
 }
 
 void SiPM::SetDetectorPosition(double x) {
-  if(m_SwapXZ) {
-    x = -x;
-  }
   m_DetectorPositionX = x;
 }
 
 void SiPM::SetDetectorTilt(double Angle) {
-  if(m_SwapXZ) {
-    Angle = -Angle;
-  }
   m_DetectorTilt = Angle;
   const double AbsAngle = TMath::Abs(Angle);
   const double DetectorSizeXOver2 = m_DetectorSizeX*0.5;

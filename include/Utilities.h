@@ -32,13 +32,9 @@ namespace Utilities {
    */
   Vector GenerateRandomEndCapTrack();
   /**
-   * Swap the x and z coordinates if the radiator cell is an end cap radiator cell
-   * @param radiatorCell The radiator cell
-   * @param v The vector we want to swap
+   * Struct containing sum of Cherenkov angle, sum of square of Cherenkov
+   * angle and total number of photons
    */
-  Vector SwapXZForEndCap(const RadiatorCell *radiatorCell, Vector v);
-  // Struct containing sum of Cherenkov angle, sum of square of Cherenkov
-  // angle and total number of photons
   struct ResolutionStruct {
     /**
      * The Cherenkov angle

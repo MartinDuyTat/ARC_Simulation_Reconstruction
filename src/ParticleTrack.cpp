@@ -18,7 +18,7 @@
 ParticleTrack::ParticleTrack(int ParticleID,
 			     const Vector &Momentum,
 			     const Vector &Position):
-  Particle::Particle(Position, Particle::CoordinateSystem::GlobalDetector),
+  Particle::Particle(Position),
   m_Momentum(Momentum),
   m_InitialPosition(Position),
   m_ParticleID(ParticleID),
@@ -34,40 +34,68 @@ void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   if(m_Location != Location::TrackerVolume) {
     throw std::runtime_error("Cannot track particle through inner tracker again");
   }
+  const auto Position = m_Position.GlobalVector();
+  const auto Momentum = m_Momentum.GlobalVector();
   // Check if we're considering the end cap or barrel
   if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
     // Solve quadratic to track particle to edge of tracking barrel
-    const double b = m_Position.X()*m_Momentum.Unit().X()
-      + m_Position.Y()*m_Momentum.Unit().Y();
-    const double c = m_Position.X()*m_Position.X()
-      + m_Position.Y()*m_Position.Y()
-      - InnerTracker.GetRadius()*InnerTracker.GetRadius();
+    const auto MomentumUnit = Momentum.Unit();
+    const double b = Position.X()*MomentumUnit.X()
+                   + Position.Y()*MomentumUnit.Y();
+    const double c = Position.X()*Position.X()
+                   + Position.Y()*Position.Y()
+                   - InnerTracker.GetRadius()*InnerTracker.GetRadius();
     const double s = TMath::Sqrt(b*b - c) - b;
-    const double xyUnit = TMath::Sqrt(TMath::Power(m_Momentum.Unit().X(), 2) +
-				      TMath::Power(m_Momentum.Unit().Y(), 2));
-    m_Position += s*m_Momentum.Unit()/xyUnit;
+    const double xyUnit = TMath::Sqrt(TMath::Power(MomentumUnit.X(), 2) +
+				      TMath::Power(MomentumUnit.Y(), 2));
+    m_Position += s*MomentumUnit/xyUnit;
   } else {
     // z-distance to end cap
     const double BarrelZ = Settings::GetDouble("ARCGeometry/BarrelZ");
-    const double ZDist = BarrelZ - m_Position.Z();
-    const double Slope = TMath::Abs(1.0/m_Momentum.Z());
-    m_Position += m_Momentum*ZDist*Slope;
+    const double ZDist = BarrelZ - Position.Z();
+    const double Slope = TMath::Abs(1.0/Momentum.Z());
+    m_Position += Momentum*ZDist*Slope;
   }
   m_Location = Location::EntranceWindow;
 }
 
 void ParticleTrack::SetRadiator(const RadiatorCell *radiatorCell) {
   m_RadiatorCell = radiatorCell;
+  
 }
 
 void ParticleTrack::ConvertToRadiatorCoordinates() {
   Particle::ConvertToRadiatorCoordinates();
+  // Assign local coordinates
+  const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
+  const auto RadiatorRotation = m_RadiatorCell->GetRadiatorRotation();
+  m_Momentum.AssignLocalCoordinates({}, RadiatorRotation);
+  m_InitialPosition.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_AerogelEntry.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_AerogelExit.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_GasEntry.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_GasExit.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_EntranceWindowPosition.AssignLocalCoordinates(RadiatorPosition,
+						  RadiatorRotation);
   // Check if particle is within acceptance
-  if(!m_RadiatorCell->IsInsideCell(m_Position) || m_Momentum.Z() < 0.0) {
+  if(!m_RadiatorCell->IsInsideCell(m_Position) ||
+     m_Momentum.GlobalVector().Dot(m_Position.GlobalVector()) < 0.0) {
     m_Location = Location::MissedEntranceWindow;
   }
   // Save the entrance window position
   m_EntranceWindowPosition = m_Position;
+}
+
+void ParticleTrack::ConvertBackToGlobalCoordinates() {
+  Particle::ConvertBackToGlobalCoordinates();
+  // Remove the local coordinate system
+  m_Momentum.ConvertToGlobal();
+  m_InitialPosition.ConvertToGlobal();
+  m_AerogelEntry.ConvertToGlobal();
+  m_AerogelExit.ConvertToGlobal();
+  m_GasEntry.ConvertToGlobal();
+  m_GasExit.ConvertToGlobal();
+  m_EntranceWindowPosition.ConvertToGlobal();
 }
 
 void ParticleTrack::TrackThroughAerogel() {
@@ -77,11 +105,12 @@ void ParticleTrack::TrackThroughAerogel() {
   if(m_Location != Location::EntranceWindow) {
     throw std::runtime_error("Particle not at entrance window");
   }
-  const double ZDistToAerogel = -m_Position.Z();
-  const double Slope = 1.0/TMath::Cos(m_Momentum.Theta());
-  m_Position += m_Momentum.Unit()*Slope*ZDistToAerogel;
+  const double ZDistToAerogel = -m_Position.LocalVector().Z();
+  const double Slope = 1.0/TMath::Cos(m_Momentum.LocalVector().Theta());
+  const auto MomentumUnit = m_Momentum.LocalVector().Unit();
+  m_Position += MomentumUnit*Slope*ZDistToAerogel;
   m_AerogelEntry = m_Position;
-  m_Position += m_Momentum.Unit()*Slope*m_RadiatorCell->GetAerogelThickness();
+  m_Position += MomentumUnit*Slope*m_RadiatorCell->GetAerogelThickness();
   m_AerogelExit = m_Position;
   m_GasEntry = m_AerogelExit;
   m_Location = Location::Radiator;
@@ -93,15 +122,17 @@ void ParticleTrack::TrackThroughGasToMirror() {
     throw std::runtime_error("Cannot track through gas if not in radiator");
   }
   m_Position = m_GasEntry;
+  const auto Position = m_GasEntry;
+  const auto LocalPosition = Position.LocalVector();
   // Solve quadratic s^2 - 2sb + c = 0 to find interserction of particle track and mirror
   auto MirrorCentre = m_RadiatorCell->GetMirrorCentre();
   const double MirrorRadius = m_RadiatorCell->GetMirrorCurvature();
-  const auto Direction = m_Momentum.Unit();
-  const double b = (MirrorCentre - m_Position).Dot(Direction);
+  const auto Direction = m_Momentum.LocalVector().Unit();
+  const double b = (MirrorCentre - LocalPosition).Dot(Direction);
   const double c = MirrorCentre.Mag2()
-                 + m_Position.Mag2()
+                 + LocalPosition.Mag2()
                  - MirrorRadius*MirrorRadius
-                 - 2*m_Position.Dot(MirrorCentre);
+                 - 2*LocalPosition.Dot(MirrorCentre);
   const double Discriminant = b*b - c;
   if(Discriminant < 0) {
     m_Location = Location::MissedMirror;
@@ -122,22 +153,14 @@ bool ParticleTrack::TrackToNextCell(const RadiatorArray &radiatorArray) {
   std::size_t Counter = 0;
   while(m_Location != Location::Mirror) {
     ConvertBackToGlobalCoordinates();
+    m_Location = Location::Radiator;
     if(!FindRadiator(radiatorArray) || Counter > 10) {
       return false;
     }
-    ConvertToRadiatorCoordinates();
     TrackThroughGasToMirror();
     Counter++;
   }
   return true;
-}
-
-void ParticleTrack::ChangeCoordinateOrigin(const Vector &Shift) {
-  Particle::ChangeCoordinateOrigin(Shift);
-  m_AerogelEntry -= Shift;
-  m_AerogelExit -= Shift;
-  m_GasEntry -= Shift;
-  m_GasExit -= Shift;
 }
 
 Photon ParticleTrack::GeneratePhotonFromAerogel() const {
@@ -160,7 +183,8 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
   if(m_Location != Location::Radiator) {
     throw std::runtime_error("Cannot generate photons before aerogel or after gas");
   }
-  const double RadiatorDistance = TMath::Sqrt((m_AerogelExit - m_AerogelEntry).Mag2());
+  const auto AerogelVec = m_AerogelExit.LocalVector() - m_AerogelEntry.LocalVector();
+  const double RadiatorDistance = TMath::Sqrt(AerogelVec.Mag2());
   const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Aerogel,
 						    1239.841987427/400.0);
   const std::size_t PhotonYield =static_cast<std::size_t>(
@@ -178,7 +202,8 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   if(m_Location != Location::Mirror) {
     throw std::runtime_error("Cannot generate photons from tracks not at the mirror");
   }
-  const double RadiatorDistance = TMath::Sqrt((m_GasExit - m_GasEntry).Mag2());
+  const auto GasVec = m_GasExit.LocalVector() - m_GasEntry.LocalVector();
+  const double RadiatorDistance = TMath::Sqrt(GasVec.Mag2());
   const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Gas, 1239.8/400.0);
   const std::size_t PhotonYield = static_cast<std::size_t>(
     std::round(GetPhotonYield(RadiatorDistance, Beta(), IndexRefraction)));
@@ -230,15 +255,17 @@ double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator,
   }
 }
 
-Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
-				     const Vector &Exit,
+Photon ParticleTrack::GeneratePhoton(const ARCVector &Entry,
+				     const ARCVector &Exit,
 				     Photon::Radiator Radiator) const {
+  const auto EntryVec = Entry.LocalVector();
+  const auto ExitVec = Exit.LocalVector();
   const double Energy = gRandom->Uniform(1.55, 4.31);
   const double n_phase = GetIndexRefraction(Radiator, Energy);
   const double RandomFraction = m_RandomEmissionPoint
                               ? gRandom->Uniform(0.005, 0.995) : 0.5;
-  const Vector EmissionPoint = Entry + (Exit - Entry)*RandomFraction;
-  const Vector AssumedEmissionPoint = 0.5*(Entry + Exit);
+  const Vector EmissionPoint = EntryVec + (ExitVec - EntryVec)*RandomFraction;
+  const Vector AssumedEmissionPoint = 0.5*(EntryVec + ExitVec);
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
   const double CosTheta = 1.0/(Beta()*n_phase);
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
@@ -247,36 +274,33 @@ Photon ParticleTrack::GeneratePhoton(const Vector &Entry,
                         *TMath::Sqrt(1.0 - CosPhi*CosPhi);
   Vector Direction(SinTheta*CosPhi, SinTheta*SinPhi, CosTheta);
   // Rotate to particle frame
-  const ROOT::Math::RotationY RotateY(m_Momentum.Theta());
+  const ROOT::Math::RotationY RotateY(m_Momentum.LocalVector().Theta());
   Direction = RotateY(Direction);
-  const ROOT::Math::RotationZ RotateZ(m_Momentum.Phi());
+  const ROOT::Math::RotationZ RotateZ(m_Momentum.LocalVector().Phi());
   Direction = RotateZ(Direction);
-  Photon photon(EmissionPoint,
-		AssumedEmissionPoint,
-		Direction,
-		m_Momentum.Unit(),
+  const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
+  const auto RadiatorRotation = m_RadiatorCell->GetRadiatorRotation();
+  Photon photon(ARCVector(EmissionPoint, RadiatorPosition, RadiatorRotation),
+		ARCVector(AssumedEmissionPoint, RadiatorPosition, RadiatorRotation),
+		ARCVector(Direction, {}, RadiatorRotation),
+		m_Momentum.GlobalVector().Unit(),
 		Energy,
 		CosTheta,
 		Radiator,
 		&(*m_RadiatorCell));
-  photon.SetPhiRotated(m_PhiRotated);
   return photon;
 }
 
 double ParticleTrack::Beta() const {
-  const double Momentum = TMath::Sqrt(m_Momentum.Mag2());
+  const double Momentum = TMath::Sqrt(m_Momentum.LocalVector().Mag2());
   return Momentum/TMath::Sqrt(m_Mass*m_Mass + Momentum*Momentum);
-}
-
-const Vector& ParticleTrack::GetMomentum() const {
-  return m_Momentum;
 }
 
 const Vector& ParticleTrack::GetEntryPoint(Photon::Radiator Radiator) const {
   if(Radiator == Photon::Radiator::Gas) {
-    return m_GasEntry;
+    return m_GasEntry.LocalVector();
   } else if(Radiator == Photon::Radiator::Aerogel) {
-    return m_AerogelEntry;
+    return m_AerogelEntry.LocalVector();
   } else {
     throw std::runtime_error("Cannot find entry point of unknown radiator");
   }
@@ -284,9 +308,9 @@ const Vector& ParticleTrack::GetEntryPoint(Photon::Radiator Radiator) const {
 
 const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
   if(Radiator == Photon::Radiator::Gas) {
-    return m_GasExit;
+    return m_GasExit.LocalVector();
   } else if(Radiator == Photon::Radiator::Aerogel) {
-    return m_AerogelExit;
+    return m_AerogelExit.LocalVector();
   } else {
     throw std::runtime_error("Cannot find entry point of unknown radiator");
   }
@@ -306,53 +330,42 @@ double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
 
 void ParticleTrack::MapPhi(double DeltaPhi) {
   Particle::MapPhi(DeltaPhi);
-  const ROOT::Math::RotationZ RotateZ(DeltaPhi);
-  m_InitialPosition = RotateZ(m_InitialPosition);
-  m_Momentum = RotateZ(m_Momentum);
-  m_AerogelEntry = RotateZ(m_AerogelEntry);
-  m_AerogelExit = RotateZ(m_AerogelExit);
-  m_GasEntry = RotateZ(m_GasEntry);
-  m_GasExit = RotateZ(m_GasExit);
+  m_InitialPosition.MapPhi(DeltaPhi);
+  m_Momentum.MapPhi(DeltaPhi);
+  m_AerogelEntry.MapPhi(DeltaPhi);
+  m_AerogelExit.MapPhi(DeltaPhi);
+  m_GasEntry.MapPhi(DeltaPhi);
+  m_GasExit.MapPhi(DeltaPhi);
 }
 
 void ParticleTrack::ReflectZ() {
   Particle::ReflectZ();
-  m_InitialPosition.SetZ(-m_InitialPosition.Z());
-  m_Momentum.SetZ(-m_Momentum.Z());
-  m_AerogelEntry.SetZ(-m_AerogelEntry.Z());
-  m_AerogelExit.SetZ(-m_AerogelExit.Z());
-  m_GasEntry.SetZ(-m_GasEntry.Z());
-  m_GasExit.SetZ(-m_GasExit.Z());
+  m_InitialPosition.ReflectZ();
+  m_Momentum.ReflectZ();
+  m_AerogelEntry.ReflectZ();
+  m_AerogelExit.ReflectZ();
+  m_GasEntry.ReflectZ();
+  m_GasExit.ReflectZ();
 }
 
 void ParticleTrack::ReflectY() {
   Particle::ReflectY();
-  m_InitialPosition.SetY(-m_InitialPosition.Y());
-  m_Momentum.SetY(-m_Momentum.Y());
-  m_AerogelEntry.SetY(-m_AerogelEntry.Y());
-  m_AerogelExit.SetY(-m_AerogelExit.Y());
-  m_GasEntry.SetY(-m_GasEntry.Y());
-  m_GasExit.SetY(-m_GasExit.Y());
-}
-
-void ParticleTrack::SwapXZ() {
-  Particle::SwapXZ();
-  Particle::SwapXZ(m_Momentum);
-  Particle::SwapXZ(m_InitialPosition);
-  Particle::SwapXZ(m_AerogelEntry);
-  Particle::SwapXZ(m_AerogelExit);
-  Particle::SwapXZ(m_GasEntry);
-  Particle::SwapXZ(m_GasExit);
+  m_InitialPosition.ReflectY();
+  m_Momentum.ReflectY();
+  m_AerogelEntry.ReflectY();
+  m_AerogelExit.ReflectY();
+  m_GasEntry.ReflectY();
+  m_GasExit.ReflectY();
 }
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
-  const auto CurrentPosition = m_RadiatorCell->GetRadiatorPosition() + m_Position;
-  const auto CurrentPositionSwapped = Utilities::SwapXZForEndCap(m_RadiatorCell,
-								 CurrentPosition);
-  TLine Track(m_InitialPosition.X(),
-	      m_InitialPosition.Z(),
-	      CurrentPositionSwapped.X(),
-	      CurrentPositionSwapped.Z());
+  const auto ReversePhi = m_RadiatorCell->ReversePhiRotation();
+  const auto InitialPosition = ReversePhi(m_InitialPosition.GlobalVector());
+  const auto Position = ReversePhi(m_Position.GlobalVector());
+  TLine Track(InitialPosition.Z(),
+	      InitialPosition.X(),
+	      Position.Z(),
+	      Position.X());
   Track.SetLineColor(kRed);
   return std::make_unique<TLine>(Track);
 }
@@ -361,8 +374,8 @@ ParticleTrack::Location ParticleTrack::GetParticleLocation() const {
   return m_Location;
 }
 
-const Vector ParticleTrack::GetEntranceWindowPosition() const {
-  return m_EntranceWindowPosition;
+Vector ParticleTrack::GetEntranceWindowPosition() const {
+  return m_EntranceWindowPosition.GlobalVector();
 }
 
 bool ParticleTrack::IsAtRadiator() const {

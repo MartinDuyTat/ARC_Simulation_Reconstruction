@@ -63,6 +63,10 @@ class ParticleTrack: public Particle {
    */
   virtual void ConvertToRadiatorCoordinates() override;
   /**
+   * Convert back to global coordinates
+   */
+  virtual void ConvertBackToGlobalCoordinates() override;
+  /**
    * Track particle through radiator cell
    */
   void TrackThroughAerogel();
@@ -100,15 +104,13 @@ class ParticleTrack: public Particle {
    * @param Exit point of ratiator
    * @param Radiator The medium the photon was emitted in, to determine the index of refraction
    */
-  Photon GeneratePhoton(const Vector &Entry, const Vector &Exit, Photon::Radiator Radiator) const;
+  Photon GeneratePhoton(const ARCVector &Entry,
+			const ARCVector &Exit,
+			Photon::Radiator Radiator) const;
   /**
    * Get the particle speed, in units of c
    */
   double Beta() const;
-  /**
-   * Get momentum vector
-   */
-  const Vector& GetMomentum() const;
   /**
    * Get entry point of particle in radiator
    */
@@ -128,7 +130,7 @@ class ParticleTrack: public Particle {
   /**
    * Get the position of the entrance window
    */
-  const Vector GetEntranceWindowPosition() const;
+  Vector GetEntranceWindowPosition() const;
   /**
    * Rotate around the phi direction to map particle to a valid radiator cell
    * @param DeltaPhi Angle that is rotated in phi
@@ -150,11 +152,31 @@ class ParticleTrack: public Particle {
   /**
    * Particle momentum, in GeV
    */
-  Vector m_Momentum;
+  ARCVector m_Momentum;
   /**
    * Initial particle position in the global coordinate system, in m
    */
-  Vector m_InitialPosition;
+  ARCVector m_InitialPosition;
+  /**
+   * Entry point of aerogel
+   */
+  ARCVector m_AerogelEntry;
+  /**
+   * Exit point of aerogel
+   */
+  ARCVector m_AerogelExit;
+  /**
+   * Entry point of gas
+   */
+  ARCVector m_GasEntry;
+  /**
+   * Exit point of gas
+   */
+  ARCVector m_GasExit;
+  /**
+   * Entrance window position
+   */
+  ARCVector m_EntranceWindowPosition;
   /**
    * Particle ID
    */
@@ -163,26 +185,6 @@ class ParticleTrack: public Particle {
    * Flag that keeps track of where the particle is
    */
   Location m_Location;
-  /**
-   * Entry point of aerogel
-   */
-  Vector m_AerogelEntry;
-  /**
-   * Exit point of aerogel
-   */
-  Vector m_AerogelExit;
-  /**
-   * Entry point of gas
-   */
-  Vector m_GasEntry;
-  /**
-   * Exit point of gas
-   */
-  Vector m_GasExit;
-  /**
-   * Entrance window position
-   */
-  Vector m_EntranceWindowPosition;
   /**
    * Flag that is true if emission point of photon is random
    */
@@ -199,14 +201,6 @@ class ParticleTrack: public Particle {
    * Frank-Tamm relation for photon yield
    */
   double GetPhotonYield(double x, double Beta, double n) const;
-  /**
-   * Helper function to swap x and z directions of all vectors (where relevant)
-   */
-  virtual void SwapXZ() override;
-  /**
-   * Helper function to change coordinate origin
-   */
-  virtual void ChangeCoordinateOrigin(const Vector &Shift) override;
   /**
    * The multiplication factor in the photon yield calculation
    */

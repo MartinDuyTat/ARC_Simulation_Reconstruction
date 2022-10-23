@@ -45,28 +45,28 @@ const RadiatorCell* EndCapRadiatorArray::FindRadiator(Particle &particle) const 
     throw std::runtime_error("Cannot find radiator since track is not at entrance window");
   }
   // If track hits the other end cap, reflect
-  if(particle.GetPosition().Z() < 0.0) {
+  if(particle.GetPosition().GlobalVector().Z() < 0.0) {
     particle.ReflectZ();
   }
   // If track hits the lower half, rotate by 180 degrees
-  if(particle.GetPosition().Phi() < 0.0) {
+  if(particle.GetPosition().GlobalVector().Phi() < 0.0) {
     particle.MapPhi(TMath::Pi());
   }
   // Rotate by 60 degrees until the track is in the interval [0, 60] degrees
-  while(particle.GetPosition().Phi() > TMath::Pi()/3.0) {
+  while(particle.GetPosition().GlobalVector().Phi() > TMath::Pi()/3.0) {
     particle.MapPhi(-TMath::Pi()/3.0);
   }
   bool IsReflected = false;
   // Reflect if particle is on the other side of the symmetry line
-  if(particle.GetPosition().Phi() > TMath::Pi()/6.0) {
+  if(particle.GetPosition().GlobalVector().Phi() > TMath::Pi()/6.0) {
     particle.MapPhi(-TMath::Pi()/6.0);
     particle.ReflectY();
     particle.MapPhi(TMath::Pi()/6.0);
     IsReflected = true;
   }
   // Loop from the bottom row until we find the correct row
-  const double x = particle.GetPosition().X();
-  const double y = particle.GetPosition().Y();
+  const double x = particle.GetPosition().GlobalVector().X();
+  const double y = particle.GetPosition().GlobalVector().Y();
   std::size_t CellRowNumber = 1;
   while(true) {
     if(IsBelowThisRow(CellRowNumber + 1, x, y)) {

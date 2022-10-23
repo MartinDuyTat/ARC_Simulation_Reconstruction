@@ -12,16 +12,17 @@
 #include"RadiatorCell.h"
 #include"BarrelRadiatorCell.h"
 #include"Utilities.h"
+#include"ARCVector.h"
 
-Photon::Photon(const Vector &Position,
-	       const Vector &AssumedPosition,
-	       const Vector &Direction,
+Photon::Photon(const ARCVector &Position,
+	       const ARCVector &AssumedPosition,
+	       const ARCVector &Direction,
 	       const Vector &ParticleDirection,
 	       double Energy,
 	       double CosCherenkovAngle,
 	       Radiator radiator,
 	       const RadiatorCell *radiatorCell):
-  Particle(Position, Particle::CoordinateSystem::LocalRadiator, radiatorCell),
+  Particle(Position.GlobalVector(), radiatorCell),
   m_AssumedEmissionPoint(AssumedPosition),
   m_EmissionPoint(Position),
   m_Direction(Direction),
@@ -33,6 +34,10 @@ Photon::Photon(const Vector &Position,
   m_AerogelTravelDistance(0.0),
   m_MirrorHitPosition(nullptr),
   m_HasMigrated(false) {
+  const auto RadiatorPosition = radiatorCell->GetRadiatorPosition();
+  const auto RadiatorRotation = radiatorCell->GetRadiatorRotation();
+  m_Position.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_ParticleDirection.AssignLocalCoordinates({}, RadiatorRotation);
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
@@ -41,17 +46,14 @@ Photon::DrawPhotonPath() const {
   if(!m_RadiatorCell) {
     return PhotonLine;
   }
-  const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
-  const auto EmissionPoint = Utilities::SwapXZForEndCap(m_RadiatorCell,
-							m_EmissionPoint
-							+ RadiatorPosition);
-  const auto Position = Utilities::SwapXZForEndCap(m_RadiatorCell,
-						   m_Position + RadiatorPosition);
+  const auto ReversePhi = m_RadiatorCell->ReversePhiRotation();
+  const auto EmissionPoint = ReversePhi(m_EmissionPoint.GlobalVector());
+  const auto Position = ReversePhi(m_Position.GlobalVector());
   if(!m_MirrorHitPosition) {
-    TLine PhotonLine1(EmissionPoint.X(),
-		      EmissionPoint.Z(),
-		      Position.X(),
-		      Position.Z());
+    TLine PhotonLine1(EmissionPoint.Z(),
+		      EmissionPoint.X(),
+		      Position.Z(),
+		      Position.X());
     if(m_Status == Status::MirrorMiss) {
       PhotonLine1.SetLineColor(7);
     } else {
@@ -59,17 +61,15 @@ Photon::DrawPhotonPath() const {
     }
     PhotonLine.push_back(std::make_pair(std::make_unique<TLine>(PhotonLine1), ""));
   } else {
-    const auto MirrorHitPosition = Utilities::SwapXZForEndCap(m_RadiatorCell,
-							      *m_MirrorHitPosition 
-							      + RadiatorPosition);
-    TLine PhotonLine1(EmissionPoint.X(),
-		      EmissionPoint.Z(),
-		      MirrorHitPosition.X(),
-		      MirrorHitPosition.Z());
-    TLine PhotonLine2(MirrorHitPosition.X(),
+    const auto MirrorHitPosition = ReversePhi(m_MirrorHitPosition->GlobalVector());
+    TLine PhotonLine1(EmissionPoint.Z(),
+		      EmissionPoint.X(),
 		      MirrorHitPosition.Z(),
-		      Position.X(),
-		      Position.Z());
+		      MirrorHitPosition.X());
+    TLine PhotonLine2(MirrorHitPosition.Z(),
+		      MirrorHitPosition.X(),
+		      Position.Z(),
+		      Position.X());
     if(m_Status != Status::DetectorHit) {
       PhotonLine1.SetLineColor(6);
       PhotonLine2.SetLineColor(6);
@@ -88,7 +88,7 @@ void Photon::PropagatePhoton(const Vector &Displacement) {
 }
 
 const Vector& Photon::GetDirection() const {
-  return m_Direction;
+  return m_Direction.LocalVector();
 }
 
 void Photon::KickPhoton(const Vector &Kick) {
@@ -101,9 +101,9 @@ Photon::Status Photon::GetStatus() const {
 
 const Vector& Photon::GetEmissionPoint(bool TrueEmissionPoint) const {
   if(TrueEmissionPoint) {
-    return m_EmissionPoint;
+    return m_EmissionPoint.LocalVector();
   } else {
-    return m_AssumedEmissionPoint;
+    return m_AssumedEmissionPoint.LocalVector();
   }
 }
 
@@ -129,7 +129,7 @@ double Photon::GetAerogelTravelDistance() const {
   return m_AerogelTravelDistance;
 }
 
-const Vector* Photon::GetMirrorHitPosition() const {
+const ARCVector* Photon::GetMirrorHitPosition() const {
   return m_MirrorHitPosition.get();
 }
 
@@ -137,7 +137,7 @@ void Photon::RegisterMirrorHitPosition(const Vector &MirrorHitPosition) {
   if(m_MirrorHitPosition) {
     throw std::runtime_error("Mirror hit position already exists");
   } else {
-    m_MirrorHitPosition = std::make_unique<Vector>(MirrorHitPosition);
+    m_MirrorHitPosition = std::make_unique<ARCVector>(MirrorHitPosition);
   }
 }
 
@@ -151,6 +151,12 @@ double Photon::GetCosCherenkovAngle() const {
 
 void Photon::ConvertToRadiatorCoordinates() {
   Particle::ConvertToRadiatorCoordinates();
+  const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
+  const auto RadiatorRotation = m_RadiatorCell->GetRadiatorRotation();
+  m_AssumedEmissionPoint.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_EmissionPoint.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_Direction.AssignLocalCoordinates({}, RadiatorRotation);
+  m_ParticleDirection.AssignLocalCoordinates({}, RadiatorRotation);
   // Check if particle is within acceptance
   if(!m_RadiatorCell->IsInsideCell(m_Position)) {
     m_Status = Status::OutsideCell;
@@ -159,52 +165,41 @@ void Photon::ConvertToRadiatorCoordinates() {
 
 void Photon::ConvertBackToGlobalCoordinates() {
   Particle::ConvertBackToGlobalCoordinates();
+  m_AssumedEmissionPoint.ConvertToGlobal();
+  m_EmissionPoint.ConvertToGlobal();
+  m_Direction.ConvertToGlobal();
+  m_ParticleDirection.ConvertToGlobal();
   // Photon doesn't hit any mirror
   m_MirrorHitPosition = nullptr;
 }
 
 void Photon::MapPhi(double DeltaPhi) {
   Particle::MapPhi(DeltaPhi);
-  const ROOT::Math::RotationZ RotateZ(DeltaPhi);
-  m_AssumedEmissionPoint = RotateZ(m_AssumedEmissionPoint);
-  m_EmissionPoint = RotateZ(m_EmissionPoint);
-  m_Direction = RotateZ(m_Direction);
-  m_ParticleDirection = RotateZ(m_ParticleDirection);
+  m_AssumedEmissionPoint.MapPhi(DeltaPhi);
+  m_EmissionPoint.MapPhi(DeltaPhi);
+  m_Direction.MapPhi(DeltaPhi);
+  m_ParticleDirection.MapPhi(DeltaPhi);
 }
 
 void Photon::ReflectZ() {
   Particle::ReflectZ();
-  m_AssumedEmissionPoint.SetZ(-m_AssumedEmissionPoint.Z());
-  m_EmissionPoint.SetZ(-m_EmissionPoint.Z());
-  m_Direction.SetZ(m_Direction.Z());
-  m_ParticleDirection.SetZ(m_ParticleDirection.Z());
+  m_AssumedEmissionPoint.ReflectZ();
+  m_EmissionPoint.ReflectZ();
+  m_Direction.ReflectZ();
+  m_ParticleDirection.ReflectZ();
 }
 
 
 void Photon::ReflectY() {
   Particle::ReflectY();
-  m_AssumedEmissionPoint.SetY(-m_AssumedEmissionPoint.Y());
-  m_EmissionPoint.SetY(-m_EmissionPoint.Y());
-  m_Direction.SetY(m_Direction.Y());
-  m_ParticleDirection.SetY(m_ParticleDirection.Y());
-}
-
-void Photon::SwapXZ() {
-  Particle::SwapXZ();
-  Particle::SwapXZ(m_AssumedEmissionPoint);
-  Particle::SwapXZ(m_EmissionPoint);
-  Particle::SwapXZ(m_Direction);
-  Particle::SwapXZ(m_ParticleDirection);
+  m_AssumedEmissionPoint.ReflectY();
+  m_EmissionPoint.ReflectY();
+  m_Direction.ReflectY();;
+  m_ParticleDirection.ReflectY();
 }
 
 bool Photon::IsAtRadiator() const {
   return m_Status == Status::Emitted;
-}
-
-void Photon::ChangeCoordinateOrigin(const Vector &Shift) {
-  Particle::ChangeCoordinateOrigin(Shift);
-  m_AssumedEmissionPoint -= Shift;
-  m_EmissionPoint -= Shift;
 }
 
 void Photon::PutPhotonToEmissionPoint() {
@@ -220,5 +215,5 @@ bool Photon::HasPhotonMigrated() const {
 }
 
 const Vector& Photon::GetParticleDirection() const {
-  return m_ParticleDirection;
+  return m_ParticleDirection.LocalVector();
 }

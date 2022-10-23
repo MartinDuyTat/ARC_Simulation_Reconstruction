@@ -21,7 +21,7 @@ class HalfRadiatorCell: public BarrelRadiatorCell {
   /**
    * Function that checks if the position is inside the radiator
    */
-  virtual bool IsInsideCell(const Vector &Position) const override;
+  virtual bool IsInsideCell(const ARCVector &Position) const override;
   /**
    * Draw radiator geometry
    */

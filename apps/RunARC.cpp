@@ -31,6 +31,7 @@
 #include"BarrelRadiatorArray.h"
 #include"EndCapRadiatorArray.h"
 #include"Utilities.h"
+#include"ARCVector.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -183,23 +184,25 @@ int main(int argc, char *argv[]) {
 	}
       };
       const Vector Momentum = GetMomentum();
+      if(BarrelOrEndcap == "EndCap") {
+	CosTheta = TMath::Cos(Momentum.Theta());
+      }
       const Vector Position(0.0, 0.0, 0.0);
       const int ParticleID = Settings::GetInt("Particle/ID");;
       ParticleTrack particleTrack(ParticleID, Momentum, Position);
       particleTrack.TrackThroughTracker(InnerTracker);
-      auto OuterTrackerPosition = particleTrack.GetPosition();
+      auto OuterTrackerPosition = particleTrack.GetPosition().GlobalVector();
       OuterTracker_x = OuterTrackerPosition.X();
       OuterTracker_y = OuterTrackerPosition.Y();
       OuterTracker_z = OuterTrackerPosition.Z();
       if(!particleTrack.FindRadiator(*radiatorArray)) {
 	continue;
       }
-      auto BeforeRadiatorPosition = particleTrack.GetPosition();
+      auto BeforeRadiatorPosition = particleTrack.GetPosition().GlobalVector();
       BeforeRadiator_x = BeforeRadiatorPosition.X();
       BeforeRadiator_y = BeforeRadiatorPosition.Y();
       BeforeRadiator_z = BeforeRadiatorPosition.Z();
-      Phi = particleTrack.GetPosition().Phi();
-      particleTrack.ConvertToRadiatorCoordinates();
+      Phi = particleTrack.GetPosition().GlobalVector().Phi();
       RadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
       RadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
       auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
@@ -217,15 +220,15 @@ int main(int argc, char *argv[]) {
 	Photons = particleTrack.GeneratePhotonsFromAerogel();
       }
       particleTrack.TrackThroughGasToMirror();
-      ParticleLocation = particleTrack.GetParticleLocation();
       if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
 	const bool HitMirror = particleTrack.TrackToNextCell(*radiatorArray);
 	if(!HitMirror) {
 	  continue;
 	}
       }
-      Phi = particleTrack.GetPosition().Phi();
-      auto MirrorHitPosition = particleTrack.GetPosition();
+      ParticleLocation = particleTrack.GetParticleLocation();
+      Phi = particleTrack.GetPosition().GlobalVector().Phi();
+      auto MirrorHitPosition = particleTrack.GetPosition().GlobalVector();
       MirrorHit_x = MirrorHitPosition.X();
       MirrorHit_y = MirrorHitPosition.Y();
       MirrorHit_z = MirrorHitPosition.Z();

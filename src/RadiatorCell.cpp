@@ -5,6 +5,8 @@
 #include<string>
 #include<memory>
 #include<stdexcept>
+#include"Math/Vector3Dfwd.h"
+#include"Math/Rotation3D.h"
 #include"RadiatorCell.h"
 #include"Settings.h"
 #include"Photon.h"
@@ -12,7 +14,11 @@
 RadiatorCell::RadiatorCell(std::size_t CellColumnNumber,
 			   std::size_t CellRowNumber,
 			   double HexagonSize,
+			   const Vector &Position,
+			   const Rotation3D &Rotation,
 			   const std::string &Prefix):
+  m_Position(Position),
+  m_Rotation(Rotation),
   m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
   m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
   m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
@@ -22,7 +28,7 @@ RadiatorCell::RadiatorCell(std::size_t CellColumnNumber,
   m_Detector(),
   m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
   m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
-  m_MirrorCentre(m_DefaultMirrorCentre) {
+  m_MirrorCentre(m_DefaultMirrorCentre, m_Position, m_Rotation) {
   const std::string RadiatorName = Prefix + "Radiator_c"
                                  + std::to_string(m_CellNumber.first)
                                  + "_r"
@@ -67,7 +73,7 @@ double RadiatorCell::GetAerogelThickness() const {
 }
 
 const Vector& RadiatorCell::GetMirrorCentre() const {
-  return m_MirrorCentre;
+  return m_MirrorCentre.LocalVector();
 }
 
 double RadiatorCell::GetMirrorCurvatureCentreZ() const {
@@ -83,6 +89,14 @@ double RadiatorCell::GetMirrorCurvature() const {
 
 bool RadiatorCell::IsInsideCell(const Photon &photon) const {
   return IsInsideCell(photon.GetPosition());
+}
+
+const Vector& RadiatorCell::GetRadiatorPosition() const {
+  return m_Position;
+}
+
+const Rotation3D& RadiatorCell::GetRadiatorRotation() const {
+  return m_Rotation;
 }
 
 double RadiatorCell::GetHexagonSize() const {
@@ -133,4 +147,8 @@ bool RadiatorCell::IsDetectorInsideCell() const {
 bool RadiatorCell::IsEdgeCell() const {
   return (m_CellNumber == std::make_pair(std::size_t{8}, std::size_t{1}) ||
          m_CellNumber == std::make_pair(std::size_t{9}, std::size_t{2}));
+}
+
+RotationZ RadiatorCell::ReversePhiRotation() const {
+  return RotationZ(0.0);
 }

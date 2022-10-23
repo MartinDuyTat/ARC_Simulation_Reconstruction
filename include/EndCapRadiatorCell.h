@@ -7,14 +7,22 @@
 #ifndef ENDCAPRADIATORCELL
 #define ENDCAPRADIATORCELL
 
+#include<vector>
+#include<utility>
+#include<memory>
+#include<array>
+#include"TObject.h"
 #include"RadiatorCell.h"
+#include"ARCVector.h"
 
 class EndCapRadiatorCell: public RadiatorCell {
  public:
   /**
    * Default constructor that calls parent constructor
    */
-  EndCapRadiatorCell(std::size_t CellColumnNumber, std::size_t CellRowNumber, double HexagonSize);
+  EndCapRadiatorCell(std::size_t CellColumnNumber,
+		     std::size_t CellRowNumber,
+		     double HexagonSize);
   /**
    * Delete copy constructor
    */
@@ -22,11 +30,7 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * Function that checks if the position is inside the radiator
    */
-  virtual bool IsInsideCell(const Vector &Position) const override;
-  /**
-   * Get the radiator cell position in the global coordinates
-   */
-  virtual const Vector& GetRadiatorPosition() const override;
+  virtual bool IsInsideCell(const ARCVector &Position) const override;
   /**
    * Draw radiator geometry
    */
@@ -35,7 +39,8 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * All the cell numbers that are valid for the end cap
    */
-  static constexpr std::array<std::pair<std::size_t, std::size_t>, 21> m_ValidCells{{
+  static constexpr std::array<std::pair<std::size_t, std::size_t>, 21>
+  m_ValidCells{{
     {2, 1}, {3, 1}, {4, 1}, {5, 1}, {6, 1}, {7, 1},
     {2, 2}, {3, 2}, {4, 2}, {5, 2}, {6, 2}, {7, 2},
     {3, 3}, {4, 3}, {5, 3}, {6, 3}, {7, 3},
@@ -45,27 +50,22 @@ class EndCapRadiatorCell: public RadiatorCell {
   /**
    * All the cell numbers that are invalid, but next to valid cells for the end cap
    */
-  static constexpr std::array<std::pair<std::size_t, std::size_t>, 21> m_NotValidCells{{
+  static constexpr std::array<std::pair<std::size_t, std::size_t>, 21>
+  m_NotValidCells{{
     {8, 1}, {8, 2}, {8, 3}, {8, 4}, {7, 5},
     {0, 1}, {1, 1}, {1, 2}
   }};
-  /**
-   * Set the mirror x position, relative to the default position
-   */
-  virtual void SetMirrorXPosition(double x) override;
  private:
-  /**
-   * The distance between hexagons in the y-direction
-   */
-  const double m_HexagonDistY;
-  /**
-   * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
-   */
-  const Vector m_Position;
   /**
    * Helper function to get cell position based on cell number
    */
-  Vector GetCellPosition(std::size_t CellColumnNumber, std::size_t CellRowNumber) const;
+  static Vector GetCellPosition(std::size_t CellColumnNumber,
+				std::size_t CellRowNumber,
+				double HexagonSize);
+  /**
+   * Helper function to determine the rotation from global to local coordinates
+   */
+  static Rotation3D GetCellOrientation();
 };
 
 #endif

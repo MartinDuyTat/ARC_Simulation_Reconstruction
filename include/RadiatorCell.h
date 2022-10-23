@@ -1,7 +1,8 @@
 // Martin Duy Tat 29th April 2022
 /**
  * RadiatorCell describes the geometry of a single radiator cell of the ARC
- * The radiator cell has a local coordinate system with its origin in the middle of the detector plane
+ * The radiator cell has a local coordinate system with its origin in the
+ * middle of the detector plane
  * All lengths are in meter
  */
 
@@ -14,10 +15,15 @@
 #include<memory>
 #include"TMath.h"
 #include"Math/Vector3Dfwd.h"
+#include"Math/Rotation3D.h"
+#include"Math/RotationZ.h"
 #include"SiPM.h"
 #include"Photon.h"
+#include"ARCVector.h"
 
 using Vector = ROOT::Math::XYZVector;
+using Rotation3D = ROOT::Math::Rotation3D;
+using RotationZ = ROOT::Math::RotationZ;
 
 class RadiatorCell {
  public:
@@ -25,12 +31,16 @@ class RadiatorCell {
    * Constructor that sets up the geometry with a default cell position
    * @param CellColumnNumber The column number of this cell
    * @param CellRowNumber The row number of this cell
-   * @param HexagonSize The length between two opposide edges (not points) of the hexagons
+   * @param HexagonSize The length between two opposide hexagon edges (not points)
+   * @param Position The position of the radiator cell
+   * @param Rotation The rotation from global to local radiator coordinates
    * @param Prefix Prefix in the names of cells in options file
    */
   RadiatorCell(std::size_t CellColumnNumber,
 	       std::size_t CellRowNumber,
 	       double HexagonSize,
+	       const Vector &Position,
+	       const Rotation3D &Rotation,
 	       const std::string &Prefix = "");
   /**
    * Delete copy constructor
@@ -67,11 +77,15 @@ class RadiatorCell {
   /**
    * Get the radiator cell position in the global coordinates
    */
-  virtual const Vector& GetRadiatorPosition() const = 0;
+  const Vector& GetRadiatorPosition() const;
+  /**
+   * Get the radiator cell rotation from global to local coordinates
+   */
+  const Rotation3D& GetRadiatorRotation() const;
   /**
    * Function that checks if the position is inside the radiator
    */
-  virtual bool IsInsideCell(const Vector &Position) const = 0;
+  virtual bool IsInsideCell(const ARCVector &Position) const = 0;
   /**
    * Function that checks if the photon is inside the radiator
    */
@@ -101,7 +115,7 @@ class RadiatorCell {
   /**
    * Set the mirror x position, relative to the default position
    */
-  virtual void SetMirrorXPosition(double x);
+  void SetMirrorXPosition(double x);
   /**
    * Set the mirror z position, relative to the default position
    */
@@ -122,7 +136,19 @@ class RadiatorCell {
    * Checks if the cell is at the edge (near the end cap)
    */
   bool IsEdgeCell() const;
+  /**
+   * Get the reverse rotation in phi, for plotting purposes
+   */
+  virtual RotationZ ReversePhiRotation() const;
  protected:
+  /**
+   * The radiator cell position
+   */
+  const Vector m_Position;
+  /**
+   * The rotation from global coordinates to the local radiator coordinates
+   */
+  const Rotation3D m_Rotation;
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
    */
@@ -150,7 +176,8 @@ class RadiatorCell {
   /**
    * Radiator cell row number (first) and column number (second)
    * For a single central cell, it is assigned number (0, 0)
-   * For an array of radiator cells, numbering starts from (0, 1) from the middle of the main row
+   * For an array of radiator cells, numbering starts from (0, 1)
+   * from the middle of the main row
    */
   const std::pair<std::size_t, std::size_t> m_CellNumber;
   /**
@@ -168,7 +195,7 @@ class RadiatorCell {
   /**
    * Centre of curvature of the mirror
    */
-  Vector m_MirrorCentre;
+  ARCVector m_MirrorCentre;
 };
 
 #endif

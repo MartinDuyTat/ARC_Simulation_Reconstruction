@@ -64,24 +64,12 @@ namespace Utilities {
     return Momentum;
   }
 
-  Vector SwapXZForEndCap(const RadiatorCell *radiatorCell, Vector v) {
-    const auto radiatorCellCast =
-      dynamic_cast<const BarrelRadiatorCell*>(radiatorCell);
-    if(!radiatorCellCast) {
-      const double Temp = v.X();
-      v.SetX(v.Z());
-      v.SetZ(Temp);
-    }
-    return v;
-  }
-
   ResolutionStruct TrackPhotons(ParticleTrack particleTrack,
 				const RadiatorCell &radiatorCell,
 				const RadiatorArray &radiatorArray) {
     if(!particleTrack.FindRadiator(radiatorArray)) {
       return ResolutionStruct{};
     }
-    particleTrack.ConvertToRadiatorCoordinates();
     particleTrack.TrackThroughAerogel();
     particleTrack.TrackThroughGasToMirror();
     if(particleTrack.GetParticleLocation() == ParticleTrack::Location::MissedMirror) {
@@ -92,13 +80,12 @@ namespace Utilities {
       bool IsEdgeCell = particleTrack.GetRadiatorCell()->IsEdgeCell();
       particleTrack.ConvertBackToGlobalCoordinates();
       if(!particleTrack.FindRadiator(radiatorArray) || Counter > 10) {
-	if(IsEdgeCell) {
+	if(IsEdgeCell && radiatorCell.IsEdgeCell()) {
 	  return ResolutionStruct{0.0, 0, true, true};
 	} else {
 	  return ResolutionStruct{};
 	}
       }
-      particleTrack.ConvertToRadiatorCoordinates();
       particleTrack.TrackThroughGasToMirror();
       if(particleTrack.GetParticleLocation() == ParticleTrack::Location::MissedMirror) {
 	return ResolutionStruct{0.0, 0, true, true};

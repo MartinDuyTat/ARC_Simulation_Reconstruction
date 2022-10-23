@@ -15,7 +15,8 @@ namespace PhotonMapper {
   double PhotonMirrorDistance(const Photon &photon) {
     auto MirrorCentre = photon.GetRadiatorCell()->GetMirrorCentre();
     const double R = photon.GetRadiatorCell()->GetMirrorCurvature();
-    const Vector MirrorCentreMinusPosition = MirrorCentre - photon.GetPosition();
+    const Vector MirrorCentreMinusPosition = MirrorCentre
+                                           - photon.GetPosition().LocalVector();
     const double b = -photon.GetDirection().Dot(MirrorCentreMinusPosition);
     const double c = (MirrorCentreMinusPosition).Mag2() - R*R;
     if(b*b - c < 0.0) {
@@ -35,27 +36,28 @@ namespace PhotonMapper {
                            - photon.GetRadiatorCell()->GetCoolingThickness();
     auto MirrorCentre = photon.GetRadiatorCell()->GetMirrorCentre();
     const auto Curvature = photon.GetRadiatorCell()->GetMirrorCurvature();
-    if(photon.GetPosition().Z() > MaxHeight) {
+    if(photon.GetPosition().LocalVector().Z() > MaxHeight) {
       photon.UpdatePhotonStatus(Photon::Status::WallMiss);
     } else if(s < 0.0) {
       photon.UpdatePhotonStatus(Photon::Status::Backwards);
-    } else if((photon.GetPosition() - MirrorCentre).Mag2() - Curvature*Curvature > 1e-6) {
+    } else if((photon.GetPosition().LocalVector() - MirrorCentre).Mag2()
+               - Curvature*Curvature > 1e-6) {
       photon.UpdatePhotonStatus(Photon::Status::OutsideMirrorRadius);
     } else if(photon.GetRadiatorCell()->IsInsideCell(photon)) {
       photon.UpdatePhotonStatus(Photon::Status::MirrorHit);
-      photon.RegisterMirrorHitPosition(photon.GetPosition());
+      photon.RegisterMirrorHitPosition(photon.GetPosition().GlobalVector());
     } else {
       photon.UpdatePhotonStatus(Photon::Status::MirrorMiss);
     }
   }
 
   PhotonHit TracePhotonToDetector(Photon &photon) {
-    const Vector Mirror = photon.GetPosition();
+    const Vector Mirror = photon.GetPosition().LocalVector();
     auto MirrorCentre = photon.GetRadiatorCell()->GetMirrorCentre();
     const auto Curvature = photon.GetRadiatorCell()->GetMirrorCurvature();
     const Vector Normal = (Mirror - MirrorCentre)/Curvature;
     photon.KickPhoton(-2*photon.GetDirection().Dot(Normal)*Normal);
-    const auto Position = photon.GetPosition();
+    const auto Position = photon.GetPosition().LocalVector();
     const auto Direction = photon.GetDirection();
     auto Detector = photon.GetRadiatorCell()->GetDetector();
     const double Theta = Detector.GetDetectorTilt();
@@ -69,7 +71,7 @@ namespace PhotonMapper {
     photon.PropagatePhoton(s*Direction);
     // Check if hit position is inside aerogel
     const double AerogelThickness = photon.GetRadiatorCell()->GetAerogelThickness();    
-    if(photon.GetPosition().Z() < AerogelThickness) {
+    if(photon.GetPosition().LocalVector().Z() < AerogelThickness) {
       const double Slope = TMath::Abs(Direction.Z());
       photon.AddAerogelTravelDistance(AerogelThickness/Slope);
     }
@@ -89,7 +91,6 @@ namespace PhotonMapper {
       photon.UpdatePhotonStatus(Photon::Status::Emitted);
       photon.ConvertBackToGlobalCoordinates();
       if(photon.FindRadiator(radiatorArray)) {
-	photon.ConvertToRadiatorCoordinates();
 	photon.PutPhotonToEmissionPoint();
 	TracePhotonToMirror(photon);
 	photon.PhotonHasMigrated();

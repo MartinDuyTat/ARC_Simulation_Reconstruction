@@ -10,6 +10,7 @@
 #include"Settings.h"
 #include"Particle.h"
 #include"BarrelRadiatorCell.h"
+#include"ARCVector.h"
 
 BarrelRadiatorArray::BarrelRadiatorArray():
   RadiatorArray::RadiatorArray(),
@@ -53,11 +54,11 @@ const RadiatorCell* BarrelRadiatorArray::FindRadiator(Particle &particle) const 
     throw std::runtime_error("Cannot find radiator since track is not at radiator");
   }
   if(m_FullArray) {
-    auto Position = particle.GetPosition();
+    auto Position = particle.GetPosition().GlobalVector();
     if(TMath::Abs(Position.Phi()) > TMath::Pi()/2.0) {
       particle.MapPhi(TMath::Pi());
     }
-    Position = particle.GetPosition();
+    Position = particle.GetPosition().GlobalVector();
     double x = Position.Z();
     const double Radius = TMath::Sqrt(Position.X()*Position.X() +
 				      Position.Y()*Position.Y());
@@ -66,35 +67,33 @@ const RadiatorCell* BarrelRadiatorArray::FindRadiator(Particle &particle) const 
       return nullptr;
     }
     // Account for curvature when calculating y coordinate (azimuthal)
-    double ProjectedY = Position.Y()*m_BarrelRadius/Radius;
-    double y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
+    double ProjectedYAngle = TMath::ASin(Position.Y()/Radius);
+    double y = m_BarrelRadius*ProjectedYAngle;
     // First check if track is on the correct side and not hitting endcap
     bool IsReflected = false;
     if(x < 0.0) {
       particle.ReflectZ();
       IsReflected = true;
-      x = particle.GetPosition().Z();
+      x = particle.GetPosition().GlobalVector().Z();
     }
     // Make sure track is not below the main row
     while(IsBelowMainRow(x, y)) {
       particle.MapPhi(+m_DeltaPhi);
-      Position = particle.GetPosition();
-      ProjectedY = Position.Y()*m_BarrelRadius/Radius;
-      y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
+      Position = particle.GetPosition().GlobalVector();
+      ProjectedYAngle = TMath::ASin(Position.Y()/Radius);
+      y = m_BarrelRadius*ProjectedYAngle;
     }
     // Make sure track is not above the upper row
     while(IsAboveUpperRow(x, y, m_BarrelRadius)) {
       particle.MapPhi(-m_DeltaPhi);
-      Position = particle.GetPosition();
-      ProjectedY = Position.Y()*m_BarrelRadius/Radius;
-      y = m_BarrelRadius*TMath::ASin(ProjectedY/m_BarrelRadius);
+      Position = particle.GetPosition().GlobalVector();
+      ProjectedYAngle = TMath::ASin(Position.Y()/Radius);
+      y = m_BarrelRadius*ProjectedYAngle;
     }
     if(IsAboveMainRow(x, y)) {
       // Particle hits the upper row
       const std::size_t xIndex = static_cast<std::size_t>(x/m_xHexDist) + 1;
       const std::size_t yIndex = 2;
-      particle.MapPhi(-m_DeltaPhi/2.0);
-      particle.SetPhiRotated(-m_DeltaPhi/2.0);
       return (*this)(xIndex, yIndex);
     } else {
       // Particle hits the main row

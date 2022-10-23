@@ -14,6 +14,7 @@
 #include"Math/Vector3Dfwd.h"
 #include"Math/DisplacementVector3D.h"
 #include"Particle.h"
+#include"ARCVector.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -61,9 +62,9 @@ class Photon: public Particle {
    * @param radiator Aerogel or gas radiator where this photon was emitted
    * @param radiatorCell The radiator cell where this photon was emitted
    */
-  Photon(const Vector &Position,
-	 const Vector &AssumedPosition,
-	 const Vector &Direction,
+  Photon(const ARCVector &Position,
+	 const ARCVector &AssumedPosition,
+	 const ARCVector &Direction,
 	 const Vector &ParticleDirection,
 	 double Energy,
 	 double CosCherenkovAngle,
@@ -126,7 +127,7 @@ class Photon: public Particle {
   /**
    * Get mirror hit position, or nullptr if the photon didn't hit the mirror
    */
-  const Vector* GetMirrorHitPosition() const;
+  const ARCVector* GetMirrorHitPosition() const;
   /**
    * Register mirror hit position
    */
@@ -180,32 +181,23 @@ class Photon: public Particle {
    * Get the direction of the particle that emitted this photon
    */
   const Vector& GetParticleDirection() const;
- protected:
-  /**
-   * Helper function to swap x and z directions of all vectors (where relevant)
-   */
-  virtual void SwapXZ() override;
-  /**
-   * Helper function to change coordinate origin
-   */
-  virtual void ChangeCoordinateOrigin(const Vector &Shift) override;
  private:
   /**
    * The midpoint of the track inside the radiator, where we assume the photon is emitted
    */
-  Vector m_AssumedEmissionPoint;
+  ARCVector m_AssumedEmissionPoint;
   /**
    * Emission point
    */
-  Vector m_EmissionPoint;
+  ARCVector m_EmissionPoint;
   /**
    * Photon direction vector
    */
-  Vector m_Direction;
+  ARCVector m_Direction;
   /**
    * Direction of the particle that emitted this photon
    */
-  Vector m_ParticleDirection;
+  ARCVector m_ParticleDirection;
   /**
    * Photon energy
    */
@@ -229,7 +221,7 @@ class Photon: public Particle {
   /**
    * Hit position of the mirror, or nullptr if the photon missed the mirror
    */
-  std::unique_ptr<Vector> m_MirrorHitPosition;
+  std::unique_ptr<ARCVector> m_MirrorHitPosition;
   /**
    * Flag that is true if photon migrates to a neighbouring cell
    */

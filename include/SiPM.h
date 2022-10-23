@@ -123,7 +123,7 @@ class SiPM {
   /**
    * Flag that is true for end cap radiator cells
    */
-  const bool m_SwapXZ;
+  const bool m_EndCap;
   /**
    * The wavelengths used to measure PDE in SiPM, in nm
    */
