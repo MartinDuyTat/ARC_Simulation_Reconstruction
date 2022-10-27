@@ -28,7 +28,7 @@ class ParticleTrack: public Particle {
    */
   ParticleTrack(int ParticleID,
 		const Vector &Momentum,
-		const Vector &Position = Vector(0.0, 0.0, 0.0));
+		std::size_t TrackNumber);
   /**
    * Need virtual constructor since it's a virtual class
    */
@@ -95,10 +95,6 @@ class ParticleTrack: public Particle {
    */
   std::vector<Photon> GeneratePhotonsFromGas() const;
   /**
-   * Get index of fraction
-   */
-  double GetIndexRefraction(Photon::Radiator Radiator, double Energy) const;
-  /**
    * Generate Cherenkov photon
    * @param Entry point of radiator
    * @param Exit point of ratiator
@@ -120,7 +116,7 @@ class ParticleTrack: public Particle {
    */
   const Vector& GetExitPoint(Photon::Radiator Radiator) const;
   /**
-   * Draw particle track
+   * Draw particle track and the photons
    */
   std::unique_ptr<TLine> DrawParticleTrack() const;
   /**
@@ -205,6 +201,22 @@ class ParticleTrack: public Particle {
    * The multiplication factor in the photon yield calculation
    */
   const double m_PhotonMultiplier;
+  /**
+   * Track number
+   */
+  std::size_t m_TrackNumber;
+  /**
+   * List of track numbers that we want to draw
+   */
+  std::vector<std::size_t> m_TracksToDraw;
+  /**
+   * Helper function that checks if this track should be drawn
+   */
+  bool IsTrackDrawn() const;
+  /**
+   * Helper function that determines the photon multiplier
+   */
+  static double GetPhotonMultiplier(const Vector &Momentum);
 };
 
 #endif

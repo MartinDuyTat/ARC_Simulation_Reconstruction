@@ -61,6 +61,8 @@ class Photon: public Particle {
    * @param CosCherenkovAngle Cosine of Cherenkov angle
    * @param radiator Aerogel or gas radiator where this photon was emitted
    * @param radiatorCell The radiator cell where this photon was emitted
+   * @param IsTrackDrawn True if the track that emitted this photon is drawn
+   * @param Weight The weight of this photon, inverse of the photon multiplier
    */
   Photon(const ARCVector &Position,
 	 const ARCVector &AssumedPosition,
@@ -69,7 +71,9 @@ class Photon: public Particle {
 	 double Energy,
 	 double CosCherenkovAngle,
 	 Radiator radiator,
-	 const RadiatorCell *radiatorCell);
+	 const RadiatorCell *radiatorCell,
+	 bool IsTrackDrawn,
+	 double Weight);
   /**
    * Need virtual constructor since it's a virtual class
    */
@@ -181,6 +185,10 @@ class Photon: public Particle {
    * Get the direction of the particle that emitted this photon
    */
   const Vector& GetParticleDirection() const;
+  /**
+   * Get the weight of this photon (inverse of the photon multiplier)
+   */
+  double GetWeight() const;
  private:
   /**
    * The midpoint of the track inside the radiator, where we assume the photon is emitted
@@ -223,9 +231,17 @@ class Photon: public Particle {
    */
   std::unique_ptr<ARCVector> m_MirrorHitPosition;
   /**
+   * The weight of this photon, usually the inverse of the photon multiplier
+   */
+  double m_Weight;
+  /**
    * Flag that is true if photon migrates to a neighbouring cell
    */
   bool m_HasMigrated;
+  /**
+   * Flag that indicates if the particle track that emitted this photon is drawn
+   */
+  bool m_IsTrackDrawn;
 };
 
 #endif

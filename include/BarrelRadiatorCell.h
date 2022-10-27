@@ -42,6 +42,10 @@ class BarrelRadiatorCell: public RadiatorCell {
    * Get the reverse rotation in phi, for plotting purposes
    */
   virtual RotationZ ReversePhiRotation() const override;
+  /**
+   * Function that checks if the detector is contained inside the radiator cell
+   */
+  virtual bool IsDetectorInsideCell() const override;
  protected:
   /**
    * Radius of the barrel where the entrance window is

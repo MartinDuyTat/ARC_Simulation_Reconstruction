@@ -22,7 +22,7 @@ class EventDisplay {
   /**
    * Draw the event display
    */
-  void DrawEventDisplay(const std::string &Filename);
+  void DrawEventDisplay();
   /**
    * Add object to event display
    */

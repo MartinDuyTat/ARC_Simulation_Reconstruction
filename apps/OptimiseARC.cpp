@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
       }
     };
     const Vector Momentum = GetMomentum();
-    ParticleTrack particleTrack(ParticleID, Momentum, Vector(0.0, 0.0, 0.0));
+    ParticleTrack particleTrack(ParticleID, Momentum, NumberTracks);
     particleTrack.TrackThroughTracker(InnerTracker);
     Particles.push_back(particleTrack);
     NumberTracks++;

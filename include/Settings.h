@@ -51,6 +51,10 @@ class Settings {
    */
   static std::vector<int> GetIntVector(const std::string &Setting);
   /**
+   * Get vector of size_t, comma separated in options file
+   */
+  static std::vector<std::size_t> GetSizeTVector(const std::string &Setting);
+  /**
    * Check if setting exists
    */
   static bool Exists(const std::string &Setting);

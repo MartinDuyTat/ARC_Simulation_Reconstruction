@@ -17,23 +17,30 @@ EndCapRadiatorCell::EndCapRadiatorCell(std::size_t CellColumnNumber,
 	       CellRowNumber,
 	       HexagonSize,
 	       GetCellPosition(CellColumnNumber, CellRowNumber, HexagonSize),
-	       GetCellOrientation(),
-	       "EndCap") {
-  const std::string RadiatorName = "EndCapRadiator_c"
-                                 + std::to_string(m_CellNumber.first)
-                                 + "_r"
-                                 + std::to_string(m_CellNumber.second)
-                                 + "_";
-  const std::string XPositionName = "RadiatorCell/" + RadiatorName + "XPosition";
-  if(Settings::Exists(XPositionName)) {
-    SetMirrorXPosition(Settings::GetDouble(XPositionName));
-  }
+	       GetCellOrientation(CellColumnNumber, CellRowNumber, HexagonSize),
+	       "EndCap"),
+  m_InnerRadius(Settings::GetDouble("ARCGeometry/EndCapInnerRadius")),
+  m_OuterRadius(Settings::GetDouble("ARCGeometry/EndCapOuterRadius")) {
 }
 
 bool EndCapRadiatorCell::IsInsideCell(const ARCVector &Position) const {
+  // First check if particle is within the radial acceptance
+  if(!IsInsideRadialAcceptance(Position.GlobalVector())) {
+    return false;
+  }
+  // Rotate coordinate system to align with hexagon
+  const double Angle = GetCoordinateRotation(m_CellNumber.first,
+					     m_CellNumber.second,
+					     m_HexagonSize);
+  const RotationZ BackRotation(Angle);
+  const Vector PositionVec = BackRotation(Position.LocalVector());
+  return IsInsideCell(PositionVec);
+}
+
+bool EndCapRadiatorCell::IsInsideCell(const Vector &Position) const {
   // Get x and y coordinates after mapping everything to first quadrant
-  const double x = TMath::Abs(Position.LocalVector().X());
-  const double y = TMath::Abs(Position.LocalVector().Y());
+  const double x = TMath::Abs(Position.X());
+  const double y = TMath::Abs(Position.Y());
   // First part is checking the sloped part, the other is the vertical part
   return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
 }
@@ -67,17 +74,18 @@ EndCapRadiatorCell::DrawRadiatorGeometry() const {
   const double h = m_RadiatorThickness - 2.0*m_VesselThickness - m_CoolingThickness;
   const double cc = h*h + MirrorCentre.Mag2() - 2.0*MirrorCentre.Z()*h
                   - m_MirrorCurvature*m_MirrorCurvature;
-  const double s1 = bb + TMath::Sqrt(bb*bb - cc);
-  const double s2 = bb - TMath::Sqrt(bb*bb - cc);
-  if(bb*bb > cc &&
-     (TMath::Abs(s1) < m_HexagonSize/2.0 || TMath::Abs(s2) < m_HexagonSize/2.0)) {
-    const double s = TMath::Abs(s1) < m_HexagonSize/2.0 ? s1 : s2;
-    const double MidAngle = TMath::ATan2(h - MirrorCentre.Z(),
-					 s + MirrorCentre.X())*180.0/TMath::Pi();
-    if(MirrorCentre.X() > 0.0) {
-      LeftAngle = MidAngle;
-    } else {
-      RightAngle = MidAngle;
+  if(bb*bb > cc) {
+    const double s1 = bb + TMath::Sqrt(bb*bb - cc);
+    const double s2 = bb - TMath::Sqrt(bb*bb - cc);
+    if(TMath::Abs(s1) < m_HexagonSize/2.0 || TMath::Abs(s2) < m_HexagonSize/2.0) {
+      const double s = TMath::Abs(s1) < m_HexagonSize/2.0 ? s1 : s2;
+      const double MidAngle = TMath::ATan2(h - MirrorCentre.Z(),
+					   s + MirrorCentre.X())*180.0/TMath::Pi();
+      if(MirrorCentre.X() > 0.0) {
+	LeftAngle = MidAngle;
+      } else {
+	RightAngle = MidAngle;
+      }
     }
   }
   // Finally draw everything
@@ -136,6 +144,53 @@ EndCapRadiatorCell::DrawRadiatorGeometry() const {
   return Objects;
 }
 
+bool EndCapRadiatorCell::IsDetectorInsideCell() const {
+  // Position of detector centre in local (radially oriented) coordinates
+  const double x = m_Detector.GetDetectorXPosition();
+  const Vector Position(x, 0.0, 0.0);
+  // Rotation matrix back to lab frame orientation
+  const RotationZ BackRotation(-GetCoordinateRotation(m_CellNumber.first,
+						      m_CellNumber.second,
+						      m_HexagonSize));
+  // Detector tilt and size
+  const double Tilt = m_Detector.GetDetectorTilt();
+  const double DetSizeX = m_Detector.GetDetectorSizeX();
+  const double DetSizeY = m_Detector.GetDetectorSizeY();
+  // Function for checking if point is inside hexagon
+  auto IsInsideHexagon = [=] (double x, double y) {
+    return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
+  };
+  // Top right corner
+  const auto Corner1_Pos = Position +
+                           Vector(DetSizeX*TMath::Cos(Tilt)/2.0, DetSizeY, 0.0);
+  const auto RotatedCorner1 = BackRotation(Corner1_Pos);
+  if(!IsInsideHexagon(RotatedCorner1.X(), RotatedCorner1.Y())) {
+    return false;
+  }
+  // Top left corner
+  const auto Corner2_Pos = Position +
+                           Vector(-DetSizeX*TMath::Cos(Tilt)/2.0, DetSizeY, 0.0);
+  const auto RotatedCorner2 = BackRotation(Corner2_Pos);
+  if(!IsInsideHexagon(RotatedCorner2.X(), RotatedCorner2.Y())) {
+    return false;
+  }
+  // Bottom left corner
+  const auto Corner3_Pos = Position +
+                           Vector(-DetSizeX*TMath::Cos(Tilt)/2.0, -DetSizeY, 0.0);
+  const auto RotatedCorner3 = BackRotation(Corner3_Pos);
+  if(!IsInsideHexagon(RotatedCorner3.X(), RotatedCorner3.Y())) {
+    return false;
+  }
+  // Bottom right corner
+  const auto Corner4_Pos = Position +
+                           Vector(DetSizeX*TMath::Cos(Tilt)/2.0, -DetSizeY, 0.0);
+  const auto RotatedCorner4 = BackRotation(Corner4_Pos);
+  if(!IsInsideHexagon(RotatedCorner4.X(), RotatedCorner4.Y())) {
+    return false;
+  }
+  return true;
+}
+
 Vector EndCapRadiatorCell::GetCellPosition(std::size_t CellColumnNumber,
 					   std::size_t CellRowNumber,
 					   double HexagonSize) {
@@ -159,6 +214,31 @@ Vector EndCapRadiatorCell::GetCellPosition(std::size_t CellColumnNumber,
   }
 }
 
-Rotation3D EndCapRadiatorCell::GetCellOrientation() {
-  return {};
+Rotation3D EndCapRadiatorCell::GetCellOrientation(std::size_t CellColumnNumber,
+						  std::size_t CellRowNumber,
+						  double HexagonSize) {
+  const double Angle = GetCoordinateRotation(CellColumnNumber,
+					     CellRowNumber,
+					     HexagonSize);
+  return Rotation3D(RotationZ(-Angle));
+}
+
+double EndCapRadiatorCell::GetCoordinateRotation(std::size_t CellColumnNumber,
+						 std::size_t CellRowNumber,
+						 double HexagonSize) {
+  const double YPosition = HexagonSize*(TMath::Sqrt(3)/2.0)*
+                           static_cast<double>(CellRowNumber - 1);
+  if(CellRowNumber%2 == 1) {
+    const double XPosition = HexagonSize*static_cast<double>(CellColumnNumber);
+    return TMath::ATan2(YPosition, XPosition);
+  } else {
+    const double XPosition = HexagonSize*(static_cast<double>(CellColumnNumber) - 0.5);
+    return TMath::ATan2(YPosition, XPosition);
+  }
+}
+
+bool EndCapRadiatorCell::IsInsideRadialAcceptance(const Vector &Position) const {
+  const double Radius = TMath::Sqrt(Position.X()*Position.X() + 
+				    Position.Y()*Position.Y());
+  return Radius >= m_InnerRadius && Radius <= m_OuterRadius;
 }

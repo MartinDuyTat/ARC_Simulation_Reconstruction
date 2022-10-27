@@ -9,7 +9,7 @@
 #include"EventDisplay.h"
 #include"Settings.h"
 
-void EventDisplay::DrawEventDisplay(const std::string &Filename) {
+void EventDisplay::DrawEventDisplay() {
   gStyle->SetLineScalePS(0.01f);
   TCanvas c("c", "", Settings::GetInt("EventDisplay/CanvasWidth"),
 	             Settings::GetInt("EventDisplay/CanvasHeight"));
@@ -79,11 +79,24 @@ void EventDisplay::DrawEventDisplay(const std::string &Filename) {
     Object.first->Draw(Object.second.c_str());
   }
   c.Draw();
-  c.SaveAs(Filename.c_str());
+  std::string EventDisplayFilename("EventDisplay");
+  if(Settings::GetString("General/BarrelOrEndcap") != "Barrel") {
+    EventDisplayFilename += "_EndCap";
+  } else {
+    if(Settings::GetInt("EventDisplay/RowToDraw") == 1) {
+      EventDisplayFilename += "_MainRow";
+    } else if(Settings::GetInt("EventDisplay/RowToDraw") == 2) {
+      EventDisplayFilename += "_UpperRow";
+    }
+  }
+  EventDisplayFilename += ".pdf";
+  c.SaveAs(EventDisplayFilename.c_str());
 }
 
 void EventDisplay::AddObject(std::unique_ptr<TObject> Object, const std::string &Option) {
-  m_EventObjects.push_back(std::make_pair(std::move(Object), Option));
+  if(Object) {
+    m_EventObjects.push_back(std::make_pair(std::move(Object), Option));
+  }
 }
 
 void EventDisplay::AddObject(std::vector<std::pair<std::unique_ptr<TObject>,

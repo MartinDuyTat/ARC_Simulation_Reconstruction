@@ -200,3 +200,7 @@ double SiPM::GetDetectorTilt() const {
 double SiPM::GetDetectorSizeX() const {
   return m_DetectorSizeX;
 }
+
+double SiPM::GetDetectorSizeY() const {
+  return m_DetectorSizeY;
+}

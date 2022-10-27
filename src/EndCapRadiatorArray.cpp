@@ -14,7 +14,9 @@
 #include"Particle.h"
 
 EndCapRadiatorArray::EndCapRadiatorArray():
-  RadiatorArray::RadiatorArray() {
+  RadiatorArray::RadiatorArray(),
+  m_InnerRadius(Settings::GetDouble("ARCGeometry/EndCapInnerRadius")),
+  m_OuterRadius(Settings::GetDouble("ARCGeometry/EndCapOuterRadius")) {
   constexpr std::size_t NumberCells = EndCapRadiatorCell::m_ValidCells.size();
   m_Cells.reserve(NumberCells);
   for(std::size_t i = 0; i < NumberCells; i++) {
@@ -43,6 +45,12 @@ EndCapRadiatorArray::DrawRadiatorArray() const {
 const RadiatorCell* EndCapRadiatorArray::FindRadiator(Particle &particle) const {
   if(!particle.IsAtRadiator()) {
     throw std::runtime_error("Cannot find radiator since track is not at entrance window");
+  }
+  const auto GlobalPosition = particle.GetPosition().GlobalVector();
+  const double Radius = TMath::Sqrt(GlobalPosition.X()*GlobalPosition.X() +
+				    GlobalPosition.Y()*GlobalPosition.Y());
+  if(Radius < m_InnerRadius || Radius > m_OuterRadius) {
+    return nullptr;
   }
   // If track hits the other end cap, reflect
   if(particle.GetPosition().GlobalVector().Z() < 0.0) {

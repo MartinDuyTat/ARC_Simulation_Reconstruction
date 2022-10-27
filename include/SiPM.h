@@ -86,6 +86,10 @@ class SiPM {
    * Get the detector X size
    */
   double GetDetectorSizeX() const;
+  /**
+   * Get the detector Y size
+   */
+  double GetDetectorSizeY() const;
  private:
   /**
    * Size of detector in x direction

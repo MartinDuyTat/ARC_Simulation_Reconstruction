@@ -151,6 +151,19 @@ RotationZ BarrelRadiatorCell::ReversePhiRotation() const {
   }
 }
 
+bool BarrelRadiatorCell::IsDetectorInsideCell() const {
+  const double Position = m_Detector.GetDetectorXPosition();
+  const double Tilt = m_Detector.GetDetectorTilt();
+  const double DetSize = m_Detector.GetDetectorSizeX();
+  if(Position + DetSize*TMath::Cos(Tilt)/2.0 > m_HexagonSize/2.0) {
+    return false;
+  } else if(Position - DetSize*TMath::Cos(Tilt)/2.0 < -m_HexagonSize/2.0) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 Vector BarrelRadiatorCell::GetCellPosition(std::size_t CellColumnNumber,
 					   std::size_t CellRowNumber,
 					   double HexagonSize) {

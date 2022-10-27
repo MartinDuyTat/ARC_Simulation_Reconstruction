@@ -13,6 +13,7 @@
 #include"BarrelRadiatorCell.h"
 #include"Utilities.h"
 #include"ARCVector.h"
+#include"Settings.h"
 
 Photon::Photon(const ARCVector &Position,
 	       const ARCVector &AssumedPosition,
@@ -21,7 +22,9 @@ Photon::Photon(const ARCVector &Position,
 	       double Energy,
 	       double CosCherenkovAngle,
 	       Radiator radiator,
-	       const RadiatorCell *radiatorCell):
+	       const RadiatorCell *radiatorCell, 
+	       bool IsTrackDrawn,
+	       double Weight):
   Particle(Position.GlobalVector(), radiatorCell),
   m_AssumedEmissionPoint(AssumedPosition),
   m_EmissionPoint(Position),
@@ -33,7 +36,9 @@ Photon::Photon(const ARCVector &Position,
   m_Status(Status::Emitted),
   m_AerogelTravelDistance(0.0),
   m_MirrorHitPosition(nullptr),
-  m_HasMigrated(false) {
+  m_Weight(Weight),
+  m_HasMigrated(false),
+  m_IsTrackDrawn(IsTrackDrawn) {
   const auto RadiatorPosition = radiatorCell->GetRadiatorPosition();
   const auto RadiatorRotation = radiatorCell->GetRadiatorRotation();
   m_Position.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
@@ -43,7 +48,8 @@ Photon::Photon(const ARCVector &Position,
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 Photon::DrawPhotonPath() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> PhotonLine;
-  if(!m_RadiatorCell) {
+  const std::size_t RowToDraw = Settings::GetSizeT("EventDisplay/RowToDraw");
+  if(!m_RadiatorCell || GetRadiatorRowNumber() != RowToDraw) {
     return PhotonLine;
   }
   const auto ReversePhi = m_RadiatorCell->ReversePhiRotation();
@@ -73,6 +79,9 @@ Photon::DrawPhotonPath() const {
     if(m_Status != Status::DetectorHit) {
       PhotonLine1.SetLineColor(6);
       PhotonLine2.SetLineColor(6);
+    } else if(m_Status == Status::DetectorMiss) {
+      PhotonLine1.SetLineColor(8);
+      PhotonLine2.SetLineColor(8);
     } else {
       PhotonLine1.SetLineColor(kBlue);
       PhotonLine2.SetLineColor(kBlue);
@@ -216,4 +225,8 @@ bool Photon::HasPhotonMigrated() const {
 
 const Vector& Photon::GetParticleDirection() const {
   return m_ParticleDirection.LocalVector();
+}
+
+double Photon::GetWeight() const {
+  return m_Weight;
 }

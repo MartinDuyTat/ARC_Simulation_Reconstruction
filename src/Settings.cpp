@@ -85,6 +85,18 @@ std::vector<int> Settings::GetIntVector(const std::string &Setting) {
   return List;
 }
 
+std::vector<std::size_t> Settings::GetSizeTVector(const std::string &Setting) {
+  std::string CommaSeparatedList = GetString(Setting);
+  std::replace(CommaSeparatedList.begin(), CommaSeparatedList.end(), ',', ' ');
+  std::stringstream ss(CommaSeparatedList);
+  std::vector<std::size_t> List;
+  std::size_t Number;
+  while(ss >> Number) {
+    List.push_back(Number);
+  }
+  return List;
+}
+
 bool Settings::Exists(const std::string &Setting) {
   try {
     GetString(Setting);

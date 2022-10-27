@@ -1,6 +1,8 @@
 // Martin Duy Tat 29th April 2022
 
 #include<stdexcept>
+#include<memory>
+#include<utility>
 #include"TMath.h"
 #include"TRandom.h"
 #include"Math/RotationY.h"
@@ -17,16 +19,18 @@
 
 ParticleTrack::ParticleTrack(int ParticleID,
 			     const Vector &Momentum,
-			     const Vector &Position):
-  Particle::Particle(Position),
+			     std::size_t TrackNumber):
+  Particle::Particle({}),
   m_Momentum(Momentum),
-  m_InitialPosition(Position),
+  m_InitialPosition(Vector(0.0, 0.0, 0.0)),
   m_ParticleID(ParticleID),
   m_Location(Location::TrackerVolume),
   m_RandomEmissionPoint(Settings::GetBool("General/RandomEmissionPoint")),
   m_ChromaticDispersion(Settings::GetBool("General/ChromaticDispersion")),
   m_Mass(ParticleMass::GetMass(m_ParticleID)),
-  m_PhotonMultiplier(Settings::GetDouble("General/PhotonMultiplier")) {
+  m_PhotonMultiplier(GetPhotonMultiplier(m_Momentum.GlobalVector())),
+  m_TrackNumber(TrackNumber),
+  m_TracksToDraw(Settings::GetSizeTVector("General/TrackToDraw")) {
 }
 
 void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
@@ -185,8 +189,8 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
   }
   const auto AerogelVec = m_AerogelExit.LocalVector() - m_AerogelEntry.LocalVector();
   const double RadiatorDistance = TMath::Sqrt(AerogelVec.Mag2());
-  const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Aerogel,
-						    1239.841987427/400.0);
+  const double IndexRefraction =
+    Utilities::GetIndexRefraction(Photon::Radiator::Aerogel, false);
   const std::size_t PhotonYield =static_cast<std::size_t>(
     std::round(GetPhotonYield(RadiatorDistance, Beta(), IndexRefraction)));
   std::vector<Photon> Photons;
@@ -204,7 +208,8 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   }
   const auto GasVec = m_GasExit.LocalVector() - m_GasEntry.LocalVector();
   const double RadiatorDistance = TMath::Sqrt(GasVec.Mag2());
-  const double IndexRefraction = GetIndexRefraction(Photon::Radiator::Gas, 1239.8/400.0);
+  const double IndexRefraction =
+    Utilities::GetIndexRefraction(Photon::Radiator::Gas, false);
   const std::size_t PhotonYield = static_cast<std::size_t>(
     std::round(GetPhotonYield(RadiatorDistance, Beta(), IndexRefraction)));
   std::vector<Photon> Photons;
@@ -215,59 +220,29 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   return Photons;
 }
 
-double ParticleTrack::GetIndexRefraction(Photon::Radiator Radiator,
-					 double Energy) const {
-  switch(Radiator) {
-    case Photon::Radiator::Aerogel:
-      {
-	auto GetIndex = [] (double eph) {
-	  const double InsideSqrt = 46.41/(113.8 - eph*eph) +
-	                            228.7/(328.5 - eph*eph);
-	  return 1.0 + 0.03*2.1467*(TMath::Sqrt(1.0 + InsideSqrt) - 1.0);
-	};
-	if(m_ChromaticDispersion) {
-	  // Equation from Roger Forty via email
-	  return GetIndex(Energy);
-	} else {
-	  const double eph = 1239.841987427/400.0;
-	  return GetIndex(eph);
-	}
-      }
-    case Photon::Radiator::Gas:
-      {
-	auto GetIndex = [] (double L) {
-	  return 1.0 + 0.25324*1e-6/((1.0/(73.7*73.7)) - (1.0/(L*L)));
-	};
-	if(m_ChromaticDispersion) {
-	  // Pressure at 1.0 bar
-	  // Sellmeier equation with coefficients from
-	  // https://twiki.cern.ch/twiki/bin/view/LHCb/C4F10
-	  // They are similar to A. Filippas, et al. Nucl. Instr. and Meth. B, 196 (2002),
-	  // p. 340 but now quite...?
-	  const double Lambda = 1239.841987427/Energy;
-	  return GetIndex(Lambda);
-	} else {
-	  return GetIndex(400);
-	}
-      }
-    default:
-      return 1.0;
-  }
-}
-
 Photon ParticleTrack::GeneratePhoton(const ARCVector &Entry,
 				     const ARCVector &Exit,
 				     Photon::Radiator Radiator) const {
   const auto EntryVec = Entry.LocalVector();
   const auto ExitVec = Exit.LocalVector();
   const double Energy = gRandom->Uniform(1.55, 4.31);
-  const double n_phase = GetIndexRefraction(Radiator, Energy);
+  const double n_phase = Utilities::GetIndexRefraction(Radiator,
+						       m_ChromaticDispersion,
+						       Energy);
   const double RandomFraction = m_RandomEmissionPoint
                               ? gRandom->Uniform(0.005, 0.995) : 0.5;
   const Vector EmissionPoint = EntryVec + (ExitVec - EntryVec)*RandomFraction;
   const Vector AssumedEmissionPoint = 0.5*(EntryVec + ExitVec);
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
-  const double CosTheta = 1.0/(Beta()*n_phase);
+  auto GetCosTheta = [&] () {
+    double CosTheta = 1.0/(Beta()*n_phase);
+    if(CosTheta > 1.0) {
+      return 1.0;
+    } else {
+      return CosTheta;
+    }
+  };
+  const double CosTheta = GetCosTheta();
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
   const double CosPhi = TMath::Cos(phi);
   const double SinPhi = (phi > TMath::Pi() ? -1.0 : +1.0)
@@ -287,7 +262,9 @@ Photon ParticleTrack::GeneratePhoton(const ARCVector &Entry,
 		Energy,
 		CosTheta,
 		Radiator,
-		&(*m_RadiatorCell));
+		&(*m_RadiatorCell),
+		IsTrackDrawn(),
+		1.0/m_PhotonMultiplier);
   return photon;
 }
 
@@ -359,15 +336,19 @@ void ParticleTrack::ReflectY() {
 }
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {
-  const auto ReversePhi = m_RadiatorCell->ReversePhiRotation();
-  const auto InitialPosition = ReversePhi(m_InitialPosition.GlobalVector());
-  const auto Position = ReversePhi(m_Position.GlobalVector());
-  TLine Track(InitialPosition.Z(),
-	      InitialPosition.X(),
-	      Position.Z(),
-	      Position.X());
-  Track.SetLineColor(kRed);
-  return std::make_unique<TLine>(Track);
+  if(IsTrackDrawn()) {
+    const auto ReversePhi = m_RadiatorCell->ReversePhiRotation();
+    const auto InitialPosition = ReversePhi(m_InitialPosition.GlobalVector());
+    const auto Position = ReversePhi(m_Position.GlobalVector());
+    TLine Track(InitialPosition.Z(),
+		InitialPosition.X(),
+		Position.Z(),
+		Position.X());
+    Track.SetLineColor(kRed);
+    return std::make_unique<TLine>(Track);
+  } else {
+    return nullptr;
+  }
 }
 
 ParticleTrack::Location ParticleTrack::GetParticleLocation() const {
@@ -385,5 +366,32 @@ bool ParticleTrack::IsAtRadiator() const {
     return false;
   } else {
     return true;
+  }
+}
+bool ParticleTrack::IsTrackDrawn() const {
+  const std::size_t RowToDraw = Settings::GetSizeT("EventDisplay/RowToDraw");
+  if(RowToDraw == GetRadiatorRowNumber()) {
+    const bool DrawAllTracks = Settings::GetBool("General/DrawAllTracks");
+    if(DrawAllTracks) {
+      return true;
+    }
+    const auto iter = std::find(m_TracksToDraw.begin(),
+				m_TracksToDraw.end(),
+				m_TrackNumber);
+    if(iter != m_TracksToDraw.end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+double ParticleTrack::GetPhotonMultiplier(const Vector &Momentum) {
+  double LowMomentumLimit = Settings::GetDouble("General/LowMomentumLimit");
+  double PhotonMultiplier = Settings::GetDouble("General/PhotonMultiplier");
+  const std::string GasOrAerogel = Settings::GetString("General/GasOrAerogel");
+  if(GasOrAerogel == "Gas" && TMath::Sqrt(Momentum.Mag2()) < LowMomentumLimit) {
+    return PhotonMultiplier*20.0;
+  } else {
+    return PhotonMultiplier;
   }
 }

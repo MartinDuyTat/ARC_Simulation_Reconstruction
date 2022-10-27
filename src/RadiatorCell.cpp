@@ -25,7 +25,6 @@ RadiatorCell::RadiatorCell(std::size_t CellColumnNumber,
   m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
   m_HexagonSize(HexagonSize),
   m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
-  m_Detector(),
   m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
   m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
   m_MirrorCentre(m_DefaultMirrorCentre, m_Position, m_Rotation) {
@@ -129,19 +128,6 @@ void RadiatorCell::SetDetectorPosition(double x) {
 
 void RadiatorCell::SetDetectorTilt(double Angle) {
   m_Detector.SetDetectorTilt(Angle);
-}
-
-bool RadiatorCell::IsDetectorInsideCell() const {
-  const double Position = m_Detector.GetDetectorXPosition();
-  const double Tilt = m_Detector.GetDetectorTilt();
-  const double DetSize = m_Detector.GetDetectorSizeX();
-  if(Position + DetSize*TMath::Cos(Tilt)/2.0 > m_HexagonSize/2.0) {
-    return false;
-  } else if(Position - DetSize*TMath::Cos(Tilt)/2.0 < -m_HexagonSize/2.0) {
-    return false;
-  } else {
-    return true;
-  }
 }
 
 bool RadiatorCell::IsEdgeCell() const {

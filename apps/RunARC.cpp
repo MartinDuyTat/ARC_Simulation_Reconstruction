@@ -35,85 +35,40 @@
 
 using Vector = ROOT::Math::XYZVector;
 
-int main(int argc, char *argv[]) {
-  if(argc%2 != 0) {
-    return 0;
-  }
-  std::cout << "Welcome to the ARC simulation and reconstruction\n";
-  for(int i = 2; i < argc; i += 2) {
-    const std::string SettingsName = argv[i];
-    const std::string SettingsFilename = argv[i + 1];
-    Settings::AddSettings(SettingsName, SettingsFilename);
-    std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
-  }
-  const std::string RunMode(argv[1]);
-  if(Settings::Exists("General/Seed")) {
-    gRandom->SetSeed(Settings::GetSizeT("General/Seed"));
-  }
-  EventDisplay eventDisplay;
-  const TrackingVolume InnerTracker;
-  eventDisplay.AddObject(InnerTracker.DrawARCGeometry());
-  std::unique_ptr<RadiatorArray> radiatorArray;
-  const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
-  if(BarrelOrEndcap == "Barrel") {
-    radiatorArray = std::make_unique<BarrelRadiatorArray>();
-  } else if(BarrelOrEndcap == "EndCap") {
-    radiatorArray = std::make_unique<EndCapRadiatorArray>();
-  } else {
-    return 0;
-  } 
-  eventDisplay.AddObject(radiatorArray->DrawRadiatorArray());
-  if(RunMode == "SingleTrack") {
-    std::cout << "Run mode: Single track\n";
-    const Vector Momentum = Utilities::VectorFromSpherical(
-      Settings::GetDouble("Particle/Momentum"),
-      Settings::GetDouble("Particle/CosTheta"),
-      Settings::GetDouble("Particle/Phi"));
-    const int ParticleID = Settings::GetInt("Particle/ID");;
-    ParticleTrack particleTrack(ParticleID, Momentum);
-    particleTrack.TrackThroughTracker(InnerTracker);
-    particleTrack.FindRadiator(*radiatorArray);
-    particleTrack.ConvertToRadiatorCoordinates();
-    particleTrack.TrackThroughAerogel();
-    particleTrack.TrackThroughGasToMirror();
-    if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
-      particleTrack.TrackToNextCell(*radiatorArray);
-    }
-    auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
-    auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
-    std::vector<PhotonHit> photonHits;
-    for(auto &photon : PhotonsAerogel) {
-      auto photonHit = PhotonMapper::TracePhoton(photon, *radiatorArray);
-      if(photonHit) {
-	photonHits.push_back(*photonHit);
-      }
-    }
-    for(auto &photon : PhotonsGas) {
-      auto photonHit = PhotonMapper::TracePhoton(photon, *radiatorArray);
-      if(photonHit) {
-	photonHits.push_back(*photonHit);
-      }
-    }
-    (*radiatorArray)(0, 0)->GetDetector().PlotHits("PhotonHits.pdf", photonHits);
-  } else if(RunMode == "CherenkovAngleResolution") {
-    std::cout << "Run mode: Cherenkov angle resolution\n";
-    TFile CherenkovFile("CherenkovFile.root", "RECREATE");
-    TTree CherenkovTree("CherenkovTree", "");
-    double CherenkovAngle_Reco_TrueEmissionPoint[2000], CherenkovAngle_Reco[2000],
-           CherenkovAngle_True[2000], PhotonEnergy[2000];
-    double OuterTracker_x, OuterTracker_y, OuterTracker_z;
-    double BeforeRadiator_x, BeforeRadiator_y, BeforeRadiator_z;
-    double Entrance_x, Entrance_y, Entrance_z;
-    double MirrorHit_x, MirrorHit_y, MirrorHit_z;
-    double RadiatorPosition_x, RadiatorPosition_y, RadiatorPosition_z;
-    double CosTheta, Phi;
-    int NumberPhotons = 0;
-    int HasMigrated[2000];
-    std::size_t RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
-    std::size_t FinalRadiatorRowNumber, FinalRadiatorColumnNumber;
-    ParticleTrack::Location ParticleLocation;
-    Photon::Status PhotonStatus[2000];
+struct CherenkovFile {
+  /**
+   * The file
+   */
+  TFile File;
+  /**
+   * The TTree with all information
+   */
+  TTree CherenkovTree;
+  /**
+   * All the variables that are saved
+   */
+  double CherenkovAngle_Reco_TrueEmissionPoint[2000], CherenkovAngle_Reco[2000],
+         CherenkovAngle_True[2000], PhotonEnergy[2000];
+  double Entrance_x, Entrance_y, Entrance_z;
+  double MirrorHit_x, MirrorHit_y, MirrorHit_z;
+  double PhotonHit_x[2000], PhotonHit_y[2000], PhotonHit_z[2000];
+  double Momentum, CosTheta, Phi;
+  int NumberPhotons = 0;
+  double NumberGoodPhotons = 0.0;
+  int HasMigrated[2000];
+  std::size_t RadiatorRowNumber, RadiatorColumnNumber, TrackNumber;
+  std::size_t FinalRadiatorRowNumber, FinalRadiatorColumnNumber;
+  ParticleTrack::Location ParticleLocation;
+  Photon::Status PhotonStatus[2000];
+  double SinglePhotonResolution, TotalResolution, Significance;
+  /**
+   * Constructor that prepares the file and tree
+   */
+  CherenkovFile(const std::string &Filename):
+    File(Filename.c_str(), "RECREATE"),
+    CherenkovTree("CherenkovTree", "") {
     CherenkovTree.Branch("NumberPhotons", &NumberPhotons);
+    CherenkovTree.Branch("NumberGoodPhotons", &NumberGoodPhotons);
     CherenkovTree.Branch("CherenkovAngle_Reco_TrueEmissionPoint",
 			 &CherenkovAngle_Reco_TrueEmissionPoint,
 			 "CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons]/D");
@@ -152,31 +107,116 @@ int main(int argc, char *argv[]) {
     CherenkovTree.Branch("MirrorHit_x", &MirrorHit_x);
     CherenkovTree.Branch("MirrorHit_y", &MirrorHit_y);
     CherenkovTree.Branch("MirrorHit_z", &MirrorHit_z);
-    CherenkovTree.Branch("OuterTracker_x", &OuterTracker_x);
-    CherenkovTree.Branch("OuterTracker_y", &OuterTracker_y);
-    CherenkovTree.Branch("OuterTracker_z", &OuterTracker_z);
-    CherenkovTree.Branch("BeforeRadiator_x", &BeforeRadiator_x);
-    CherenkovTree.Branch("BeforeRadiator_y", &BeforeRadiator_y);
-    CherenkovTree.Branch("BeforeRadiator_z", &BeforeRadiator_z);
-    CherenkovTree.Branch("RadiatorPosition_x", &RadiatorPosition_x);
-    CherenkovTree.Branch("RadiatorPosition_y", &RadiatorPosition_y);
-    CherenkovTree.Branch("RadiatorPosition_z", &RadiatorPosition_z);
+    CherenkovTree.Branch("PhotonHit_x",
+			 &PhotonHit_x,
+			 "PhotonHit_x[NumberPhotons]/D");
+    CherenkovTree.Branch("PhotonHit_y",
+			 &PhotonHit_y,
+			 "PhotonHit_y[NumberPhotons]/D");
+    CherenkovTree.Branch("PhotonHit_z",
+			 &PhotonHit_z,
+			 "PhotonHit_z[NumberPhotons]/D");
+    CherenkovTree.Branch("Momentum", &Momentum);
     CherenkovTree.Branch("CosTheta", &CosTheta);
     CherenkovTree.Branch("Phi", &Phi);
+    CherenkovTree.Branch("SinglePhotonResolution", &SinglePhotonResolution);
+    CherenkovTree.Branch("TotalResolution", &TotalResolution);
+    CherenkovTree.Branch("Significance", &Significance);
+  }
+  /**
+   * Fill the TTree
+   */
+  void Fill() {
+    CherenkovTree.Fill();
+  }
+  /**
+   * Save and close
+   */
+  void Close() {
+    CherenkovTree.Write();
+    File.Close();
+  }
+};
+
+int main(int argc, char *argv[]) {
+  if(argc%2 != 0) {
+    return 0;
+  }
+  std::cout << "Welcome to the ARC simulation and reconstruction\n";
+  for(int i = 2; i < argc; i += 2) {
+    const std::string SettingsName = argv[i];
+    const std::string SettingsFilename = argv[i + 1];
+    Settings::AddSettings(SettingsName, SettingsFilename);
+    std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
+  }
+  const std::string RunMode(argv[1]);
+  if(Settings::Exists("General/Seed")) {
+    gRandom->SetSeed(Settings::GetSizeT("General/Seed"));
+  }
+  EventDisplay eventDisplay;
+  const TrackingVolume InnerTracker;
+  eventDisplay.AddObject(InnerTracker.DrawARCGeometry());
+  std::unique_ptr<RadiatorArray> radiatorArray;
+  const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
+  if(BarrelOrEndcap == "Barrel") {
+    radiatorArray = std::make_unique<BarrelRadiatorArray>();
+  } else if(BarrelOrEndcap == "EndCap") {
+    radiatorArray = std::make_unique<EndCapRadiatorArray>();
+  } else {
+    return 0;
+  } 
+  eventDisplay.AddObject(radiatorArray->DrawRadiatorArray());
+  if(RunMode == "SingleTrack") {
+    std::cout << "Run mode: Single track\n";
+    const Vector Momentum = Utilities::VectorFromSpherical(
+      Settings::GetDouble("Particle/Momentum"),
+      Settings::GetDouble("Particle/CosTheta"),
+      Settings::GetDouble("Particle/Phi"));
+    const int ParticleID = Settings::GetInt("Particle/ID");;
+    ParticleTrack particleTrack(ParticleID, Momentum, 0);
+    particleTrack.TrackThroughTracker(InnerTracker);
+    particleTrack.FindRadiator(*radiatorArray);
+    particleTrack.ConvertToRadiatorCoordinates();
+    particleTrack.TrackThroughAerogel();
+    particleTrack.TrackThroughGasToMirror();
+    if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
+      particleTrack.TrackToNextCell(*radiatorArray);
+    }
+    auto PhotonsAerogel = particleTrack.GeneratePhotonsFromAerogel();
+    auto PhotonsGas = particleTrack.GeneratePhotonsFromGas();
+    std::vector<PhotonHit> photonHits;
+    for(auto &photon : PhotonsAerogel) {
+      auto photonHit = PhotonMapper::TracePhoton(photon, *radiatorArray);
+      if(photonHit) {
+	photonHits.push_back(*photonHit);
+      }
+    }
+    for(auto &photon : PhotonsGas) {
+      auto photonHit = PhotonMapper::TracePhoton(photon, *radiatorArray);
+      if(photonHit) {
+	photonHits.push_back(*photonHit);
+      }
+    }
+    (*radiatorArray)(0, 0)->GetDetector().PlotHits("PhotonHits.pdf", photonHits);
+  } else if(RunMode == "CherenkovAngleResolution") {
+    std::cout << "Run mode: Cherenkov angle resolution\n";
+    CherenkovFile File("CherenkovFile.root");
     const std::size_t NumberTracks = Settings::GetSizeT("General/NumberTracks");
-    const bool DrawAllTracks = Settings::GetBool("General/DrawAllTracks");
-    const std::vector<int> TracksToDraw = Settings::GetIntVector("General/TrackToDraw");
-    const std::size_t RowToDraw = Settings::GetSizeT("EventDisplay/RowToDraw");
-    const bool DrawMissPhoton = Settings::GetBool("General/DrawMissPhoton");
     const bool Aerogel = Settings::GetString("General/GasOrAerogel") == "Aerogel";
+    const Photon::Radiator Radiator = Aerogel ?
+                                      Photon::Radiator::Aerogel :
+                                      Photon::Radiator::Gas;
+    const int Hypothesis1 = Settings::GetInt("General/MassHypothesis1");
+    const int Hypothesis2 = Settings::GetInt("General/MassHypothesis2");
     for(std::size_t i = 0; i < NumberTracks; i++) {
-      NumberPhotons = 0;
-      TrackNumber = i;
-      RadiatorRowNumber = static_cast<std::size_t>(-1);
-      RadiatorColumnNumber = static_cast<std::size_t>(-1);
+      File.NumberPhotons = 0;
+      File.NumberGoodPhotons = 0.0;
+      File.TrackNumber = i;
+      File.RadiatorRowNumber = static_cast<std::size_t>(-1);
+      File.RadiatorColumnNumber = static_cast<std::size_t>(-1);
       auto GetMomentum = [&] () {
 	if(BarrelOrEndcap == "Barrel") {
-	  return Utilities::GenerateRandomBarrelTrack(CosTheta, Phi);
+	  return Utilities::GenerateRandomBarrelTrack(File.CosTheta, File.Phi);
 	} else if(BarrelOrEndcap == "EndCap") {
 	  return Utilities::GenerateRandomEndCapTrack();
 	} else {
@@ -184,34 +224,33 @@ int main(int argc, char *argv[]) {
 	}
       };
       const Vector Momentum = GetMomentum();
+      File.Momentum = TMath::Sqrt(Momentum.Mag2());
       if(BarrelOrEndcap == "EndCap") {
-	CosTheta = TMath::Cos(Momentum.Theta());
+	File.CosTheta = TMath::Cos(Momentum.Theta());
       }
       const Vector Position(0.0, 0.0, 0.0);
-      const int ParticleID = Settings::GetInt("Particle/ID");;
-      ParticleTrack particleTrack(ParticleID, Momentum, Position);
+      const int ParticleID = Settings::GetInt("Particle/ID");
+      ParticleTrack particleTrack(ParticleID, Momentum, i);
+      const double MomentumMag = TMath::Sqrt(Momentum.Mag2());
+      const double CherenkovAngleDifference =
+	Utilities::GetCherenkovAngleDifference(MomentumMag,
+					       Hypothesis1,
+					       Hypothesis2,
+					       Radiator);
       particleTrack.TrackThroughTracker(InnerTracker);
-      auto OuterTrackerPosition = particleTrack.GetPosition().GlobalVector();
-      OuterTracker_x = OuterTrackerPosition.X();
-      OuterTracker_y = OuterTrackerPosition.Y();
-      OuterTracker_z = OuterTrackerPosition.Z();
       if(!particleTrack.FindRadiator(*radiatorArray)) {
 	continue;
       }
-      auto BeforeRadiatorPosition = particleTrack.GetPosition().GlobalVector();
-      BeforeRadiator_x = BeforeRadiatorPosition.X();
-      BeforeRadiator_y = BeforeRadiatorPosition.Y();
-      BeforeRadiator_z = BeforeRadiatorPosition.Z();
-      Phi = particleTrack.GetPosition().GlobalVector().Phi();
-      RadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
-      RadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
+      File.Phi = particleTrack.GetPosition().GlobalVector().Phi();
+      File.RadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
+      File.RadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
       auto EntranceWindowPosition = particleTrack.GetEntranceWindowPosition();
-      Entrance_x = EntranceWindowPosition.X();
-      Entrance_y = EntranceWindowPosition.Y();
-      Entrance_z = EntranceWindowPosition.Z();
+      File.Entrance_x = EntranceWindowPosition.X();
+      File.Entrance_y = EntranceWindowPosition.Y();
+      File.Entrance_z = EntranceWindowPosition.Z();
       if(particleTrack.GetParticleLocation() != ParticleTrack::Location::EntranceWindow) {
-	ParticleLocation = particleTrack.GetParticleLocation();
-	CherenkovTree.Fill();
+	File.ParticleLocation = particleTrack.GetParticleLocation();
+	File.Fill();
 	continue;
       }
       particleTrack.TrackThroughAerogel();
@@ -223,82 +262,64 @@ int main(int argc, char *argv[]) {
       if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
 	const bool HitMirror = particleTrack.TrackToNextCell(*radiatorArray);
 	if(!HitMirror) {
+	  File.ParticleLocation = particleTrack.GetParticleLocation();
+	  File.Fill();
 	  continue;
 	}
-      }
-      ParticleLocation = particleTrack.GetParticleLocation();
-      Phi = particleTrack.GetPosition().GlobalVector().Phi();
-      auto MirrorHitPosition = particleTrack.GetPosition().GlobalVector();
-      MirrorHit_x = MirrorHitPosition.X();
-      MirrorHit_y = MirrorHitPosition.Y();
-      MirrorHit_z = MirrorHitPosition.Z();
-      auto RadiatorPosition = particleTrack.GetRadiatorCell()->GetRadiatorPosition();
-      RadiatorPosition_x = RadiatorPosition.X();
-      RadiatorPosition_y = RadiatorPosition.Y();
-      RadiatorPosition_z = RadiatorPosition.Z();
-      FinalRadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
-      FinalRadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
-      auto IsTrackDraw = [&] () {
-	if(DrawAllTracks) {
-	  return true;
-	}
-	const auto iter = std::find(TracksToDraw.begin(), TracksToDraw.end(), i);
-	if(iter == TracksToDraw.end()) {
-	  return false;
-	}
-	return true;
-      };
-      const bool DrawThisTrack = IsTrackDraw();
-      if(DrawThisTrack && FinalRadiatorRowNumber == RowToDraw) {
-	eventDisplay.AddObject(particleTrack.DrawParticleTrack());
       }
       if(!Aerogel) {
 	Photons = particleTrack.GeneratePhotonsFromGas();
       }
+      File.ParticleLocation = particleTrack.GetParticleLocation();
+      File.Phi = particleTrack.GetPosition().GlobalVector().Phi();
+      auto MirrorHitPosition = particleTrack.GetPosition().GlobalVector();
+      File.MirrorHit_x = MirrorHitPosition.X();
+      File.MirrorHit_y = MirrorHitPosition.Y();
+      File.MirrorHit_z = MirrorHitPosition.Z();
+      File.FinalRadiatorRowNumber = particleTrack.GetRadiatorRowNumber();
+      File.FinalRadiatorColumnNumber = particleTrack.GetRadiatorColumnNumber();
+      eventDisplay.AddObject(particleTrack.DrawParticleTrack());
+      std::vector<double> GoodAngles;
       for(auto &Photon : Photons) {
-	if(NumberPhotons >= 2000) {
+	if(File.NumberPhotons >= 2000) {
 	  std::cout << "Warning! Number of photons is greater than 2000\n";
 	}
-	CherenkovAngle_True[NumberPhotons] = TMath::ACos(Photon.GetCosCherenkovAngle());
+	File.CherenkovAngle_True[File.NumberPhotons] =
+	  TMath::ACos(Photon.GetCosCherenkovAngle());
 	auto photonHit = PhotonMapper::TracePhoton(Photon, *radiatorArray);
-	if(DrawThisTrack && Photon.GetRadiatorRowNumber() == RowToDraw) {
-	  eventDisplay.AddObject(Photon.DrawPhotonPath());
-	}
+	eventDisplay.AddObject(Photon.DrawPhotonPath());
 	if(!Photon.GetMirrorHitPosition()) {
-	  if(DrawMissPhoton && Photon.GetStatus() == Photon::Status::MirrorMiss) {
-	    eventDisplay.AddObject(Photon.DrawPhotonPath());
-	  }
-	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] = -1.0;
-	  CherenkovAngle_Reco[NumberPhotons] = -1.0;
+	  File.CherenkovAngle_Reco_TrueEmissionPoint[File.NumberPhotons] = -1.0;
+	  File.CherenkovAngle_Reco[File.NumberPhotons] = -1.0;
 	} else {
 	  auto reconstructedPhoton =
 	    PhotonReconstructor::ReconstructPhoton(*photonHit);
-	  CherenkovAngle_Reco_TrueEmissionPoint[NumberPhotons] =
+	  File.CherenkovAngle_Reco_TrueEmissionPoint[File.NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle_TrueEmissionPoint);
-	  CherenkovAngle_Reco[NumberPhotons] =
+	  File.CherenkovAngle_Reco[File.NumberPhotons] =
 	    TMath::ACos(reconstructedPhoton.m_CosCherenkovAngle);
-	  HasMigrated[NumberPhotons] = Photon.HasPhotonMigrated() ? 1 : 0;
+	  File.HasMigrated[File.NumberPhotons] = Photon.HasPhotonMigrated() ? 1 : 0;
+	  if(Photon.GetStatus() == Photon::Status::DetectorHit) {
+	    File.NumberGoodPhotons += Photon.GetWeight();
+	    GoodAngles.push_back(File.CherenkovAngle_Reco[File.NumberPhotons]);
+	  }
 	}
-	PhotonEnergy[NumberPhotons] = Photon.GetEnergy();
-	PhotonStatus[NumberPhotons] = Photon.GetStatus();
-	NumberPhotons++;
+	File.PhotonEnergy[File.NumberPhotons] = Photon.GetEnergy();
+	File.PhotonStatus[File.NumberPhotons] = Photon.GetStatus();
+	const auto PhotonPosition = Photon.GetPosition().GlobalVector();
+	File.PhotonHit_x[File.NumberPhotons] = PhotonPosition.X();
+	File.PhotonHit_y[File.NumberPhotons] = PhotonPosition.Y();
+	File.PhotonHit_z[File.NumberPhotons] = PhotonPosition.Z();
+	File.NumberPhotons++;
       }
-      CherenkovTree.Fill();
+      const double RMS = TMath::RMS(GoodAngles.begin(), GoodAngles.end());
+      File.SinglePhotonResolution = RMS;
+      File.TotalResolution = RMS/TMath::Sqrt(File.NumberGoodPhotons);
+      File.Significance = CherenkovAngleDifference/File.TotalResolution;
+      File.Fill();
     }
-    std::string EventDisplayFilename("EventDisplay");
-    if(Settings::GetString("General/BarrelOrEndcap") != "Barrel") {
-      EventDisplayFilename += "_EndCap";
-    } else {
-      if(Settings::GetInt("EventDisplay/RowToDraw") == 1) {
-	EventDisplayFilename += "_MainRow";
-      } else if(Settings::GetInt("EventDisplay/RowToDraw") == 2) {
-	EventDisplayFilename += "_UpperRow";
-      }
-    }
-    EventDisplayFilename += ".pdf";
-    eventDisplay.DrawEventDisplay(EventDisplayFilename);
-    CherenkovTree.Write();
-    CherenkovFile.Close();
+    eventDisplay.DrawEventDisplay();
+    File.Close();
   }
   return 0;
 }

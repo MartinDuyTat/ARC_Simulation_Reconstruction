@@ -62,6 +62,14 @@ class EndCapRadiatorArray: public RadiatorArray {
   bool IsBelowEvenRow(double x, double y) const;
  private:
   /**
+   * Inner radius of end cap
+   */
+  const double m_InnerRadius;
+  /**
+   * Outer radius of end cap
+   */
+  const double m_OuterRadius;
+  /**
    * Helper function to find the index for the radiator cell
    */
   virtual int FindRadiatorIndex(std::size_t i, std::size_t j) const override;

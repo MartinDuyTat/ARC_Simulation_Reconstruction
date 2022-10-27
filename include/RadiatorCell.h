@@ -131,7 +131,7 @@ class RadiatorCell {
   /**
    * Function that checks if the detector is contained inside the radiator cell
    */
-  bool IsDetectorInsideCell() const;
+  virtual bool IsDetectorInsideCell() const = 0;
   /**
    * Checks if the cell is at the edge (near the end cap)
    */

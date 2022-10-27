@@ -11,6 +11,7 @@
 #include"RadiatorCell.h"
 #include"RadiatorArray.h"
 #include"ParticleTrack.h"
+#include"Photon.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -31,6 +32,10 @@ namespace Utilities {
    * Generate a random end cap track which is uniform in x and y
    */
   Vector GenerateRandomEndCapTrack();
+  /**
+   * Get the magnitude of the particle momentum
+   */
+  double GetMomentumMag();
   /**
    * Struct containing sum of Cherenkov angle, sum of square of Cherenkov
    * angle and total number of photons
@@ -63,6 +68,35 @@ namespace Utilities {
   ResolutionStruct TrackPhotons(ParticleTrack particleTrack,
 				const RadiatorCell &radiatorCell,
 				const RadiatorArray &radiatorArray);
+  /**
+   * Get index of fraction
+   * @param Radiator Gas or aerogel
+   * @param Energy The photon energy
+   * @param 
+   */
+  double GetIndexRefraction(Photon::Radiator Radiator,
+			    bool ChromaticDispersion,
+			    double Energy = 0.0);
+  /**
+   * Get the predicted Cherenkov angle
+   * @param Momentum The particle momentum
+   * @param ID The particle ID
+   * @param Radiator Gas or aerogel
+   */
+  double GetPredictedCherenkovAngle(double Momentum,
+				    int ID,
+				    Photon::Radiator Radiator);
+  /**
+   * Get the difference in Cherenkov angle between two mass hypotheses
+   * @param Momentum The particle momentum
+   * @param ID1 The first particle hypothesis
+   * @param ID2 The second particle hypothesis
+   * @param Radiator Gas or aerogel
+   */
+  double GetCherenkovAngleDifference(double Momentum,
+				     int ID1,
+				     int ID2,
+				     Photon::Radiator Radiator);
 }
 
 #endif
