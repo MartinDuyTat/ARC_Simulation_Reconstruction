@@ -369,6 +369,9 @@ bool ParticleTrack::IsAtRadiator() const {
   }
 }
 bool ParticleTrack::IsTrackDrawn() const {
+  if(!Settings::Exists("EventDisplay/RowToDraw")) {
+    return false;
+  }
   const std::size_t RowToDraw = Settings::GetSizeT("EventDisplay/RowToDraw");
   if(RowToDraw == GetRadiatorRowNumber()) {
     const bool DrawAllTracks = Settings::GetBool("General/DrawAllTracks");

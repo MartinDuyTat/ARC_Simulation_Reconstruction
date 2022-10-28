@@ -158,33 +158,47 @@ bool EndCapRadiatorCell::IsDetectorInsideCell() const {
   const double DetSizeY = m_Detector.GetDetectorSizeY();
   // Function for checking if point is inside hexagon
   auto IsInsideHexagon = [=] (double x, double y) {
+    x = TMath::Abs(x);
+    y = TMath::Abs(y);
     return x < std::min(m_HexagonSize - y*TMath::Sqrt(3.0), m_HexagonSize*0.5);
   };
   // Top right corner
   const auto Corner1_Pos = Position +
-                           Vector(DetSizeX*TMath::Cos(Tilt)/2.0, DetSizeY, 0.0);
+                           Vector(DetSizeX*TMath::Cos(Tilt)/2.0, DetSizeY/2.0, 0.0);
   const auto RotatedCorner1 = BackRotation(Corner1_Pos);
+  if(!IsInsideRadialAcceptance(m_Position + RotatedCorner1)) {
+    return false;
+  }
   if(!IsInsideHexagon(RotatedCorner1.X(), RotatedCorner1.Y())) {
     return false;
   }
   // Top left corner
   const auto Corner2_Pos = Position +
-                           Vector(-DetSizeX*TMath::Cos(Tilt)/2.0, DetSizeY, 0.0);
+                           Vector(-DetSizeX*TMath::Cos(Tilt)/2.0, DetSizeY/2.0, 0.0);
   const auto RotatedCorner2 = BackRotation(Corner2_Pos);
+  if(!IsInsideRadialAcceptance(m_Position + RotatedCorner2)) {
+    return false;
+  }
   if(!IsInsideHexagon(RotatedCorner2.X(), RotatedCorner2.Y())) {
     return false;
   }
   // Bottom left corner
   const auto Corner3_Pos = Position +
-                           Vector(-DetSizeX*TMath::Cos(Tilt)/2.0, -DetSizeY, 0.0);
+                           Vector(-DetSizeX*TMath::Cos(Tilt)/2.0, -DetSizeY/2.0, 0.0);
   const auto RotatedCorner3 = BackRotation(Corner3_Pos);
+  if(!IsInsideRadialAcceptance(m_Position + RotatedCorner3)) {
+    return false;
+  }
   if(!IsInsideHexagon(RotatedCorner3.X(), RotatedCorner3.Y())) {
     return false;
   }
   // Bottom right corner
   const auto Corner4_Pos = Position +
-                           Vector(DetSizeX*TMath::Cos(Tilt)/2.0, -DetSizeY, 0.0);
+                           Vector(DetSizeX*TMath::Cos(Tilt)/2.0, -DetSizeY/2.0, 0.0);
   const auto RotatedCorner4 = BackRotation(Corner4_Pos);
+  if(!IsInsideRadialAcceptance(m_Position + RotatedCorner4)) {
+    return false;
+  }
   if(!IsInsideHexagon(RotatedCorner4.X(), RotatedCorner4.Y())) {
     return false;
   }
