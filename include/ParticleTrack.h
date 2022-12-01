@@ -15,6 +15,7 @@
 #include"TrackingVolume.h"
 #include"RadiatorArray.h"
 #include"Particle.h"
+#include"HelixPath.h"
 
 using Vector = ROOT::Math::XYZVector;
 
@@ -25,10 +26,12 @@ class ParticleTrack: public Particle {
    * @param ParticleID PDG particle ID convention
    * @param Momentum Particle momentum, in GeV
    * @param Position Particle initial position, by default it's the origin
+   * @param BField Magnetic field that particle passes through
    */
   ParticleTrack(int ParticleID,
 		const Vector &Momentum,
-		std::size_t TrackNumber);
+		std::size_t TrackNumber,
+		double BField);
   /**
    * Need virtual constructor since it's a virtual class
    */
@@ -52,8 +55,10 @@ class ParticleTrack: public Particle {
     MissedMirror};
   /**
    * Track particle through inner tracker with magnetic field
+   * @param InnerTracker The tracking volume
+   * @return Returns true if tracking through the magnetic field was successful
    */
-  void TrackThroughTracker(const TrackingVolume &InnerTracker);
+  bool TrackThroughTracker(const TrackingVolume &InnerTracker);
   /**
    * Set radiator
    */
@@ -68,8 +73,9 @@ class ParticleTrack: public Particle {
   virtual void ConvertBackToGlobalCoordinates() override;
   /**
    * Track particle through radiator cell
+   * @return Returns true if tracking through the magnetic field was successful
    */
-  void TrackThroughAerogel();
+  bool TrackThroughAerogel();
   /**
    * Helper function to track particle through gas until it hits the correct mirror
    */
@@ -96,25 +102,17 @@ class ParticleTrack: public Particle {
   std::vector<Photon> GeneratePhotonsFromGas() const;
   /**
    * Generate Cherenkov photon
-   * @param Entry point of radiator
-   * @param Exit point of ratiator
+   * @param Entry_s Path length at entry of radiator
+   * @param Exit_s Path length at exit of radiator
    * @param Radiator The medium the photon was emitted in, to determine the index of refraction
    */
-  Photon GeneratePhoton(const ARCVector &Entry,
-			const ARCVector &Exit,
+  Photon GeneratePhoton(double Entry,
+			double Exit,
 			Photon::Radiator Radiator) const;
   /**
    * Get the particle speed, in units of c
    */
   double Beta() const;
-  /**
-   * Get entry point of particle in radiator
-   */
-  const Vector& GetEntryPoint(Photon::Radiator Radiator) const;
-  /**
-   * Get exit point of particle in radiator
-   */
-  const Vector& GetExitPoint(Photon::Radiator Radiator) const;
   /**
    * Draw particle track and the photons
    */
@@ -154,21 +152,21 @@ class ParticleTrack: public Particle {
    */
   ARCVector m_InitialPosition;
   /**
-   * Entry point of aerogel
+   * Entry path length of aerogel
    */
-  ARCVector m_AerogelEntry;
+  double m_AerogelEntry_s;
   /**
-   * Exit point of aerogel
+   * Exit path length of aerogel
    */
-  ARCVector m_AerogelExit;
+  double m_AerogelExit_s;
   /**
-   * Entry point of gas
+   * Entry path length of gas
    */
-  ARCVector m_GasEntry;
+  double m_GasEntry_s;
   /**
-   * Exit point of gas
+   * Exit path length of gas
    */
-  ARCVector m_GasExit;
+  double m_GasExit_s;
   /**
    * Entrance window position
    */
@@ -209,6 +207,14 @@ class ParticleTrack: public Particle {
    * List of track numbers that we want to draw
    */
   std::vector<std::size_t> m_TracksToDraw;
+  /**
+   * Helix trajectory
+   */
+  HelixPath m_Helix;
+  /**
+   * Current path length
+   */
+  double m_PathLength;
   /**
    * Helper function that checks if this track should be drawn
    */

@@ -173,11 +173,18 @@ int main(int argc, char *argv[]) {
       Settings::GetDouble("Particle/CosTheta"),
       Settings::GetDouble("Particle/Phi"));
     const int ParticleID = Settings::GetInt("Particle/ID");;
-    ParticleTrack particleTrack(ParticleID, Momentum, 0);
-    particleTrack.TrackThroughTracker(InnerTracker);
+    ParticleTrack particleTrack(ParticleID, Momentum,
+				0, InnerTracker.GetFieldStrength());
+    if(!particleTrack.TrackThroughTracker(InnerTracker)) {
+      std::cout << "Could not track through tracker...\n";
+      return 0;
+    }
     particleTrack.FindRadiator(*radiatorArray);
     particleTrack.ConvertToRadiatorCoordinates();
-    particleTrack.TrackThroughAerogel();
+    if(!particleTrack.TrackThroughAerogel()) {
+      std::cout << "Could not track through aerogel...\n";
+      return 0;
+    }
     particleTrack.TrackThroughGasToMirror();
     if(particleTrack.GetParticleLocation() != ParticleTrack::Location::Mirror) {
       particleTrack.TrackToNextCell(*radiatorArray);
@@ -230,14 +237,17 @@ int main(int argc, char *argv[]) {
       }
       const Vector Position(0.0, 0.0, 0.0);
       const int ParticleID = Settings::GetInt("Particle/ID");
-      ParticleTrack particleTrack(ParticleID, Momentum, i);
+      ParticleTrack particleTrack(ParticleID, Momentum,
+				  i, InnerTracker.GetFieldStrength());
       const double MomentumMag = TMath::Sqrt(Momentum.Mag2());
       const double CherenkovAngleDifference =
 	Utilities::GetCherenkovAngleDifference(MomentumMag,
 					       Hypothesis1,
 					       Hypothesis2,
 					       Radiator);
-      particleTrack.TrackThroughTracker(InnerTracker);
+      if(!particleTrack.TrackThroughTracker(InnerTracker)) {
+	continue;
+      }
       if(!particleTrack.FindRadiator(*radiatorArray)) {
 	continue;
       }
@@ -253,7 +263,9 @@ int main(int argc, char *argv[]) {
 	File.Fill();
 	continue;
       }
-      particleTrack.TrackThroughAerogel();
+      if(!particleTrack.TrackThroughAerogel()) {
+	continue;
+      }
       std::vector<Photon> Photons;
       if(Aerogel) {
 	Photons = particleTrack.GeneratePhotonsFromAerogel();

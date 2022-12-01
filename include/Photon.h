@@ -53,10 +53,13 @@ class Photon: public Particle {
   };
   /**
    * Construct a photon with position, direction and energy
+   * Input vectors in constructor are in global coordinates
+   * All vectors are stored in the local coordinates internally
    * @param Position Position vector
    * @param AssumedPosition The midpoint of the track in the radiator
    * @param Direction Direction vector
    * @param ParticleDirection Unit vector in the direction of the particle
+   * @param AssumedParticleDirection Unit vector in the assumed particle direction
    * @param Energy Photon energy
    * @param CosCherenkovAngle Cosine of Cherenkov angle
    * @param radiator Aerogel or gas radiator where this photon was emitted
@@ -64,10 +67,11 @@ class Photon: public Particle {
    * @param IsTrackDrawn True if the track that emitted this photon is drawn
    * @param Weight The weight of this photon, inverse of the photon multiplier
    */
-  Photon(const ARCVector &Position,
-	 const ARCVector &AssumedPosition,
-	 const ARCVector &Direction,
+  Photon(const Vector &Position,
+	 const Vector &AssumedPosition,
+	 const Vector &Direction,
 	 const Vector &ParticleDirection,
+	 const Vector &AssumedParticleDirection,
 	 double Energy,
 	 double CosCherenkovAngle,
 	 Radiator radiator,
@@ -184,7 +188,7 @@ class Photon: public Particle {
   /**
    * Get the direction of the particle that emitted this photon
    */
-  const Vector& GetParticleDirection() const;
+  const Vector& GetParticleDirection(bool TrueEmissionPoint) const;
   /**
    * Get the weight of this photon (inverse of the photon multiplier)
    */
@@ -206,6 +210,10 @@ class Photon: public Particle {
    * Direction of the particle that emitted this photon
    */
   ARCVector m_ParticleDirection;
+  /**
+   * The direction of the particle that emitted this photon at the mid point
+   */
+  ARCVector m_AssumedParticleDirection;
   /**
    * Photon energy
    */

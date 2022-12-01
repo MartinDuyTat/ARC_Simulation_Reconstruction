@@ -38,7 +38,8 @@ int main(int argc, char *argv[]) {
     const std::string SettingsName = argv[i];
     const std::string SettingsFilename = argv[i + 1];
     Settings::AddSettings(SettingsName, SettingsFilename);
-    std::cout << "Added " << SettingsName << " settings from " << SettingsFilename << "\n";
+    std::cout << "Added " << SettingsName << " settings from ";
+    std::cout << SettingsFilename << "\n";
   }
   const std::string RunMode(argv[1]);
   const std::size_t Seed = Settings::GetSizeT("General/Seed");
@@ -46,11 +47,14 @@ int main(int argc, char *argv[]) {
   std::cout << "Generating tracks...\n";
   const int ParticleID = Settings::GetInt("Particle/ID");;
   const TrackingVolume InnerTracker;
-  const std::size_t Column = static_cast<std::size_t>(std::stoi(std::string(argv[1])));
-  const std::size_t Row = static_cast<std::size_t>(std::stoi(std::string(argv[2])));
+  const std::size_t Column =
+    static_cast<std::size_t>(std::stoi(std::string(argv[1])));
+  const std::size_t Row =
+    static_cast<std::size_t>(std::stoi(std::string(argv[2])));
   std::cout << "Tracks ready\n";
   std::unique_ptr<RadiatorArray> radiatorArray;
-  const std::string BarrelOrEndcap = Settings::GetString("General/BarrelOrEndcap");
+  const std::string BarrelOrEndcap =
+    Settings::GetString("General/BarrelOrEndcap");
   if(BarrelOrEndcap == "Barrel") {
     radiatorArray = std::make_unique<BarrelRadiatorArray>();
   } else if(BarrelOrEndcap == "EndCap") {
@@ -62,7 +66,8 @@ int main(int argc, char *argv[]) {
   const double z_min = Settings::GetDouble("Particle/z_min");
   const double z_max = Settings::GetDouble("Particle/z_max");
   Tracks Particles;
-  const std::size_t TotalNumberTracks = Settings::GetSizeT("General/NumberTracks");
+  const std::size_t TotalNumberTracks =
+    Settings::GetSizeT("General/NumberTracks");
   Particles.reserve(TotalNumberTracks);
   std::size_t NumberTracks = 0;
   while(NumberTracks < TotalNumberTracks) {
@@ -76,7 +81,8 @@ int main(int argc, char *argv[]) {
       }
     };
     const Vector Momentum = GetMomentum();
-    ParticleTrack particleTrack(ParticleID, Momentum, NumberTracks);
+    ParticleTrack particleTrack(ParticleID, Momentum,
+				NumberTracks, InnerTracker.GetFieldStrength());
     particleTrack.TrackThroughTracker(InnerTracker);
     Particles.push_back(particleTrack);
     NumberTracks++;
@@ -102,12 +108,15 @@ int main(int argc, char *argv[]) {
   }
   if(Settings::GetBool("Optimisation/DoFit")) {
     std::cout << "Differential evolution ready, sending off agents...\n";
-    ResolutionUtilities::DoFit(*radiatorCell, *radiatorArray, Particles, Column, Row);
+    ResolutionUtilities::DoFit(*radiatorCell, *radiatorArray,
+			       Particles, Column, Row);
     std::cout << "ARC is optimised!\n";
   }
   if(Settings::GetBool("Optimisation/PlotProjections")) {
     std::cout << "Plotting...\n";
-    ResolutionUtilities::PlotProjections(*radiatorCell, *radiatorArray, Particles);
+    ResolutionUtilities::PlotProjections(*radiatorCell,
+					 *radiatorArray,
+					 Particles);
     std::cout << "Resolution projections plotted\n";
   }
   return 0;

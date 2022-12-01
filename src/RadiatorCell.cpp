@@ -75,6 +75,10 @@ const Vector& RadiatorCell::GetMirrorCentre() const {
   return m_MirrorCentre.LocalVector();
 }
 
+Vector RadiatorCell::GetGlobalMirrorCentre() const {
+  return m_MirrorCentre.GlobalVector();
+}
+
 double RadiatorCell::GetMirrorCurvatureCentreZ() const {
   return m_RadiatorThickness
        - m_MirrorCurvature

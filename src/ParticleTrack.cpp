@@ -16,10 +16,12 @@
 #include"SiPM.h"
 #include"RadiatorArray.h"
 #include"Utilities.h"
+#include"HelixFunctor.h"
 
 ParticleTrack::ParticleTrack(int ParticleID,
 			     const Vector &Momentum,
-			     std::size_t TrackNumber):
+			     std::size_t TrackNumber,
+			     double BField):
   Particle::Particle({}),
   m_Momentum(Momentum),
   m_InitialPosition(Vector(0.0, 0.0, 0.0)),
@@ -30,37 +32,33 @@ ParticleTrack::ParticleTrack(int ParticleID,
   m_Mass(ParticleMass::GetMass(m_ParticleID)),
   m_PhotonMultiplier(GetPhotonMultiplier(m_Momentum.GlobalVector())),
   m_TrackNumber(TrackNumber),
-  m_TracksToDraw(Settings::GetSizeTVector("General/TrackToDraw")) {
+  m_TracksToDraw(Settings::GetSizeTVector("General/TrackToDraw")),
+  m_Helix(Momentum, m_ParticleID > 0 ? +1 : -1, BField),
+  m_PathLength(0.0) {
 }
 
-void ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
-  // TODO: Account for magnetic field
+bool ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   if(m_Location != Location::TrackerVolume) {
     throw std::runtime_error("Cannot track particle through inner tracker again");
   }
-  const auto Position = m_Position.GlobalVector();
-  const auto Momentum = m_Momentum.GlobalVector();
-  // Check if we're considering the end cap or barrel
   if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
-    // Solve quadratic to track particle to edge of tracking barrel
-    const auto MomentumUnit = Momentum.Unit();
-    const double b = Position.X()*MomentumUnit.X()
-                   + Position.Y()*MomentumUnit.Y();
-    const double c = Position.X()*Position.X()
-                   + Position.Y()*Position.Y()
-                   - InnerTracker.GetRadius()*InnerTracker.GetRadius();
-    const double s = TMath::Sqrt(b*b - c) - b;
-    const double xyUnit = TMath::Sqrt(TMath::Power(MomentumUnit.X(), 2) +
-				      TMath::Power(MomentumUnit.Y(), 2));
-    m_Position += s*MomentumUnit/xyUnit;
+    const double TrackerRadius = InnerTracker.GetRadius();
+    BarrelHelixFunctor Functor(TrackerRadius);
+    const double Tracker_s = m_Helix.SolvePathLength(Functor,
+						     0.9*TrackerRadius,
+						     5.0*TrackerRadius);
+    if(Tracker_s == -999.0) {
+      // Most likely the track didn't reach the barrel
+      return false;
+    }
+    const auto NewPosition = m_Helix.GetPosition(Tracker_s);
+    m_Position.SetGlobalVector(NewPosition);
+    m_PathLength = Tracker_s;
   } else {
-    // z-distance to end cap
-    const double BarrelZ = Settings::GetDouble("ARCGeometry/BarrelZ");
-    const double ZDist = BarrelZ - Position.Z();
-    const double Slope = TMath::Abs(1.0/Momentum.Z());
-    m_Position += Momentum*ZDist*Slope;
+    throw std::runtime_error("Haven't implemented end cap magnetic field tracking");
   }
   m_Location = Location::EntranceWindow;
+  return true;
 }
 
 void ParticleTrack::SetRadiator(const RadiatorCell *radiatorCell) {
@@ -75,10 +73,6 @@ void ParticleTrack::ConvertToRadiatorCoordinates() {
   const auto RadiatorRotation = m_RadiatorCell->GetRadiatorRotation();
   m_Momentum.AssignLocalCoordinates({}, RadiatorRotation);
   m_InitialPosition.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
-  m_AerogelEntry.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
-  m_AerogelExit.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
-  m_GasEntry.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
-  m_GasExit.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
   m_EntranceWindowPosition.AssignLocalCoordinates(RadiatorPosition,
 						  RadiatorRotation);
   // Check if particle is within acceptance
@@ -95,29 +89,51 @@ void ParticleTrack::ConvertBackToGlobalCoordinates() {
   // Remove the local coordinate system
   m_Momentum.ConvertToGlobal();
   m_InitialPosition.ConvertToGlobal();
-  m_AerogelEntry.ConvertToGlobal();
-  m_AerogelExit.ConvertToGlobal();
-  m_GasEntry.ConvertToGlobal();
-  m_GasExit.ConvertToGlobal();
   m_EntranceWindowPosition.ConvertToGlobal();
 }
 
-void ParticleTrack::TrackThroughAerogel() {
+bool ParticleTrack::TrackThroughAerogel() {
   if(!m_RadiatorCell) {
     throw std::runtime_error("No radiator cell to track through");
   }
   if(m_Location != Location::EntranceWindow) {
     throw std::runtime_error("Particle not at entrance window");
   }
-  const double ZDistToAerogel = -m_Position.LocalVector().Z();
-  const double Slope = 1.0/TMath::Cos(m_Momentum.LocalVector().Theta());
-  const auto MomentumUnit = m_Momentum.LocalVector().Unit();
-  m_Position += MomentumUnit*Slope*ZDistToAerogel;
-  m_AerogelEntry = m_Position;
-  m_Position += MomentumUnit*Slope*m_RadiatorCell->GetAerogelThickness();
-  m_AerogelExit = m_Position;
-  m_GasEntry = m_AerogelExit;
+  ZPlaneHelixFunctor CoolingFunctor(0.0,
+				    m_RadiatorCell->GetRadiatorPosition(),
+				    true);
+  const double Cooling_s = m_Helix.SolvePathLength(CoolingFunctor,
+						   m_PathLength,
+						   1.2*m_PathLength);
+  if(Cooling_s == -999.0) {
+    return false;
+  }
+  const auto CoolingLayerPosition = m_Helix.GetPosition(Cooling_s);
+  m_Position.SetGlobalVector(CoolingLayerPosition);
+  m_PathLength = Cooling_s;
+  m_AerogelEntry_s = Cooling_s;
+  if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
+    //const auto Position = m_Position.GlobalVector();
+    const double AerogelThickness = m_RadiatorCell->GetAerogelThickness();
+    ZPlaneHelixFunctor AerogelFunctor(AerogelThickness,
+				      m_RadiatorCell->GetRadiatorPosition(),
+				      true);
+    const double Aerogel_s = m_Helix.SolvePathLength(AerogelFunctor,
+						     m_PathLength,
+						     1.2*m_PathLength);
+    if(Aerogel_s == -999.0) {
+      return false;
+    }
+    const auto AerogelPosition = m_Helix.GetPosition(Aerogel_s);
+    m_Position.SetGlobalVector(AerogelPosition);
+    m_PathLength = Aerogel_s;
+  } else {
+    throw std::runtime_error("Haven't implemented end cap magnetic field tracking");
+  }
+  m_AerogelExit_s = m_PathLength;
+  m_GasEntry_s = m_AerogelExit_s;
   m_Location = Location::Radiator;
+  return true;
 }
 
 void ParticleTrack::TrackThroughGasToMirror() {
@@ -125,29 +141,17 @@ void ParticleTrack::TrackThroughGasToMirror() {
      m_Location != Location::MissedEntranceWindow) {
     throw std::runtime_error("Cannot track through gas if not in radiator");
   }
-  m_Position = m_GasEntry;
-  const auto Position = m_GasEntry;
-  const auto LocalPosition = Position.LocalVector();
-  // Solve quadratic s^2 - 2sb + c = 0 to find interserction of particle track and mirror
-  auto MirrorCentre = m_RadiatorCell->GetMirrorCentre();
-  const double MirrorRadius = m_RadiatorCell->GetMirrorCurvature();
-  const auto Direction = m_Momentum.LocalVector().Unit();
-  const double b = (MirrorCentre - LocalPosition).Dot(Direction);
-  const double c = MirrorCentre.Mag2()
-                 + LocalPosition.Mag2()
-                 - MirrorRadius*MirrorRadius
-                 - 2*LocalPosition.Dot(MirrorCentre);
-  const double Discriminant = b*b - c;
-  if(Discriminant < 0) {
-    m_Location = Location::MissedMirror;
-    return;
-  }
-  const double s1 = b + TMath::Sqrt(Discriminant);
-  const double s2 = b - TMath::Sqrt(Discriminant);
-  // Pick forwards moving particle solution
-  const double s = std::max(s1, s2);
-  m_Position += Direction*s;
-  m_GasExit = m_Position;
+  m_Position.SetGlobalVector(m_Helix.GetPosition(m_GasEntry_s));
+  const auto MirrorCentre = m_RadiatorCell->GetGlobalMirrorCentre();
+  MirrorHelixFunctor MirrorFunctor(MirrorCentre,
+				   m_RadiatorCell->GetMirrorCurvature());
+  const double Mirror_s = m_Helix.SolvePathLength(MirrorFunctor,
+						  0.9*m_PathLength,
+						  2.0*m_PathLength);
+  const auto MirrorPosition = m_Helix.GetPosition(Mirror_s);
+  m_Position.SetGlobalVector(MirrorPosition);
+  m_PathLength = Mirror_s;
+  m_GasExit_s = Mirror_s;
   if(m_RadiatorCell->IsInsideCell(m_Position)) {
     m_Location = Location::Mirror;
   }
@@ -169,34 +173,40 @@ bool ParticleTrack::TrackToNextCell(const RadiatorArray &radiatorArray) {
 
 Photon ParticleTrack::GeneratePhotonFromAerogel() const {
   if(m_Location != Location::Radiator) {
-    throw std::runtime_error("Cannot generate photons before aerogel or after gas");
+    throw std::runtime_error(
+      "Cannot generate photons before aerogel or after gas");
   }
-  Photon photon = GeneratePhoton(m_AerogelEntry, m_AerogelExit, Photon::Radiator::Aerogel);
+  Photon photon = GeneratePhoton(m_AerogelEntry_s,
+				 m_AerogelExit_s,
+				 Photon::Radiator::Aerogel);
   return photon;
 }
 
 Photon ParticleTrack::GeneratePhotonFromGas() const {
   if(m_Location != Location::Mirror) {
-    throw std::runtime_error("Cannot generate photons from tracks not at the mirror");
+    throw std::runtime_error(
+      "Cannot generate photons from tracks not at the mirror");
   }
-  Photon photon = GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas);
+  Photon photon = GeneratePhoton(m_GasEntry_s,
+				 m_GasExit_s,
+				 Photon::Radiator::Gas);
   return photon;
 }
 
 std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
   if(m_Location != Location::Radiator) {
-    throw std::runtime_error("Cannot generate photons before aerogel or after gas");
+    throw std::runtime_error(
+      "Cannot generate photons before aerogel or after gas");
   }
-  const auto AerogelVec = m_AerogelExit.LocalVector() - m_AerogelEntry.LocalVector();
-  const double RadiatorDistance = TMath::Sqrt(AerogelVec.Mag2());
+  const double RadiatorDistance = m_AerogelExit_s - m_AerogelEntry_s;
   const double IndexRefraction =
     Utilities::GetIndexRefraction(Photon::Radiator::Aerogel, false);
   const std::size_t PhotonYield =static_cast<std::size_t>(
     std::round(GetPhotonYield(RadiatorDistance, Beta(), IndexRefraction)));
   std::vector<Photon> Photons;
   for(std::size_t i = 0; i < PhotonYield; i++) {
-    Photons.push_back(GeneratePhoton(m_AerogelEntry,
-				     m_AerogelExit,
+    Photons.push_back(GeneratePhoton(m_AerogelEntry_s,
+				     m_AerogelExit_s,
 				     Photon::Radiator::Aerogel));
   }
   return Photons;
@@ -204,10 +214,10 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromAerogel() const {
 
 std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   if(m_Location != Location::Mirror) {
-    throw std::runtime_error("Cannot generate photons from tracks not at the mirror");
+    throw std::runtime_error(
+      "Cannot generate photons from tracks not at the mirror");
   }
-  const auto GasVec = m_GasExit.LocalVector() - m_GasEntry.LocalVector();
-  const double RadiatorDistance = TMath::Sqrt(GasVec.Mag2());
+  const double RadiatorDistance = m_GasExit_s - m_GasEntry_s;
   const double IndexRefraction =
     Utilities::GetIndexRefraction(Photon::Radiator::Gas, false);
   const std::size_t PhotonYield = static_cast<std::size_t>(
@@ -215,25 +225,32 @@ std::vector<Photon> ParticleTrack::GeneratePhotonsFromGas() const {
   std::vector<Photon> Photons;
   Photons.reserve(PhotonYield);
   for(std::size_t i = 0; i < PhotonYield; i++) {
-    Photons.emplace_back(GeneratePhoton(m_GasEntry, m_GasExit, Photon::Radiator::Gas));
+    Photons.emplace_back(GeneratePhoton(m_GasEntry_s,
+					m_GasExit_s,
+					Photon::Radiator::Gas));
   }
   return Photons;
 }
 
-Photon ParticleTrack::GeneratePhoton(const ARCVector &Entry,
-				     const ARCVector &Exit,
+Photon ParticleTrack::GeneratePhoton(double Entry_s,
+				     double Exit_s,
 				     Photon::Radiator Radiator) const {
-  const auto EntryVec = Entry.LocalVector();
-  const auto ExitVec = Exit.LocalVector();
+  // Random emission point
+  const double RandomFraction = m_RandomEmissionPoint
+                              ? gRandom->Uniform(0.005, 0.995) : 0.5;
+  const double EmissionPoint_s = Entry_s + (Exit_s - Entry_s)*RandomFraction;
+  const auto EmissionPoint = m_Helix.GetPosition(EmissionPoint_s);
+  // Assumed emission point
+  const double AssumedEmissionPoint_s = 0.5*(Entry_s + Exit_s);
+  const auto AssumedEmissionPoint = m_Helix.GetPosition(AssumedEmissionPoint_s);
+  // Energy and index of refraction
   const double Energy = gRandom->Uniform(1.55, 4.31);
   const double n_phase = Utilities::GetIndexRefraction(Radiator,
 						       m_ChromaticDispersion,
 						       Energy);
-  const double RandomFraction = m_RandomEmissionPoint
-                              ? gRandom->Uniform(0.005, 0.995) : 0.5;
-  const Vector EmissionPoint = EntryVec + (ExitVec - EntryVec)*RandomFraction;
-  const Vector AssumedEmissionPoint = 0.5*(EntryVec + ExitVec);
+  // Random azimuthal angle
   const double phi = gRandom->Uniform(0.0, 2*TMath::Pi());
+  // Cherenkov angle
   auto GetCosTheta = [&] () {
     double CosTheta = 1.0/(Beta()*n_phase);
     if(CosTheta > 1.0) {
@@ -242,55 +259,37 @@ Photon ParticleTrack::GeneratePhoton(const ARCVector &Entry,
       return CosTheta;
     }
   };
+  // Trigonometry calculations
   const double CosTheta = GetCosTheta();
   const double SinTheta = TMath::Sqrt(1.0 - CosTheta*CosTheta);
   const double CosPhi = TMath::Cos(phi);
   const double SinPhi = (phi > TMath::Pi() ? -1.0 : +1.0)
                         *TMath::Sqrt(1.0 - CosPhi*CosPhi);
+  // Photon direction in particle rest frame
   Vector Direction(SinTheta*CosPhi, SinTheta*SinPhi, CosTheta);
-  // Rotate to particle frame
-  const ROOT::Math::RotationY RotateY(m_Momentum.LocalVector().Theta());
+  // Rotate to lab frame
+  const auto ParticleDirection = m_Helix.GetDirection(EmissionPoint_s);
+  const ROOT::Math::RotationY RotateY(ParticleDirection.Theta());
   Direction = RotateY(Direction);
-  const ROOT::Math::RotationZ RotateZ(m_Momentum.LocalVector().Phi());
+  const ROOT::Math::RotationZ RotateZ(ParticleDirection.Phi());
   Direction = RotateZ(Direction);
-  const auto RadiatorPosition = m_RadiatorCell->GetRadiatorPosition();
-  const auto RadiatorRotation = m_RadiatorCell->GetRadiatorRotation();
-  Photon photon(ARCVector(EmissionPoint, RadiatorPosition, RadiatorRotation),
-		ARCVector(AssumedEmissionPoint, RadiatorPosition, RadiatorRotation),
-		ARCVector(Direction, {}, RadiatorRotation),
-		m_Momentum.GlobalVector().Unit(),
+  // Finally create the photon
+  return Photon(EmissionPoint,
+		AssumedEmissionPoint,
+		Direction,
+		ParticleDirection,
+		m_Helix.GetDirection(AssumedEmissionPoint_s),
 		Energy,
 		CosTheta,
 		Radiator,
 		&(*m_RadiatorCell),
 		IsTrackDrawn(),
 		1.0/m_PhotonMultiplier);
-  return photon;
 }
 
 double ParticleTrack::Beta() const {
   const double Momentum = TMath::Sqrt(m_Momentum.LocalVector().Mag2());
   return Momentum/TMath::Sqrt(m_Mass*m_Mass + Momentum*Momentum);
-}
-
-const Vector& ParticleTrack::GetEntryPoint(Photon::Radiator Radiator) const {
-  if(Radiator == Photon::Radiator::Gas) {
-    return m_GasEntry.LocalVector();
-  } else if(Radiator == Photon::Radiator::Aerogel) {
-    return m_AerogelEntry.LocalVector();
-  } else {
-    throw std::runtime_error("Cannot find entry point of unknown radiator");
-  }
-}
-
-const Vector& ParticleTrack::GetExitPoint(Photon::Radiator Radiator) const {
-  if(Radiator == Photon::Radiator::Gas) {
-    return m_GasExit.LocalVector();
-  } else if(Radiator == Photon::Radiator::Aerogel) {
-    return m_AerogelExit.LocalVector();
-  } else {
-    throw std::runtime_error("Cannot find entry point of unknown radiator");
-  }
 }
 
 double ParticleTrack::GetPhotonYield(double x, double Beta, double n) const {
@@ -309,30 +308,23 @@ void ParticleTrack::MapPhi(double DeltaPhi) {
   Particle::MapPhi(DeltaPhi);
   m_InitialPosition.MapPhi(DeltaPhi);
   m_Momentum.MapPhi(DeltaPhi);
-  m_AerogelEntry.MapPhi(DeltaPhi);
-  m_AerogelExit.MapPhi(DeltaPhi);
-  m_GasEntry.MapPhi(DeltaPhi);
-  m_GasExit.MapPhi(DeltaPhi);
+  m_Helix.ResetOrigin(m_PathLength);
+  m_Helix.MapPhi(DeltaPhi);
 }
 
 void ParticleTrack::ReflectZ() {
   Particle::ReflectZ();
   m_InitialPosition.ReflectZ();
   m_Momentum.ReflectZ();
-  m_AerogelEntry.ReflectZ();
-  m_AerogelExit.ReflectZ();
-  m_GasEntry.ReflectZ();
-  m_GasExit.ReflectZ();
+  m_Helix.ReflectZ();
 }
 
 void ParticleTrack::ReflectY() {
   Particle::ReflectY();
   m_InitialPosition.ReflectY();
   m_Momentum.ReflectY();
-  m_AerogelEntry.ReflectY();
-  m_AerogelExit.ReflectY();
-  m_GasEntry.ReflectY();
-  m_GasExit.ReflectY();
+  m_Helix.ResetOrigin(m_PathLength);
+  m_Helix.ReflectY();
 }
 
 std::unique_ptr<TLine> ParticleTrack::DrawParticleTrack() const {

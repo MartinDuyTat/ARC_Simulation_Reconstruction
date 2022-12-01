@@ -58,7 +58,7 @@ namespace PhotonReconstructor {
       std::swap(ReflectionPoint, OtherReflectionPoint);
     }
     const Vector ReflectionEmissionPoint = ReflectionPoint - EmissionPoint;
-    const Vector Direction = Photon->GetParticleDirection();
+    const Vector Direction = Photon->GetParticleDirection(TrueEmissionPoint);
     const double CosTheta = ReflectionEmissionPoint.Unit().Dot(Direction);
     return CosTheta;
   }

@@ -15,21 +15,23 @@
 #include"ARCVector.h"
 #include"Settings.h"
 
-Photon::Photon(const ARCVector &Position,
-	       const ARCVector &AssumedPosition,
-	       const ARCVector &Direction,
+Photon::Photon(const Vector &Position,
+	       const Vector &AssumedPosition,
+	       const Vector &Direction,
 	       const Vector &ParticleDirection,
+	       const Vector &AssumedParticleDirection,
 	       double Energy,
 	       double CosCherenkovAngle,
 	       Radiator radiator,
 	       const RadiatorCell *radiatorCell, 
 	       bool IsTrackDrawn,
 	       double Weight):
-  Particle(Position.GlobalVector(), radiatorCell),
+  Particle(Position, radiatorCell),
   m_AssumedEmissionPoint(AssumedPosition),
   m_EmissionPoint(Position),
   m_Direction(Direction),
   m_ParticleDirection(ParticleDirection),
+  m_AssumedParticleDirection(AssumedParticleDirection),
   m_Energy(Energy),
   m_Radiator(radiator),
   m_CosCherenkovAngle(CosCherenkovAngle),
@@ -42,7 +44,12 @@ Photon::Photon(const ARCVector &Position,
   const auto RadiatorPosition = radiatorCell->GetRadiatorPosition();
   const auto RadiatorRotation = radiatorCell->GetRadiatorRotation();
   m_Position.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_AssumedEmissionPoint.AssignLocalCoordinates(RadiatorPosition,
+						RadiatorRotation);
+  m_EmissionPoint.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
+  m_Direction.AssignLocalCoordinates({}, RadiatorRotation);
   m_ParticleDirection.AssignLocalCoordinates({}, RadiatorRotation);
+  m_AssumedParticleDirection.AssignLocalCoordinates({}, RadiatorRotation);
 }
 
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
@@ -166,6 +173,7 @@ void Photon::ConvertToRadiatorCoordinates() {
   m_EmissionPoint.AssignLocalCoordinates(RadiatorPosition, RadiatorRotation);
   m_Direction.AssignLocalCoordinates({}, RadiatorRotation);
   m_ParticleDirection.AssignLocalCoordinates({}, RadiatorRotation);
+  m_AssumedParticleDirection.AssignLocalCoordinates({}, RadiatorRotation);
   // Check if particle is within acceptance
   if(!m_RadiatorCell->IsInsideCell(m_Position)) {
     m_Status = Status::OutsideCell;
@@ -178,6 +186,7 @@ void Photon::ConvertBackToGlobalCoordinates() {
   m_EmissionPoint.ConvertToGlobal();
   m_Direction.ConvertToGlobal();
   m_ParticleDirection.ConvertToGlobal();
+  m_AssumedParticleDirection.ConvertToGlobal();
   // Photon doesn't hit any mirror
   m_MirrorHitPosition = nullptr;
 }
@@ -188,6 +197,7 @@ void Photon::MapPhi(double DeltaPhi) {
   m_EmissionPoint.MapPhi(DeltaPhi);
   m_Direction.MapPhi(DeltaPhi);
   m_ParticleDirection.MapPhi(DeltaPhi);
+  m_AssumedParticleDirection.MapPhi(DeltaPhi);
 }
 
 void Photon::ReflectZ() {
@@ -196,6 +206,7 @@ void Photon::ReflectZ() {
   m_EmissionPoint.ReflectZ();
   m_Direction.ReflectZ();
   m_ParticleDirection.ReflectZ();
+  m_AssumedParticleDirection.ReflectZ();
 }
 
 
@@ -205,6 +216,7 @@ void Photon::ReflectY() {
   m_EmissionPoint.ReflectY();
   m_Direction.ReflectY();;
   m_ParticleDirection.ReflectY();
+  m_AssumedParticleDirection.ReflectY();
 }
 
 bool Photon::IsAtRadiator() const {
@@ -223,8 +235,12 @@ bool Photon::HasPhotonMigrated() const {
   return m_HasMigrated;
 }
 
-const Vector& Photon::GetParticleDirection() const {
-  return m_ParticleDirection.LocalVector();
+const Vector& Photon::GetParticleDirection(bool TrueEmissionPoint) const {
+  if(TrueEmissionPoint) {
+    return m_ParticleDirection.LocalVector();
+  } else {
+    return m_AssumedParticleDirection.LocalVector();
+  }
 }
 
 double Photon::GetWeight() const {

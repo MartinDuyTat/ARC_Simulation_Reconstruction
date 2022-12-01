@@ -67,9 +67,13 @@ class RadiatorCell {
    */
   double GetAerogelThickness() const;
   /**
-   * Get the mirror centre of curvature
+   * Get the mirror centre of curvature in local coordinates
    */
   const Vector& GetMirrorCentre() const;
+  /**
+   * Get the mirror centre of curvature in global coordinates
+   */
+  Vector GetGlobalMirrorCentre() const;
   /**
    * Get the mirror curvature
    */

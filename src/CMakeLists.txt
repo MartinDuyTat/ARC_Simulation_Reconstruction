@@ -6,6 +6,8 @@ add_library(ARC_Simulation_Reconstruction
 	    EndCapRadiatorCell.cpp
 	    EventDisplay.cpp
 	    HalfRadiatorCell.cpp
+	    HelixFunctor.cpp
+	    HelixPath.cpp
 	    Quartic.cpp
 	    Particle.cpp
 	    ParticleTrack.cpp

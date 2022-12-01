@@ -89,6 +89,10 @@ class ARCVector {
    * Set the z-component, only use this to set the mirror position!
    */
   void SetZ(double z);
+  /**
+   * Set global vector
+   */
+  void SetGlobalVector(const Vector &Vect);
  private:
   /**
    * The actual vector

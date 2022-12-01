@@ -101,6 +101,13 @@ void ARCVector::SetZ(double z) {
   m_Vector.SetZ(z);
 }
 
+void ARCVector::SetGlobalVector(const Vector &Vect) {
+  m_Vector = Vect;
+  if(m_CoordinateTransform) {
+    GlobalToLocal(m_Vector);
+  }
+}
+
 void ARCVector::GlobalToLocal(Vector &Vec) const {
   Vec -= m_CoordinateTransform->first;
   Vec = m_CoordinateTransform->second(Vec);
