@@ -43,7 +43,7 @@ bool ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
   }
   if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
     const double TrackerRadius = InnerTracker.GetRadius();
-    BarrelHelixFunctor Functor(TrackerRadius);
+    const BarrelHelixFunctor Functor(TrackerRadius);
     const double Tracker_s = m_Helix.SolvePathLength(Functor,
 						     0.9*TrackerRadius,
 						     5.0*TrackerRadius);
@@ -55,7 +55,18 @@ bool ParticleTrack::TrackThroughTracker(const TrackingVolume &InnerTracker) {
     m_Position.SetGlobalVector(NewPosition);
     m_PathLength = Tracker_s;
   } else {
-    throw std::runtime_error("Haven't implemented end cap magnetic field tracking");
+    const double BarrelZ = Settings::GetDouble("ARCGeometry/BarrelZ");
+    const int Sign = m_Momentum.GlobalVector().Z() > 0 ? +1 : -1;
+    const EndCapHelixFunctor Functor(BarrelZ*Sign);
+    const double Tracker_s = m_Helix.SolvePathLength(Functor,
+						     0.95*BarrelZ,
+						     3.0*BarrelZ);
+    if(Tracker_s == -999.0) {
+      throw std::runtime_error("Track did not reach end cap");
+    }
+    const auto NewPosition = m_Helix.GetPosition(Tracker_s);
+    m_Position.SetGlobalVector(NewPosition);
+    m_PathLength = Tracker_s;
   }
   m_Location = Location::EntranceWindow;
   return true;
@@ -99,9 +110,10 @@ bool ParticleTrack::TrackThroughAerogel() {
   if(m_Location != Location::EntranceWindow) {
     throw std::runtime_error("Particle not at entrance window");
   }
-  ZPlaneHelixFunctor CoolingFunctor(0.0,
-				    m_RadiatorCell->GetRadiatorPosition(),
-				    true);
+  const bool InBarrel = Settings::GetString("General/BarrelOrEndcap") == "Barrel";
+  const ZPlaneHelixFunctor CoolingFunctor(0.0,
+					  m_RadiatorCell->GetRadiatorPosition(),
+					  InBarrel);
   const double Cooling_s = m_Helix.SolvePathLength(CoolingFunctor,
 						   m_PathLength,
 						   1.2*m_PathLength);
@@ -112,24 +124,19 @@ bool ParticleTrack::TrackThroughAerogel() {
   m_Position.SetGlobalVector(CoolingLayerPosition);
   m_PathLength = Cooling_s;
   m_AerogelEntry_s = Cooling_s;
-  if(Settings::GetString("General/BarrelOrEndcap") == "Barrel") {
-    //const auto Position = m_Position.GlobalVector();
-    const double AerogelThickness = m_RadiatorCell->GetAerogelThickness();
-    ZPlaneHelixFunctor AerogelFunctor(AerogelThickness,
-				      m_RadiatorCell->GetRadiatorPosition(),
-				      true);
-    const double Aerogel_s = m_Helix.SolvePathLength(AerogelFunctor,
-						     m_PathLength,
-						     1.2*m_PathLength);
-    if(Aerogel_s == -999.0) {
-      return false;
-    }
-    const auto AerogelPosition = m_Helix.GetPosition(Aerogel_s);
-    m_Position.SetGlobalVector(AerogelPosition);
-    m_PathLength = Aerogel_s;
-  } else {
-    throw std::runtime_error("Haven't implemented end cap magnetic field tracking");
+  const double AerogelThickness = m_RadiatorCell->GetAerogelThickness();
+  const ZPlaneHelixFunctor AerogelFunctor(AerogelThickness,
+					  m_RadiatorCell->GetRadiatorPosition(),
+					  InBarrel);
+  const double Aerogel_s = m_Helix.SolvePathLength(AerogelFunctor,
+						   m_PathLength,
+						   1.2*m_PathLength);
+  if(Aerogel_s == -999.0) {
+    return false;
   }
+  const auto AerogelPosition = m_Helix.GetPosition(Aerogel_s);
+  m_Position.SetGlobalVector(AerogelPosition);
+  m_PathLength = Aerogel_s;
   m_AerogelExit_s = m_PathLength;
   m_GasEntry_s = m_AerogelExit_s;
   m_Location = Location::Radiator;

@@ -51,6 +51,32 @@ class BarrelHelixFunctor: public HelixFunctor {
 };
 
 /**
+ * EndCapHelixFunctor is a functor for tracking the particle to the end cap
+ */
+class EndCapHelixFunctor: public HelixFunctor {
+  public:
+  /**
+   * Constructor that sets up the end cap distance we want to track particle to
+   * @param z The z distance we're tracking the particle to
+   */
+  EndCapHelixFunctor(double z);
+  /**
+   * We do not need copy constructor
+   */
+  EndCapHelixFunctor(const BarrelHelixFunctor &Functor) = delete;
+  /**
+   * Virtual () operator
+   * @param Vect Vector position
+   */
+  virtual double operator()(const Vector &Vect) const override;
+ private:
+  /**
+   * The z distance we're tracking the particle to
+   */
+  const double m_z;
+};
+
+/**
  * ZPlaneHelixFunctor is a functor for tracking the particle through various
  * the different layers of a barrel cell
  */

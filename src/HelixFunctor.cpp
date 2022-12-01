@@ -10,6 +10,13 @@ double BarrelHelixFunctor::operator()(const Vector &Vect) const {
   return Vect.X()*Vect.X() + Vect.Y()*Vect.Y() - m_Radius*m_Radius;
 }
 
+EndCapHelixFunctor::EndCapHelixFunctor(double z): m_z(z) {
+}
+
+double EndCapHelixFunctor::operator()(const Vector &Vect) const {
+  return Vect.Z() - m_z;
+}
+
 ZPlaneHelixFunctor::ZPlaneHelixFunctor(double z,
 				       const Vector &CellPosition,
 				       bool Barrel):
@@ -30,7 +37,6 @@ Vector ZPlaneHelixFunctor::GetUnitZ(bool Barrel, const Vector &Position) {
     return Vector(0.0, 0.0, 1.0);
   }
 }
-    
 
 MirrorHelixFunctor::MirrorHelixFunctor(const Vector &MirrorPosition,
 				       double Curvature):

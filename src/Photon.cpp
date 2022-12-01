@@ -55,6 +55,9 @@ Photon::Photon(const Vector &Position,
 std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
 Photon::DrawPhotonPath() const {
   std::vector<std::pair<std::unique_ptr<TObject>, std::string>> PhotonLine;
+  if(!m_IsTrackDrawn) {
+    return PhotonLine;
+  }
   const std::size_t RowToDraw = Settings::GetSizeT("EventDisplay/RowToDraw");
   if(!m_RadiatorCell || GetRadiatorRowNumber() != RowToDraw) {
     return PhotonLine;
