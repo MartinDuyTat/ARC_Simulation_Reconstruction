@@ -11,7 +11,7 @@ using Functor1D = ROOT::Math::Functor1D;
 
 HelixPath::HelixPath(const Vector &Momentum, int Q, double B):
   m_n(Momentum.Unit()),
-  m_Radius(TMath::Sqrt(Momentum.Mag2())/(Q*B)),
+  m_Radius(3.335640952*TMath::Sqrt(Momentum.Mag2())/(Q*B)),
   m_InvRadius(1.0/m_Radius),
   m_BFieldOn(B != 0.0),
   m_Origin_s(0.0) {
