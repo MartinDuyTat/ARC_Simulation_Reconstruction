@@ -275,6 +275,8 @@ int main(int argc, char *argv[]) {
 	const bool HitMirror = particleTrack.TrackToNextCell(*radiatorArray);
 	if(!HitMirror) {
 	  File.ParticleLocation = particleTrack.GetParticleLocation();
+	  File.FinalRadiatorRowNumber = static_cast<std::size_t>(-1);
+	  File.FinalRadiatorColumnNumber = static_cast<std::size_t>(-1);
 	  File.Fill();
 	  continue;
 	}

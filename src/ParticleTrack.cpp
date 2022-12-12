@@ -149,12 +149,16 @@ void ParticleTrack::TrackThroughGasToMirror() {
     throw std::runtime_error("Cannot track through gas if not in radiator");
   }
   m_Position.SetGlobalVector(m_Helix.GetPosition(m_GasEntry_s));
+  m_PathLength = m_GasEntry_s;
   const auto MirrorCentre = m_RadiatorCell->GetGlobalMirrorCentre();
   MirrorHelixFunctor MirrorFunctor(MirrorCentre,
 				   m_RadiatorCell->GetMirrorCurvature());
   const double Mirror_s = m_Helix.SolvePathLength(MirrorFunctor,
-						  0.9*m_PathLength,
-						  2.0*m_PathLength);
+						  m_PathLength,
+						  1.5*m_PathLength);
+  if(Mirror_s == -999.0) {
+    return;
+  }
   const auto MirrorPosition = m_Helix.GetPosition(Mirror_s);
   m_Position.SetGlobalVector(MirrorPosition);
   m_PathLength = Mirror_s;

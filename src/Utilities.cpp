@@ -22,39 +22,62 @@ namespace Utilities {
   }
 
   Vector GenerateRandomBarrelTrackZRange(double z_min, double z_max) {
-    const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-    const double z = gRandom->Uniform(z_min, z_max);
-    const double CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
-    const double Phi = Settings::GetBool("Particle/RandomPhi")
-      ? gRandom->Uniform(-TMath::Pi(), TMath::Pi())
-      : gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
-			 Settings::GetDouble("Particle/Phi_max"));
-    const Vector Momentum = VectorFromSpherical(GetMomentumMag(), CosTheta, Phi);
-    return Momentum;
+    const double CosTheta_boundary =
+      Settings::GetDouble("ARCGeometry/CosTheta_boundary");
+    while(true) {
+      const double Radius = Settings::GetDouble("ARCGeometry/Radius");
+      const double z = gRandom->Uniform(z_min, z_max);
+      const double CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
+      if(TMath::Abs(CosTheta) > CosTheta_boundary) {
+	continue;
+      }
+      const double Phi = Settings::GetBool("Particle/RandomPhi")
+	? gRandom->Uniform(-TMath::Pi(), TMath::Pi())
+	: gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
+			   Settings::GetDouble("Particle/Phi_max"));
+      const Vector Momentum = VectorFromSpherical(GetMomentumMag(), CosTheta, Phi);
+      return Momentum;
+    }
   }
 
   Vector GenerateRandomBarrelTrack(double &CosTheta, double &Phi) {
-    const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-    const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
-				      Settings::GetDouble("Particle/z_max"));
-    CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
-    Phi = Settings::GetBool("Particle/RandomPhi")
-      ? gRandom->Uniform(-TMath::Pi(), TMath::Pi())
-      : gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
-			 Settings::GetDouble("Particle/Phi_max"));
-    const Vector Momentum = VectorFromSpherical(GetMomentumMag(), CosTheta, Phi);
-    return Momentum;
+    const double CosTheta_boundary =
+      Settings::GetDouble("ARCGeometry/CosTheta_boundary");
+    while(true) {
+      const double Radius = Settings::GetDouble("ARCGeometry/Radius");
+      const double z = gRandom->Uniform(Settings::GetDouble("Particle/z_min"),
+					Settings::GetDouble("Particle/z_max"));
+      CosTheta = z/TMath::Sqrt(z*z + Radius*Radius);
+      if(TMath::Abs(CosTheta) > CosTheta_boundary) {
+	continue;
+      }
+      Phi = Settings::GetBool("Particle/RandomPhi")
+	? gRandom->Uniform(-TMath::Pi(), TMath::Pi())
+	: gRandom->Uniform(Settings::GetDouble("Particle/Phi_min"),
+			   Settings::GetDouble("Particle/Phi_max"));
+      const Vector Momentum = VectorFromSpherical(GetMomentumMag(), CosTheta, Phi);
+      return Momentum;
+    }
   }
 
   Vector GenerateRandomEndCapTrack() {
-    const double Radius = Settings::GetDouble("ARCGeometry/MaxEndCapRadius");
+    const double CosTheta_boundary =
+      Settings::GetDouble("ARCGeometry/CosTheta_boundary");
+    const double SecTheta = 1.0/CosTheta_boundary;
+    const double TanTheta = TMath::Sqrt(SecTheta*SecTheta - 1.0);
     const double z = Settings::GetDouble("ARCGeometry/BarrelZ");
-    auto GetUniformCircle = [Radius] () {
-      double x = Radius, y = Radius;
-      while(x*x + y*y > Radius*Radius) {
-	x = gRandom->Uniform(-Radius, Radius);
-	y = gRandom->Uniform(-Radius, Radius);
-      }
+    const double Radius_max = TanTheta*z;
+    const double Radius_min = Settings::GetDouble("ARCGeometry/EndCapInnerRadius");
+    auto GetUniformCircle = [=] () {
+      double x = CosTheta_boundary, y = CosTheta_boundary;
+      double r2, CosTheta;
+      do {
+	x = gRandom->Uniform(-Radius_max, Radius_max);
+	y = gRandom->Uniform(-Radius_max, Radius_max);
+	r2 = x*x + y*y;
+	CosTheta = z/TMath::Sqrt(r2 + z*z);
+      } while(CosTheta < CosTheta_boundary ||
+	      r2 < Radius_min*Radius_min);
       return std::make_pair(x, y);
     };
     auto [x, y] = GetUniformCircle();
@@ -91,7 +114,14 @@ double GetMomentumMag() {
     }
     // Check if track hit the cell we're optimising
     if(particleTrack.GetRadiatorCell() != &radiatorCell) {
-      return ResolutionStruct{};
+      if(particleTrack.GetRadiatorCell()) {
+	return ResolutionStruct{};
+      } else {
+	ResolutionStruct resolutionStruct;
+	resolutionStruct.HitCorrectCell = true;
+	resolutionStruct.HitTopWall = true;
+	return resolutionStruct;
+      }
     }
     // If we're in the cell we're optimising, make sure we hit the mirror
     const auto Location = particleTrack.GetParticleLocation();

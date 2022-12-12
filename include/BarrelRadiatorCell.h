@@ -46,6 +46,10 @@ class BarrelRadiatorCell: public RadiatorCell {
    * Function that checks if the detector is contained inside the radiator cell
    */
   virtual bool IsDetectorInsideCell() const override;
+  /**
+   * Checks if the cell is at the edge (near the end cap)
+   */
+  virtual bool IsEdgeCell() const override;
  protected:
   /**
    * Radius of the barrel where the entrance window is

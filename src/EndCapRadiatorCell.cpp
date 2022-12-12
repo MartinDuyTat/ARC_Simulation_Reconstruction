@@ -256,3 +256,7 @@ bool EndCapRadiatorCell::IsInsideRadialAcceptance(const Vector &Position) const 
 				    Position.Y()*Position.Y());
   return Radius >= m_InnerRadius && Radius <= m_OuterRadius;
 }
+
+bool EndCapRadiatorCell::IsEdgeCell() const {
+  return false;
+}

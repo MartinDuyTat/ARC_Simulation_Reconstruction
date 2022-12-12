@@ -206,3 +206,8 @@ Rotation3D BarrelRadiatorCell::GetCellOrientation(double HexagonSize,
     return Rotation2*Rotation1*Rotation0;
   }
 }
+
+bool BarrelRadiatorCell::IsEdgeCell() const {
+  return (m_CellNumber == std::make_pair(std::size_t{8}, std::size_t{1}) ||
+         m_CellNumber == std::make_pair(std::size_t{9}, std::size_t{2}));
+}

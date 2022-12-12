@@ -134,11 +134,6 @@ void RadiatorCell::SetDetectorTilt(double Angle) {
   m_Detector.SetDetectorTilt(Angle);
 }
 
-bool RadiatorCell::IsEdgeCell() const {
-  return (m_CellNumber == std::make_pair(std::size_t{8}, std::size_t{1}) ||
-         m_CellNumber == std::make_pair(std::size_t{9}, std::size_t{2}));
-}
-
 RotationZ RadiatorCell::ReversePhiRotation() const {
   return RotationZ(0.0);
 }

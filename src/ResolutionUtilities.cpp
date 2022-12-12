@@ -33,7 +33,6 @@ namespace ResolutionUtilities {
     // Put it all together
     ResolutionStruct Total{};
     std::size_t PhotonsHitWallTracks = 0;
-    bool TooFewPhotons = false;
     #pragma omp parallel for num_threads(8)
     for(std::size_t i = 0; i < Particles.size(); i++) {
       ResolutionStruct resolutionStruct =
@@ -46,16 +45,13 @@ namespace ResolutionUtilities {
       if(resolutionStruct.HitTopWall) {
 	PhotonsHitWallTracks++;
       } else if(resolutionStruct.N <= 1) {
-        TooFewPhotons = true;
+        PhotonsHitWallTracks++;
       } else {
         Total.x += resolutionStruct.x;
         Total.N++;
         Total.CentreHitDistance += resolutionStruct.CentreHitDistance;
       }
       }
-    }
-    if(TooFewPhotons) {
-      return 1000.0;
     }
     if(Total.N == 0) {
       return 1000.0;

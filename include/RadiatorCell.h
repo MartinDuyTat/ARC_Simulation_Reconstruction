@@ -139,7 +139,7 @@ class RadiatorCell {
   /**
    * Checks if the cell is at the edge (near the end cap)
    */
-  bool IsEdgeCell() const;
+  virtual bool IsEdgeCell() const = 0;
   /**
    * Get the reverse rotation in phi, for plotting purposes
    */

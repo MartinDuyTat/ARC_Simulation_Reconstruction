@@ -63,6 +63,16 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   RadiatorCell *radiatorCell = radiatorArray->GetRadiatorCell(Column, Row);
+  if(!radiatorCell) {
+    if(BarrelOrEndcap == "Barrel") {
+      std::cout << "Barrel ";
+    } else {
+      std::cout << "End cap ";
+    }
+    std::cout << "radiator cell (" << Column << ", " << Row << ")";
+    std::cout << " doesn't exist\n";
+    return 0;
+  }
   const double z_min = Settings::GetDouble("Particle/z_min");
   const double z_max = Settings::GetDouble("Particle/z_max");
   Tracks Particles;

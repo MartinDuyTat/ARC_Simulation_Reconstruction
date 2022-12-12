@@ -52,6 +52,11 @@ const RadiatorCell* EndCapRadiatorArray::FindRadiator(Particle &particle) const 
   if(Radius < m_InnerRadius || Radius > m_OuterRadius) {
     return nullptr;
   }
+  const double CosTheta_min = Settings::GetDouble("ARCGeometry/CosTheta_boundary");
+  const double Theta = particle.GetPosition().GlobalVector().Theta();
+  if(TMath::Cos(Theta) < CosTheta_min) {
+    return nullptr;
+  }
   // If track hits the other end cap, reflect
   if(particle.GetPosition().GlobalVector().Z() < 0.0) {
     particle.ReflectZ();
