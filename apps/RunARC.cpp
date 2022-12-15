@@ -216,6 +216,10 @@ int main(int argc, char *argv[]) {
     const int Hypothesis1 = Settings::GetInt("General/MassHypothesis1");
     const int Hypothesis2 = Settings::GetInt("General/MassHypothesis2");
     for(std::size_t i = 0; i < NumberTracks; i++) {
+      if(i%(NumberTracks/10) == 0) {
+	std::cout << 100*i/NumberTracks;
+	std::cout << "%\n";
+      }
       File.NumberPhotons = 0;
       File.NumberGoodPhotons = 0.0;
       File.TrackNumber = i;
