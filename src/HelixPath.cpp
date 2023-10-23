@@ -15,6 +15,7 @@ HelixPath::HelixPath(const Vector &Momentum, int Q, double B):
   m_InvRadius(1.0/m_Radius),
   m_BFieldOn(B != 0.0),
   m_Origin_s(0.0) {
+  gErrorIgnoreLevel = kFatal;
 }
 
 Vector HelixPath::GetPosition(double s) const {

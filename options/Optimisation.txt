@@ -1,0 +1,55 @@
+NumberAgents 50
+#Iterations 2000
+#Iterations 200
+Iterations 700
+DoFit true
+PlotProjections false
+Filename FitResults.txt
+
+MirrorCurvature_IsFixed false
+MirrorCurvature_value 0.37
+#MirrorCurvature_min 0.22
+MirrorCurvature_min 0.27
+#MirrorCurvature_min 0.35
+#MirrorCurvature_max 0.45
+MirrorCurvature_max 0.38
+MirrorCurvaturePlot_min 0.33
+MirrorCurvaturePlot_max 0.345
+
+MirrorXPosition_IsFixed false
+MirrorXPosition_value 0.0
+MirrorXPosition_min -0.25
+MirrorXPosition_max 0.25
+#MirrorXPosition_min -0.05
+#MirrorXPosition_max 0.05
+#MirrorXPosition_max 0.0
+MirrorXPositionPlot_min -0.148
+MirrorXPositionPlot_max -0.12
+
+MirrorZPosition_IsFixed false
+MirrorZPosition_value 0.0
+MirrorZPosition_min -0.05
+MirrorZPosition_max 0.15
+#MirrorZPosition_max 0.05
+MirrorZPositionPlot_min 0.029
+MirrorZPositionPlot_max 0.038
+
+DetectorPosition_IsFixed false
+DetectorPosition_value 0.0
+DetectorPosition_min -0.15
+DetectorPosition_max 0.15
+#DetectorPosition_max 0.0
+DetectorPositionPlot_min -0.067
+DetectorPositionPlot_max -0.0277
+
+DetectorTilt_IsFixed false
+DetectorTilt_value 0.0
+#DetectorTilt_min -1.6
+DetectorTilt_min -1.4
+#DetectorTilt_min -0.8
+DetectorTilt_max 1.4
+#DetectorTilt_max -1.0
+DetectorTiltPlot_min -0.91
+DetectorTiltPlot_max 0.05
+
+SinglePoints false

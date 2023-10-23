@@ -1,0 +1,10 @@
+Radius 1.91 * Radius where cooling layer starts
+Length 4.362
+CellsPerRow 9
+#FieldStrength 2.0
+FieldStrength 0.0
+BarrelZ 2.01 * z coordinate where cooling layer of end cap starts
+MaxEndCapRadius 2.0
+EndCapInnerRadius 0.30
+EndCapOuterRadius 1.89
+CosTheta_boundary 0.74
