@@ -4,38 +4,54 @@
 #include<utility>
 #include<string>
 #include<memory>
-#include"TArc.h"
-#include"TLine.h"
-#include"TMath.h"
-#include"TObject.h"
+#include<stdexcept>
+#include"Math/Vector3Dfwd.h"
+#include"Math/Rotation3D.h"
 #include"RadiatorCell.h"
 #include"Settings.h"
 #include"Photon.h"
 
-RadiatorCell::RadiatorCell(int CellNumber): m_ThetaLength(Settings::GetDouble("ARCGeometry/Length")/Settings::GetInt("ARCGeometry/ThetaCells")),
-					    m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
-					    m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
-					    m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
-					    m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
-					    m_Position(GetCellPosition(CellNumber)),
-					    m_Detector(DetermineSiPMPositionX(), 0.0),
-					    m_MirrorCurvature(DetermineMirrorCurvature()),
-					    m_MirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
-                                            m_DeltaPhi(2.0*TMath::Pi()/Settings::GetInt("ARCGeometry/PhiCells")),
-                                            m_CellNumber(CellNumber) {
-  // TODO: Allow for off-axis mirror or mirror with different radius of curvature
-  // Check if this cell is at the edge
-  if(Settings::GetBool("General/FullArray")) {
-    const int NumberThetaCells = Settings::GetInt("ARCGeometry/ThetaCells");
-    if(m_CellNumber == -NumberThetaCells/2) {
-      m_FirstMiddleLast = FirstMiddleLast::First;
-    } else if(m_CellNumber == NumberThetaCells/2) {
-      m_FirstMiddleLast = FirstMiddleLast::Last;
-    } else {
-      m_FirstMiddleLast = FirstMiddleLast::Middle;
-    }
-  } else {
-    m_FirstMiddleLast = FirstMiddleLast::Single;
+RadiatorCell::RadiatorCell(std::size_t CellColumnNumber,
+			   std::size_t CellRowNumber,
+			   double HexagonSize,
+			   const Vector &Position,
+			   const Rotation3D &Rotation,
+			   const std::string &Prefix):
+  m_Position(Position),
+  m_Rotation(Rotation),
+  m_RadiatorThickness(Settings::GetDouble("RadiatorCell/RadiatorThickness")),
+  m_VesselThickness(Settings::GetDouble("RadiatorCell/VesselThickness")),
+  m_CoolingThickness(Settings::GetDouble("RadiatorCell/CoolingThickness")),
+  m_AerogelThickness(Settings::GetDouble("RadiatorCell/AerogelThickness")),
+  m_HexagonSize(HexagonSize),
+  m_CellNumber(std::make_pair(CellColumnNumber, CellRowNumber)),
+  m_MirrorCurvature(Settings::GetDouble("RadiatorCell/MirrorCurvature")),
+  m_DefaultMirrorCentre(0.0, 0.0, GetMirrorCurvatureCentreZ()),
+  m_MirrorCentre(m_DefaultMirrorCentre, m_Position, m_Rotation) {
+  const std::string RadiatorName = Prefix + "Radiator_c"
+                                 + std::to_string(m_CellNumber.first)
+                                 + "_r"
+                                 + std::to_string(m_CellNumber.second)
+                                 + "_";
+  const std::string CurvatureName = "RadiatorCell/" + RadiatorName + "Curvature";
+  if(Settings::Exists(CurvatureName)) {
+    SetMirrorCurvature(Settings::GetDouble(CurvatureName));
+  }
+  const std::string XPositionName = "RadiatorCell/" + RadiatorName + "XPosition";
+  if(Settings::Exists(XPositionName)) {
+    SetMirrorXPosition(Settings::GetDouble(XPositionName));
+  }
+  const std::string ZPositionName = "RadiatorCell/" + RadiatorName + "ZPosition";
+  if(Settings::Exists(ZPositionName)) {
+    SetMirrorZPosition(Settings::GetDouble(ZPositionName));
+  }
+  const std::string DetPositionName = "RadiatorCell/" + RadiatorName + "DetPosition";
+  if(Settings::Exists(DetPositionName)) {
+    SetDetectorPosition(Settings::GetDouble(DetPositionName));
+  }
+  const std::string DetTiltName = "RadiatorCell/" + RadiatorName + "DetTilt";
+  if(Settings::Exists(DetTiltName)) {
+    SetDetectorTilt(Settings::GetDouble(DetTiltName));
   }
 }
 
@@ -56,139 +72,68 @@ double RadiatorCell::GetAerogelThickness() const {
 }
 
 const Vector& RadiatorCell::GetMirrorCentre() const {
-  return m_MirrorCentre;
+  return m_MirrorCentre.LocalVector();
+}
+
+Vector RadiatorCell::GetGlobalMirrorCentre() const {
+  return m_MirrorCentre.GlobalVector();
 }
 
 double RadiatorCell::GetMirrorCurvatureCentreZ() const {
-  // TODO: Allow for off-axis mirror
-  return m_RadiatorThickness - m_MirrorCurvature - 2*m_VesselThickness - m_CoolingThickness;
+  return m_RadiatorThickness
+       - m_MirrorCurvature
+       - 2*m_VesselThickness
+       - m_CoolingThickness;
 }
 
 double RadiatorCell::GetMirrorCurvature() const {
   return m_MirrorCurvature;
 }
 
+bool RadiatorCell::IsInsideCell(const Photon &photon) const {
+  return IsInsideCell(photon.GetPosition());
+}
+
 const Vector& RadiatorCell::GetRadiatorPosition() const {
   return m_Position;
 }
 
-bool RadiatorCell::IsInsideThetaBoundary(const Vector &Position) const {
-  return TMath::Abs(Position.X()) <= m_ThetaLength/2.0;
+const Rotation3D& RadiatorCell::GetRadiatorRotation() const {
+  return m_Rotation;
 }
 
-bool RadiatorCell::IsInsideThetaBoundary(const Photon &photon) const {
-  return IsInsideThetaBoundary(photon.m_Position);
+double RadiatorCell::GetHexagonSize() const {
+  return m_HexagonSize;
 }
 
-bool RadiatorCell::IsInsidePhiBoundary(const Photon &photon) const {
-  const double PhiLength = m_DeltaPhi*Settings::GetDouble("ARCGeometry/Radius");
-  return TMath::Abs(photon.m_Position.Y()) <= PhiLength/2.0 + photon.m_Position.Z()*TMath::Tan(m_DeltaPhi/2.0);
-}
-
-std::vector<std::pair<std::unique_ptr<TObject>, std::string>> RadiatorCell::DrawRadiatorGeometry() const {
-  // First find the mirror intersections with the walls in local coordinates by solving a quadratic
-  const double b = m_MirrorCentre.Z();
-  const double c_left = TMath::Power(m_ThetaLength/2.0, 2)
-                      + m_MirrorCentre.Mag2()
-                      - m_MirrorCurvature*m_MirrorCurvature
-                      - m_MirrorCentre.X()*m_ThetaLength;
-  const double c_right = TMath::Power(m_ThetaLength/2.0, 2)
-                       + m_MirrorCentre.Mag2()
-                       - m_MirrorCurvature*m_MirrorCurvature
-                       + m_MirrorCentre.X()*m_ThetaLength;
-  const double s_left = TMath::Sqrt(b*b - c_left);
-  const double s_right = TMath::Sqrt(b*b - c_right);
-  const auto MirrorCentreGlobal = m_Position + m_MirrorCentre;
-  //const double ArcAngle = TMath::ASin(0.5*m_ThetaLength/m_MirrorCurvature)*180.0/TMath::Pi();
-  TArc MirrorArc(MirrorCentreGlobal.X(),
-		 MirrorCentreGlobal.Z(),
-		 m_MirrorCurvature,
-		 TMath::ASin(s_right/m_MirrorCurvature)*180.0/TMath::Pi(),
-		 180.0 - TMath::ASin(s_left/m_MirrorCurvature)*180.0/TMath::Pi());
-  MirrorArc.SetLineColor(kBlack);
-  MirrorArc.SetLineWidth(2);
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> Objects;
-  Objects.push_back(std::make_pair(std::make_unique<TArc>(MirrorArc), "ONLY"));
-  // Draw the walls
-  TLine LeftLine(-m_ThetaLength/2.0 + m_Position.X(),
-		 Settings::GetDouble("ARCGeometry/Radius"),
-		 -m_ThetaLength/2.0 + m_Position.X(),
-		 Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
-  LeftLine.SetLineColor(kBlack);
-  Objects.push_back(std::make_pair(std::make_unique<TLine>(LeftLine), ""));
-  TLine RightLine(m_ThetaLength/2.0 + m_Position.X(),
-		  Settings::GetDouble("ARCGeometry/Radius"),
-		  m_ThetaLength/2.0 + m_Position.X(),
-		  Settings::GetDouble("ARCGeometry/Radius") + m_RadiatorThickness);
-  RightLine.SetLineColor(kBlack);
-  Objects.push_back(std::make_pair(std::make_unique<TLine>(RightLine), ""));
-  // Draw the detector plane
-  TLine DetectorLine(-m_ThetaLength/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness,
-		     m_ThetaLength/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness);
-  DetectorLine.SetLineColor(kBlack);
-  Objects.push_back(std::make_pair(std::make_unique<TLine>(DetectorLine), ""));
-  // Draw the aerogel plane
-  TLine AerogelLine(-m_ThetaLength/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness,
-		     m_ThetaLength/2.0 + m_Position.X(),
-		     Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness + m_AerogelThickness);
-  AerogelLine.SetLineColor(kBlack);
-  Objects.push_back(std::make_pair(std::make_unique<TLine>(AerogelLine), ""));
-  // Draw SiPM
-  Objects.push_back(std::make_pair(m_Detector.DrawSiPM(GetRadiatorPosition()), ""));
-  return Objects;
-}
-
-Vector RadiatorCell::GetCellPosition(int CellNumber) const {
-  const double ZPosition = Settings::GetDouble("ARCGeometry/Radius") + m_VesselThickness + m_CoolingThickness;
-  if(CellNumber == 0) {
-    return Vector(0.0, 0.0, ZPosition);
-  } else {
-    if(CellNumber > 0) {
-      const double XPosition = m_ThetaLength*(CellNumber - 0.5);
-      return Vector(XPosition, 0.0, ZPosition);
-    } else {
-      const double XPosition = m_ThetaLength*(CellNumber + 0.5);
-      return Vector(XPosition, 0.0, ZPosition);
-    }
-  }
-}
-
-double RadiatorCell::GetThetaLength() const {
-  return m_ThetaLength;
-}
-
-double RadiatorCell::GetCellNumber() const {
+std::pair<std::size_t, std::size_t> RadiatorCell::GetCellNumber() const {
   return m_CellNumber;
 }
 
-RadiatorCell::FirstMiddleLast RadiatorCell::GetFirstMiddleLast() const {
-  return m_FirstMiddleLast;
-}
-
-double RadiatorCell::DetermineMirrorCurvature() const {
-  const double NominalCurvature = Settings::GetDouble("RadiatorCell/MirrorCurvature");
-  if(Settings::GetBool("General/VariableMirrorCurvature")) {
-    const double Radius = Settings::GetDouble("ARCGeometry/Radius");
-    const double Theta = TMath::ATan2(m_Position.X(), Radius + m_RadiatorThickness - m_VesselThickness);
-    return NominalCurvature/TMath::Abs(TMath::Cos(Theta));
-  } else {
-    return NominalCurvature;
-  }
-}
-
-double RadiatorCell::DetermineSiPMPositionX() const {
-  if(Settings::GetBool("General/VariableMirrorCurvature")) {
-    const double TanTheta = GetRadiatorPosition().X()/GetRadiatorPosition().Z();
-    const double SiPM_xPosition = 2*(m_RadiatorThickness - 2*m_VesselThickness - m_CoolingThickness)*TanTheta;
-    return SiPM_xPosition;
-  } else {
-    return 0.0;
-  }
-}
-
-SiPM& RadiatorCell::GetDetector() {
+const SiPM& RadiatorCell::GetDetector() const {
   return m_Detector;
+}
+
+void RadiatorCell::SetMirrorCurvature(double Curvature) {
+  m_MirrorCurvature = Curvature;
+}
+
+void RadiatorCell::SetMirrorXPosition(double x) {
+  m_MirrorCentre.SetX(m_DefaultMirrorCentre.X() + x);
+}
+
+void RadiatorCell::SetMirrorZPosition(double z) {
+  m_MirrorCentre.SetZ(m_DefaultMirrorCentre.Z() + z);
+}
+
+void RadiatorCell::SetDetectorPosition(double x) {
+  m_Detector.SetDetectorPosition(x);
+}
+
+void RadiatorCell::SetDetectorTilt(double Angle) {
+  m_Detector.SetDetectorTilt(Angle);
+}
+
+RotationZ RadiatorCell::ReversePhiRotation() const {
+  return RotationZ(0.0);
 }

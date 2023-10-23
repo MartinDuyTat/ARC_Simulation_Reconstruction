@@ -1,0 +1,21 @@
+Momentum 100.0
+ConstantMomentum true
+# Kaons in gas
+#Momentum_min 9.1
+#Momentum_max 100.0
+# Kaons in aerogel
+Momentum_min 2.0
+Momentum_max 30.0
+ID 211
+#ID 321
+#ID 2212
+RandomPhi true
+CosTheta 0.0
+z_min -2.181
+z_max 2.181
+#z_min -1.8
+#z_max 1.8
+Phi 0.0
+Phi_min -0.1
+Phi_max 0.1
+FromOrigin true

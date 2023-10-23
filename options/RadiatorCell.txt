@@ -1,0 +1,293 @@
+RadiatorThickness 0.20
+VesselThickness 0.01
+CoolingThickness 0.005
+AerogelThickness 0.01
+MirrorCurvature 0.37
+DetectorSize 0.08
+
+#20k
+Radiator_c0_r1_Curvature 0.369008
+Radiator_c0_r1_XPosition 0.00199739
+Radiator_c0_r1_ZPosition 0.000484417
+Radiator_c0_r1_DetPosition 0.00204862
+Radiator_c0_r1_DetTilt -0.0204611
+
+#20k
+Radiator_c1_r2_Curvature 0.368913
+Radiator_c1_r2_XPosition -0.025092
+Radiator_c1_r2_ZPosition 0.00109283
+Radiator_c1_r2_DetPosition -0.0127519
+Radiator_c1_r2_DetTilt -0.0445222
+
+#20k
+Radiator_c1_r1_Curvature 0.367441
+Radiator_c1_r1_XPosition -0.0441887
+Radiator_c1_r1_ZPosition 0.00248451
+Radiator_c1_r1_DetPosition -0.0203282
+Radiator_c1_r1_DetTilt -0.0931162
+
+#20k
+Radiator_c2_r2_Curvature 0.363157
+Radiator_c2_r2_XPosition -0.063806
+Radiator_c2_r2_ZPosition 0.00637531
+Radiator_c2_r2_DetPosition -0.028171
+Radiator_c2_r2_DetTilt -0.124024
+
+#20k
+Radiator_c2_r1_Curvature 0.358554
+Radiator_c2_r1_XPosition -0.0816915
+Radiator_c2_r1_ZPosition 0.0113855
+Radiator_c2_r1_DetPosition -0.0351757
+Radiator_c2_r1_DetTilt -0.132262
+
+#20k
+Radiator_c3_r2_Curvature 0.350086
+Radiator_c3_r2_XPosition -0.0959577
+Radiator_c3_r2_ZPosition 0.0193522
+Radiator_c3_r2_DetPosition -0.0397032
+Radiator_c3_r2_DetTilt -0.150924
+
+#20k
+Radiator_c3_r1_Curvature 0.346543
+Radiator_c3_r1_XPosition -0.114685
+Radiator_c3_r1_ZPosition 0.0234365
+Radiator_c3_r1_DetPosition -0.0478341
+Radiator_c3_r1_DetTilt -0.134323
+
+#20k
+Radiator_c4_r2_Curvature 0.336429
+Radiator_c4_r2_XPosition -0.116496
+Radiator_c4_r2_ZPosition 0.033904
+Radiator_c4_r2_DetPosition -0.0423608
+Radiator_c4_r2_DetTilt -0.18349
+
+#20k
+Radiator_c4_r1_Curvature 0.33016
+Radiator_c4_r1_XPosition -0.127363
+Radiator_c4_r1_ZPosition 0.04225
+Radiator_c4_r1_DetPosition -0.0459939
+Radiator_c4_r1_DetTilt -0.20144
+
+#20k
+Radiator_c5_r2_Curvature 0.320575
+Radiator_c5_r2_XPosition -0.123091
+Radiator_c5_r2_ZPosition 0.05137
+Radiator_c5_r2_DetPosition -0.0366375
+Radiator_c5_r2_DetTilt -0.21376
+
+#20k
+Radiator_c5_r1_Curvature 0.325436
+Radiator_c5_r1_XPosition -0.128286
+Radiator_c5_r1_ZPosition 0.0503257
+Radiator_c5_r1_DetPosition -0.0324965
+Radiator_c5_r1_DetTilt -0.154886
+
+#20k
+Radiator_c6_r2_Curvature 0.314895
+Radiator_c6_r2_XPosition -0.129993
+Radiator_c6_r2_ZPosition 0.0624498
+Radiator_c6_r2_DetPosition -0.0315672
+Radiator_c6_r2_DetTilt -0.229024
+
+#20k
+Radiator_c6_r1_Curvature 0.326104
+Radiator_c6_r1_XPosition -0.139797
+Radiator_c6_r1_ZPosition 0.055998
+Radiator_c6_r1_DetPosition -0.0295479
+Radiator_c6_r1_DetTilt -0.134243
+
+#20k
+Radiator_c7_r2_Curvature 0.319311
+Radiator_c7_r2_XPosition -0.137129
+Radiator_c7_r2_ZPosition 0.0664953
+Radiator_c7_r2_DetPosition -0.0266767
+Radiator_c7_r2_DetTilt -0.14106
+
+#20k
+Radiator_c7_r1_Curvature 0.310634
+Radiator_c7_r1_XPosition -0.134094
+Radiator_c7_r1_ZPosition 0.076318
+Radiator_c7_r1_DetPosition -0.0198518
+Radiator_c7_r1_DetTilt -0.259362
+
+#20k
+Radiator_c8_r2_Curvature 0.321726
+Radiator_c8_r2_XPosition -0.141744
+Radiator_c8_r2_ZPosition 0.0698931
+Radiator_c8_r2_DetPosition -0.0196984
+Radiator_c8_r2_DetTilt -0.0928119
+
+#20k
+Radiator_c8_r1_Curvature 0.350381
+Radiator_c8_r1_XPosition -0.215767
+Radiator_c8_r1_ZPosition 0.0785187
+Radiator_c8_r1_DetPosition -0.0827883
+Radiator_c8_r1_DetTilt -0.403075
+
+#20k
+Radiator_c9_r2_Curvature 0.254983
+Radiator_c9_r2_XPosition -0.221951
+Radiator_c9_r2_ZPosition 0.135631
+Radiator_c9_r2_DetPosition -0.120379
+Radiator_c9_r2_DetTilt -1.38132
+
+#20k
+EndCapRadiator_c1_r1_Curvature 0.349637
+EndCapRadiator_c1_r1_XPosition 0.0540617
+EndCapRadiator_c1_r1_ZPosition 0.0185107
+EndCapRadiator_c1_r1_DetPosition 0.081954
+EndCapRadiator_c1_r1_DetTilt -0.101852
+
+#20k
+EndCapRadiator_c2_r2_Curvature 0.35963
+EndCapRadiator_c2_r2_XPosition -0.0693705
+EndCapRadiator_c2_r2_ZPosition 0.0100598
+EndCapRadiator_c2_r2_DetPosition -0.0304485
+EndCapRadiator_c2_r2_DetTilt -0.118494
+
+#20k
+EndCapRadiator_c2_r1_Curvature 0.358139
+EndCapRadiator_c2_r1_XPosition -0.0846481
+EndCapRadiator_c2_r1_ZPosition 0.0115558
+EndCapRadiator_c2_r1_DetPosition -0.0407355
+EndCapRadiator_c2_r1_DetTilt -0.103914
+
+#20k
+EndCapRadiator_c3_r2_Curvature 0.349695
+EndCapRadiator_c3_r2_XPosition -0.0999593
+EndCapRadiator_c3_r2_ZPosition 0.0198683
+EndCapRadiator_c3_r2_DetPosition -0.0432295
+EndCapRadiator_c3_r2_DetTilt -0.118265
+
+#20k
+EndCapRadiator_c3_r1_Curvature 0.344967
+EndCapRadiator_c3_r1_XPosition -0.107123
+EndCapRadiator_c3_r1_ZPosition 0.0250228
+EndCapRadiator_c3_r1_DetPosition -0.0447855
+EndCapRadiator_c3_r1_DetTilt -0.137308
+
+#20k
+EndCapRadiator_c3_r3_Curvature 0.340541
+EndCapRadiator_c3_r3_XPosition -0.113788
+EndCapRadiator_c3_r3_ZPosition 0.0289459
+EndCapRadiator_c3_r3_DetPosition -0.0419997
+EndCapRadiator_c3_r3_DetTilt -0.119164
+
+#20k
+EndCapRadiator_c4_r2_Curvature 0.339376
+EndCapRadiator_c4_r2_XPosition -0.115136
+EndCapRadiator_c4_r2_ZPosition 0.0306836
+EndCapRadiator_c4_r2_DetPosition -0.0422966
+EndCapRadiator_c4_r2_DetTilt -0.118536
+
+#20k
+EndCapRadiator_c4_r1_Curvature 0.333608
+EndCapRadiator_c4_r1_XPosition -0.124894
+EndCapRadiator_c4_r1_ZPosition 0.0364653
+EndCapRadiator_c4_r1_DetPosition -0.0456515
+EndCapRadiator_c4_r1_DetTilt -0.112783
+
+#20k
+EndCapRadiator_c4_r3_Curvature 0.327512
+EndCapRadiator_c4_r3_XPosition -0.126093
+EndCapRadiator_c4_r3_ZPosition 0.0427482
+EndCapRadiator_c4_r3_DetPosition -0.0433654
+EndCapRadiator_c4_r3_DetTilt -0.143649
+
+#20k
+EndCapRadiator_c5_r2_Curvature 0.324686
+EndCapRadiator_c5_r2_XPosition -0.12464
+EndCapRadiator_c5_r2_ZPosition 0.0469601
+EndCapRadiator_c5_r2_DetPosition -0.0383363
+EndCapRadiator_c5_r2_DetTilt -0.186657
+
+#20k
+EndCapRadiator_c5_r4_Curvature 0.317135
+EndCapRadiator_c5_r4_XPosition -0.121418
+EndCapRadiator_c5_r4_ZPosition 0.0532098
+EndCapRadiator_c5_r4_DetPosition -0.0288431
+EndCapRadiator_c5_r4_DetTilt -0.129972
+
+#20k
+EndCapRadiator_c5_r1_Curvature 0.323165
+EndCapRadiator_c5_r1_XPosition -0.134206
+EndCapRadiator_c5_r1_ZPosition 0.0530051
+EndCapRadiator_c5_r1_DetPosition -0.0443281
+EndCapRadiator_c5_r1_DetTilt -0.20109
+
+#20k
+EndCapRadiator_c5_r3_Curvature 0.313826
+EndCapRadiator_c5_r3_XPosition -0.118079
+EndCapRadiator_c5_r3_ZPosition 0.0570635
+EndCapRadiator_c5_r3_DetPosition -0.0254509
+EndCapRadiator_c5_r3_DetTilt -0.186348
+
+#20k
+EndCapRadiator_c6_r2_Curvature 0.312448
+EndCapRadiator_c6_r2_XPosition -0.125109
+EndCapRadiator_c6_r2_ZPosition 0.0621203
+EndCapRadiator_c6_r2_DetPosition -0.029028
+EndCapRadiator_c6_r2_DetTilt -0.251983
+
+#20k
+EndCapRadiator_c6_r4_Curvature 0.306595
+EndCapRadiator_c6_r4_XPosition -0.116272
+EndCapRadiator_c6_r4_ZPosition 0.0648111
+EndCapRadiator_c6_r4_DetPosition -0.0159027
+EndCapRadiator_c6_r4_DetTilt -0.19651
+
+#20k
+EndCapRadiator_c6_r1_Curvature 0.324725
+EndCapRadiator_c6_r1_XPosition -0.138884
+EndCapRadiator_c6_r1_ZPosition 0.0577007
+EndCapRadiator_c6_r1_DetPosition -0.0348118
+EndCapRadiator_c6_r1_DetTilt -0.159627
+
+#20k
+EndCapRadiator_c6_r3_Curvature 0.305166
+EndCapRadiator_c6_r3_XPosition -0.11767
+EndCapRadiator_c6_r3_ZPosition 0.0684136
+EndCapRadiator_c6_r3_DetPosition -0.0169257
+EndCapRadiator_c6_r3_DetTilt -0.211619
+
+#20k
+EndCapRadiator_c7_r2_Curvature 0.315405
+EndCapRadiator_c7_r2_XPosition -0.130506
+EndCapRadiator_c7_r2_ZPosition 0.0646394
+EndCapRadiator_c7_r2_DetPosition -0.024065
+EndCapRadiator_c7_r2_DetTilt -0.124305
+
+#20k
+EndCapRadiator_c6_r5_Curvature 0.293591
+EndCapRadiator_c6_r5_XPosition -0.150647
+EndCapRadiator_c6_r5_ZPosition 0.0848231
+EndCapRadiator_c6_r5_DetPosition -0.0489362
+EndCapRadiator_c6_r5_DetTilt -0.34349
+
+#20k
+EndCapRadiator_c7_r4_Curvature 0.305523
+EndCapRadiator_c7_r4_XPosition -0.171981
+EndCapRadiator_c7_r4_ZPosition 0.0783345
+EndCapRadiator_c7_r4_DetPosition -0.0660806
+EndCapRadiator_c7_r4_DetTilt -0.286207
+
+#20k
+EndCapRadiator_c7_r1_Curvature 0.347918
+EndCapRadiator_c7_r1_XPosition -0.210358
+EndCapRadiator_c7_r1_ZPosition 0.0679805
+EndCapRadiator_c7_r1_DetPosition -0.0914699
+EndCapRadiator_c7_r1_DetTilt -0.413081
+
+#20k
+EndCapRadiator_c7_r3_Curvature 0.274816
+EndCapRadiator_c7_r3_XPosition -0.186277
+EndCapRadiator_c7_r3_ZPosition 0.10374
+EndCapRadiator_c7_r3_DetPosition -0.0902764
+EndCapRadiator_c7_r3_DetTilt -0.652112
+
+#20k
+EndCapRadiator_c8_r2_Curvature 0.220668
+EndCapRadiator_c8_r2_XPosition -0.200031
+EndCapRadiator_c8_r2_ZPosition 0.101179
+EndCapRadiator_c8_r2_DetPosition -0.117352
+EndCapRadiator_c8_r2_DetTilt -1.3989

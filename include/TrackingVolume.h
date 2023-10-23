@@ -42,11 +42,7 @@ class TrackingVolume {
   /**
    * Number of cells in theta direction
    */
-  const int m_ThetaCells;
-  /**
-   * Number of cells in phi direction
-   */
-  const int m_PhiCells;
+  const int m_CellsPerRow;
   /**
    * The magnetic field strength
    */

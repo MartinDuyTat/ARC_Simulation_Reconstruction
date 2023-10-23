@@ -9,8 +9,10 @@
 #define SETTINGS
 
 #include<string>
-#include<map>
+#include<unordered_map>
 #include<vector>
+
+using ssMap = std::unordered_map<std::string, std::string>;
 
 class Settings {
  public:
@@ -37,6 +39,10 @@ class Settings {
    */
   static int GetInt(const std::string &Setting);
   /**
+   * Get unsigned integer setting
+   */
+  static std::size_t GetSizeT(const std::string &Setting);
+  /**
    * Get bool setting (if string is "true" this evaluates to true)
    */
   static bool GetBool(const std::string &Setting);
@@ -45,6 +51,10 @@ class Settings {
    */
   static std::vector<int> GetIntVector(const std::string &Setting);
   /**
+   * Get vector of size_t, comma separated in options file
+   */
+  static std::vector<std::size_t> GetSizeTVector(const std::string &Setting);
+  /**
    * Check if setting exists
    */
   static bool Exists(const std::string &Setting);
@@ -52,7 +62,7 @@ class Settings {
   /**
    * Map where keys are name of settings file and values are maps with settings
    */
-  static std::map<std::string, std::map<std::string, std::string>> m_Settings;
+  static std::unordered_map<std::string, ssMap> m_Settings;
 };
 
 #endif

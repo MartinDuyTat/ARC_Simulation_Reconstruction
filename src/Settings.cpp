@@ -1,7 +1,7 @@
 // Martin Duy Tat 5th May 2022
 
 #include<string>
-#include<map>
+#include<unordered_map>
 #include<stdexcept>
 #include<utility>
 #include<fstream>
@@ -11,13 +11,13 @@
 #include<algorithm>
 #include"Settings.h"
 
-std::map<std::string, std::map<std::string, std::string>> Settings::m_Settings;
+std::unordered_map<std::string, ssMap> Settings::m_Settings;
 
 void Settings::AddSettings(const std::string &Name, const std::string &Filename) {
   if(m_Settings.find(Name) != m_Settings.end()) {
     throw std::runtime_error("Settings " + Name + " already exists");
   }
-  std::map<std::string, std::string> NewSettings;
+  ssMap NewSettings;
   std::ifstream File(Filename);
   std::string Line;
   while(std::getline(File, Line)) {
@@ -60,6 +60,15 @@ int Settings::GetInt(const std::string &Setting) {
   return std::stoi(GetString(Setting));
 }
 
+std::size_t Settings::GetSizeT(const std::string &Setting) {
+  const int Integer = std::stoi(GetString(Setting));
+  if(Integer < 0) {
+    throw std::runtime_error("Cannot load negative integer into std::size_t");
+  } else {
+    return static_cast<std::size_t>(Integer);
+  }
+}
+
 bool Settings::GetBool(const std::string &Setting) {
   return GetString(Setting) == "true";
 }
@@ -70,6 +79,18 @@ std::vector<int> Settings::GetIntVector(const std::string &Setting) {
   std::stringstream ss(CommaSeparatedList);
   std::vector<int> List;
   int Number;
+  while(ss >> Number) {
+    List.push_back(Number);
+  }
+  return List;
+}
+
+std::vector<std::size_t> Settings::GetSizeTVector(const std::string &Setting) {
+  std::string CommaSeparatedList = GetString(Setting);
+  std::replace(CommaSeparatedList.begin(), CommaSeparatedList.end(), ',', ' ');
+  std::stringstream ss(CommaSeparatedList);
+  std::vector<std::size_t> List;
+  std::size_t Number;
   while(ss >> Number) {
     List.push_back(Number);
   }

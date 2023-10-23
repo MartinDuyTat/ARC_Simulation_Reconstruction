@@ -21,48 +21,75 @@ namespace InterpolationType = ROOT::Math::Interpolation;
 
 struct PhotonHit {
   /**
-   * Constructor saving the photon hits
-   */
-  PhotonHit(double x, double y, const Photon *photon): x(x), y(y), m_Photon(photon) {}
-  /**
    * Detector hit coordinates
    */
-  const double x;
-  const double y;
+  const Vector m_HitPosition;
   /**
    * Pointer to the photon that caused this hit
    */
   const Photon *m_Photon;
+  /**
+   * Vector between photon hit and centre of detector
+   */
+  const Vector m_CentreHitDistance;
 };
 
 class SiPM {
  public:
   /**
    * Constructor setting up the detector coordinates and detector size
-   * @param xPosition Position in the x direction
-   * @param yPosition Position in the y direction
    */
-  SiPM(double xPosition, double yPosition);
+  SiPM();
   /**
-   * Add a photon hit
+   * Register a photon hit and return it
    */
-  bool AddPhotonHit(const Photon &photon);
+  PhotonHit AddPhotonHit(Photon &photon) const;
   /**
    * Plot photon hits
    */
-  void PlotHits(const std::string &Filename) const;
+  void PlotHits(const std::string &Filename,
+		const std::vector<PhotonHit> &photonHits) const;
   /**
    * Get photon hits in SiPM
    */
   const std::vector<PhotonHit>& GetPhotonHits() const;
   /**
    * Draw SiPM
+   * @param RadiatorPosition The position of the radiator cell
    */
   std::unique_ptr<TObject> DrawSiPM(const Vector &RadiatorPosition) const;
   /**
    * Check if photon hit the detector
    */
   bool IsDetectorHit(const Photon &photon) const;
+  /**
+   * Set the detector X position
+   */
+  void SetDetectorPosition(double x);
+  /**
+   * Set the detector tilt, in radians
+   */
+  void SetDetectorTilt(double Angle);
+  /**
+   * Get the detector X position
+   */
+  double GetDetectorXPosition() const;
+  /**
+   * Get the detector Z position
+   */
+  double GetDetectorZPosition() const;
+  /**
+   * Get the detector tilt, in radiations
+   */
+  double GetDetectorTilt() const;
+  /**
+   * Get the detector X size
+   */
+  double GetDetectorSizeX() const;
+  /**
+   * Get the detector Y size
+   */
+  double GetDetectorSizeY() const;
  private:
   /**
    * Size of detector in x direction
@@ -75,31 +102,52 @@ class SiPM {
   /**
    * Centre of detector in x direction
    */
-  const double m_DetectorPositionX;
+  double m_DetectorPositionX;
   /**
    * Centre of detector in y direction
    */
   const double m_DetectorPositionY;
   /**
+   * Centre of detector in z direction
+   */
+  double m_DetectorPositionZ;
+  /**
+   * The tilt of the detector plane, in radians
+   * Positive tilt is anti-clockwise
+   */
+  double m_DetectorTilt;
+  /**
+   * Aerogel thickness
+   */
+  double m_CoolingThickness;
+  /**
    * Max PDE
    */
   const double m_MaxPDE;
   /**
+   * Flag that is true for end cap radiator cells
+   */
+  const bool m_EndCap;
+  /**
+   * The wavelengths used to measure PDE in SiPM, in nm
+   */
+  static constexpr std::array<double, 16> m_Lambda{
+    287.0, 299.0, 322.0, 340.0,
+    367.0, 392.0, 402.0, 413.0,
+    422.0, 437.0, 452.0, 467.0,
+    503.0, 590.0, 700.0, 800.0};
+  /**
+   * The measured PDE
+   */
+  static constexpr std::array<double, 16> m_PDE{
+    0.20, 0.41, 0.46, 0.47,
+    0.52, 0.59, 0.60, 0.60,
+    0.59, 0.57, 0.56, 0.53,
+    0.51, 0.40, 0.26, 0.13};
+  /**
    * Interpolator for PDE
    */
-  std::unique_ptr<Interpolator> m_Interpolator;
-  /**
-   * Vector of photon hits
-   */
-  std::vector<PhotonHit> m_PhotonHits;
-  /**
-   * Get the wavelengths used to measure PDE in SiPM, in nm
-   */
-  constexpr std::array<double, 15> GetPDEWavelengths() const;
-  /**
-   * Get the measured PDE
-   */
-  constexpr std::array<double, 15> GetMeasuredPDE() const;
+  static const Interpolator m_Interpolator;
 };
 
 #endif

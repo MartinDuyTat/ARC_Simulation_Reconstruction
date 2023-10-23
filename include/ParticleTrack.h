@@ -14,38 +14,76 @@
 #include"Photon.h"
 #include"TrackingVolume.h"
 #include"RadiatorArray.h"
+#include"Particle.h"
+#include"HelixPath.h"
 
 using Vector = ROOT::Math::XYZVector;
 
-class ParticleTrack {
+class ParticleTrack: public Particle {
  public:
   /**
    * Construct a charged particle with momentum and ID at the interaction point
    * @param ParticleID PDG particle ID convention
    * @param Momentum Particle momentum, in GeV
    * @param Position Particle initial position, by default it's the origin
+   * @param BField Magnetic field that particle passes through
    */
   ParticleTrack(int ParticleID,
 		const Vector &Momentum,
-		const Vector &Position = Vector(0.0, 0.0, 0.0));
+		std::size_t TrackNumber,
+		double BField);
   /**
-   * Enum with the two coordinate systems used
-   * GlobalDetector: z along symmetry axis, x is up, y is out of the plane (only used to generate charged tracks)
-   * LocalRadiator: z axis in the radial direction, x in the theta direction and y in the phi direction
+   * Need virtual constructor since it's a virtual class
    */
-  enum class CoordinateSystem{GlobalDetector, LocalRadiator};
+  ~ParticleTrack() = default;
+  /**
+   * Enum class with the location of the particle
+   * TrackerVolume: Inside the tracker volume, where the IP is
+   * EntranceWindow: Particle is at the entrance window to the radiator cell
+   * MissedEntranceWindow: Particle didn't hit this radiator entrance window
+   * MissedRadiator: Particle did not enter any radiator cells
+   * Radiator: Inside the radiatorCell
+   * Mirror: The particle has reached the mirror
+   * MissedMirror: The particle missed the mirror
+   */
+  enum class Location{
+    TrackerVolume,
+    EntranceWindow,
+    MissedEntranceWindow,
+    Radiator,
+    Mirror,
+    MissedMirror};
   /**
    * Track particle through inner tracker with magnetic field
+   * @param InnerTracker The tracking volume
+   * @return Returns true if tracking through the magnetic field was successful
    */
-  void TrackThroughTracker(const TrackingVolume &InnerTracker);
+  bool TrackThroughTracker(const TrackingVolume &InnerTracker);
+  /**
+   * Set radiator
+   */
+  void SetRadiator(const RadiatorCell *radiatorCell);
   /**
    * Convert to local radiator coordinates
    */
-  void ConvertToRadiatorCoordinates(RadiatorArray &Cell);
+  virtual void ConvertToRadiatorCoordinates() override;
+  /**
+   * Convert back to global coordinates
+   */
+  virtual void ConvertBackToGlobalCoordinates() override;
   /**
    * Track particle through radiator cell
+   * @return Returns true if tracking through the magnetic field was successful
    */
-  void TrackThroughRadiatorCell();
+  bool TrackThroughAerogel();
+  /**
+   * Helper function to track particle through gas until it hits the correct mirror
+   */
+  void TrackThroughGasToMirror();
+  /**
+   * If particle misses the mirror in this cell, call this function to migrate to next cell
+   */
+  bool TrackToNextCell(const RadiatorArray &radiatorArray);
   /**
    * Generate Cherenkov photon from aerogel
    */
@@ -63,118 +101,128 @@ class ParticleTrack {
    */
   std::vector<Photon> GeneratePhotonsFromGas() const;
   /**
-   * Get index of fraction
-   */
-  double GetIndexRefraction(Photon::Radiator Radiator, double Energy) const;
-  /**
    * Generate Cherenkov photon
-   * @param Entry point of radiator
-   * @param Exit point of ratiator
+   * @param Entry_s Path length at entry of radiator
+   * @param Exit_s Path length at exit of radiator
    * @param Radiator The medium the photon was emitted in, to determine the index of refraction
    */
-  Photon GeneratePhoton(const Vector &Entry, const Vector &Exit, Photon::Radiator Radiator) const;
+  Photon GeneratePhoton(double Entry,
+			double Exit,
+			Photon::Radiator Radiator) const;
   /**
    * Get the particle speed, in units of c
    */
   double Beta() const;
   /**
-   * Get momentum vector
-   */
-  const Vector& GetMomentum() const;
-  /**
-   * Get entry point of particle in radiator
-   */
-  const Vector& GetEntryPoint(Photon::Radiator Radiator) const;
-  /**
-   * Get exit point of particle in radiator
-   */
-  const Vector& GetExitPoint(Photon::Radiator Radiator) const;
-  /**
-   * Draw particle track
+   * Draw particle track and the photons
    */
   std::unique_ptr<TLine> DrawParticleTrack() const;
   /**
-   * Get photon hits in SiPM
+   * Get particle location
    */
-  const std::vector<PhotonHit>& GetPhotonHits() const;
+  Location GetParticleLocation() const;
   /**
-   * Get particle position
+   * Get the position of the entrance window
    */
-  const Vector& GetPosition() const;
+  Vector GetEntranceWindowPosition() const;
+  /**
+   * Rotate around the phi direction to map particle to a valid radiator cell
+   * @param DeltaPhi Angle that is rotated in phi
+   */
+  virtual void MapPhi(double DeltaPhi) override;
+  /**
+   * Reflect everything in the z-direction since radiator cells are symmetric
+   */
+  virtual void ReflectZ() override;
+  /**
+   * Reflect everything in the y-direction
+   */
+  virtual void ReflectY() override;
+  /**
+   * Check if particle is at the radiator so that we can search for the radiator cell
+   */
+  virtual bool IsAtRadiator() const override;
  private:
   /**
    * Particle momentum, in GeV
    */
-  Vector m_Momentum;
-  /**
-   * Particle position, in m
-   */
-  Vector m_Position;
+  ARCVector m_Momentum;
   /**
    * Initial particle position in the global coordinate system, in m
    */
-  Vector m_InitialPosition;
+  ARCVector m_InitialPosition;
+  /**
+   * Entry path length of aerogel
+   */
+  double m_AerogelEntry_s;
+  /**
+   * Exit path length of aerogel
+   */
+  double m_AerogelExit_s;
+  /**
+   * Entry path length of gas
+   */
+  double m_GasEntry_s;
+  /**
+   * Exit path length of gas
+   */
+  double m_GasExit_s;
+  /**
+   * Entrance window position
+   */
+  ARCVector m_EntranceWindowPosition;
   /**
    * Particle ID
    */
   int m_ParticleID;
   /**
-   * Pointer to the radiator cell that track enters
+   * Flag that keeps track of where the particle is
    */
-  RadiatorIter m_RadiatorCell;
+  Location m_Location;
   /**
-   * Flag that is true when track has been traced through inner tracker detector
+   * Flag that is true if emission point of photon is random
    */
-  bool m_TrackedThroughTracker;
+  bool m_RandomEmissionPoint;
   /**
-   * Flag that is true when track has been traced through radiator cell
+   * Flag that is true if chromatic dispersion is on
    */
-  bool m_TrackedThroughRadiator;
+  bool m_ChromaticDispersion;
   /**
-   * Entry point of aerogel
+   * Mass of particle
    */
-  Vector m_AerogelEntry;
-  /**
-   * Exit point of aerogel
-   */
-  Vector m_AerogelExit;
-  /**
-   * Entry point of gas
-   */
-  Vector m_GasEntry;
-  /**
-   * Exit point of gas
-   */
-  Vector m_GasExit;
-  /**
-   * Which coordinate system the momentum and position is given in
-   */
-  CoordinateSystem m_CoordinateSystem;
+  const double m_Mass;
   /**
    * Frank-Tamm relation for photon yield
    */
   double GetPhotonYield(double x, double Beta, double n) const;
   /**
-   * Helper function that maps the phi direction to the cell near phi = 0
+   * The multiplication factor in the photon yield calculation
    */
-  void MapPhiBack();
+  const double m_PhotonMultiplier;
   /**
-   * Helper function to rotate around y axis in coordinate transformation
+   * Track number
    */
-  void RotateY(Vector &Vec) const;
+  std::size_t m_TrackNumber;
   /**
-   * Helper function to track particle through gas until it hits the correct mirror
-   * If it ends up outside the cell in the theta direction, move to the next radiator cell
+   * List of track numbers that we want to draw
    */
-  void TrackThroughGasToMirror();
+  std::vector<std::size_t> m_TracksToDraw;
   /**
-   * Helper function to swap radiator cell if particle is outside in the theta direction
+   * Helix trajectory
    */
-  bool SwapRadiatorCell();
+  HelixPath m_Helix;
   /**
-   * Helper function to change coordinate origin
+   * Current path length
    */
-  void ChangeCoordinateOrigin(const Vector &Shift);
+  double m_PathLength;
+  /**
+   * Helper function that checks if this track should be drawn
+   */
+  bool IsTrackDrawn() const;
+  /**
+   * Helper function that determines the photon multiplier
+   */
+  static double GetPhotonMultiplier(const Vector &Momentum);
 };
 
 #endif

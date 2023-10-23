@@ -1,6 +1,6 @@
-// Martin Duy Tat 23rd June 2022
+// Martin Duy Tat 2nd September 2022
 /**
- * RadiatorArray contains the full ARC geometry of radiators
+ * RadiatorArray is an abstract class that represent an array of radiator cells
  */
 
 #ifndef RADIATORARRAY
@@ -8,46 +8,64 @@
 
 #include<vector>
 #include<memory>
-#include<utility>
-#include<string>
-#include"TObject.h"
-#include"Math/Vector3Dfwd.h"
 #include"RadiatorCell.h"
 
-using Vector = ROOT::Math::XYZVector;
+class Particle;
 
 class RadiatorArray {
  public:
   /**
-   * Constructor that sets up the geometry
+   * Default constructor
    */
   RadiatorArray();
   /**
-   * Draw all the radiator cells
+   * Delete copy constructor
    */
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorArray() const;
+  RadiatorArray(const RadiatorArray &radiatorArray) = delete;
+  /**
+   * Need virtual destructor because of polymorphism
+   */
+  virtual ~RadiatorArray() = default;
+  /**
+   * Function to get a non-constant RadiatorCell object
+   */
+  RadiatorCell* GetRadiatorCell(std::size_t i, std::size_t j);
   /**
    * Operator overload to get the individual radiator cells
    */
-  RadiatorIter operator[](int i);
+  const RadiatorCell* operator()(std::size_t i, std::size_t j) const;
   /**
    * Check which radiator the particle goes through
-   * It is assumed that the input vector is right at the bottom surface of the radiator plane
+   * It will map the track momentum and position if the track hits an equivalent radiator cell
    */
-  RadiatorIter WhichRadiator(const Vector &Position);
- private:
+  virtual const RadiatorCell* FindRadiator(Particle &particle) const = 0;
+  /**
+   * Draw all the radiator cells
+   */
+  virtual std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
+  DrawRadiatorArray() const = 0;
+ protected:
   /**
    * Vector containing all the radiator cells
    */
-  std::vector<RadiatorCell> m_Cells;
+  std::vector<std::unique_ptr<RadiatorCell>> m_Cells;
   /**
-   * Flag that is true if the full geometry is included, otherwise a single cell in the middle is used
+   * Number of cells in theta direction along the main row
    */
-  const bool m_FullArray;
+  const std::size_t m_NumberMainRowCells;
   /**
-   * Number of cells in theta direction
+   * The horizontal distance between two hexagons
    */
-  const int m_NumberCells;
+  const double m_xHexDist;
+  /**
+   * The vertical distance between two hexagons
+   */
+  const double m_yHexDist;
+ private:
+  /**
+   * Helper function to find the index for the radiator cell
+   */
+  virtual int FindRadiatorIndex(std::size_t i, std::size_t j) const = 0;
 };
 
 #endif

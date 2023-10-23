@@ -1,7 +1,8 @@
 // Martin Duy Tat 29th April 2022
 /**
  * RadiatorCell describes the geometry of a single radiator cell of the ARC
- * The radiator cell has a local coordinate system with its origin in the middle of the detector plane
+ * The radiator cell has a local coordinate system with its origin in the
+ * middle of the detector plane
  * All lengths are in meter
  */
 
@@ -14,23 +15,41 @@
 #include<memory>
 #include"TMath.h"
 #include"Math/Vector3Dfwd.h"
+#include"Math/Rotation3D.h"
+#include"Math/RotationZ.h"
 #include"SiPM.h"
 #include"Photon.h"
+#include"ARCVector.h"
 
 using Vector = ROOT::Math::XYZVector;
-using RadiatorIter = std::vector<RadiatorCell>::iterator;
+using Rotation3D = ROOT::Math::Rotation3D;
+using RotationZ = ROOT::Math::RotationZ;
 
 class RadiatorCell {
  public:
   /**
-   * enum class describing if the radiator cell is the first, middle or last cell
+   * Constructor that sets up the geometry with a default cell position
+   * @param CellColumnNumber The column number of this cell
+   * @param CellRowNumber The row number of this cell
+   * @param HexagonSize The length between two opposide hexagon edges (not points)
+   * @param Position The position of the radiator cell
+   * @param Rotation The rotation from global to local radiator coordinates
+   * @param Prefix Prefix in the names of cells in options file
    */
-  enum class FirstMiddleLast{First, Middle, Last, Single};
+  RadiatorCell(std::size_t CellColumnNumber,
+	       std::size_t CellRowNumber,
+	       double HexagonSize,
+	       const Vector &Position,
+	       const Rotation3D &Rotation,
+	       const std::string &Prefix = "");
   /**
-   * Constructor that sets up the geometry
-   * @param CellNumber Unique number that identifies the position of the cell
+   * Delete copy constructor
    */
-  RadiatorCell(int CellNumber);
+  RadiatorCell(const RadiatorCell &radiatorCell) = delete;
+  /**
+   * Need virtual destructor because of polymorphism
+   */
+  virtual ~RadiatorCell() = default;
   /**
    * Get total radiator cell thickness
    */
@@ -48,9 +67,13 @@ class RadiatorCell {
    */
   double GetAerogelThickness() const;
   /**
-   * Get the mirror centre of curvature
+   * Get the mirror centre of curvature in local coordinates
    */
   const Vector& GetMirrorCentre() const;
+  /**
+   * Get the mirror centre of curvature in global coordinates
+   */
+  Vector GetGlobalMirrorCentre() const;
   /**
    * Get the mirror curvature
    */
@@ -60,46 +83,80 @@ class RadiatorCell {
    */
   const Vector& GetRadiatorPosition() const;
   /**
-   * Function that checks if the position is inside the radiator in the theta direction
+   * Get the radiator cell rotation from global to local coordinates
    */
-  bool IsInsideThetaBoundary(const Vector &Position) const;
+  const Rotation3D& GetRadiatorRotation() const;
   /**
-   * Function that checks if the photon is inside the radiator in the theta direction
+   * Function that checks if the position is inside the radiator
    */
-  bool IsInsideThetaBoundary(const Photon &photon) const;
+  virtual bool IsInsideCell(const ARCVector &Position) const = 0;
   /**
-   * Function that checks if the photon is inside the radiator in the phi direction
+   * Function that checks if the photon is inside the radiator
    */
-  bool IsInsidePhiBoundary(const Photon &photon) const;
+  bool IsInsideCell(const Photon &photon) const;
   /**
    * Draw radiator geometry
    */
-  std::vector<std::pair<std::unique_ptr<TObject>, std::string>> DrawRadiatorGeometry() const;
+  virtual std::vector<std::pair<std::unique_ptr<TObject>, std::string>>
+  DrawRadiatorGeometry() const = 0;
   /**
-   * Get length of cell in theta direction
+   * Get length between two edges of a hexagon cell
    */
-  double GetThetaLength() const;
+  double GetHexagonSize() const;
   /**
    * Get cell number
    */
-  double GetCellNumber() const;
-  /**
-   * Get the radiator cell position to be first, middle or last
-   */
-  FirstMiddleLast GetFirstMiddleLast() const;
+  std::pair<std::size_t, std::size_t> GetCellNumber() const;
   /**
    * Get the detector
    */
-  SiPM& GetDetector();
- private:
+  const SiPM& GetDetector() const;
+  /**
+   * Set the mirror curvature
+   * @param Curvature New mirror curvature
+   */
+  void SetMirrorCurvature(double Curvature);
+  /**
+   * Set the mirror x position, relative to the default position
+   */
+  void SetMirrorXPosition(double x);
+  /**
+   * Set the mirror z position, relative to the default position
+   */
+  void SetMirrorZPosition(double z);
+  /**
+   * Set the detector X position
+   */
+  void SetDetectorPosition(double x);
+  /**
+   * Set the detector tilt, in radians
+   */
+  void SetDetectorTilt(double Angle);
+  /**
+   * Function that checks if the detector is contained inside the radiator cell
+   */
+  virtual bool IsDetectorInsideCell() const = 0;
+  /**
+   * Checks if the cell is at the edge (near the end cap)
+   */
+  virtual bool IsEdgeCell() const = 0;
+  /**
+   * Get the reverse rotation in phi, for plotting purposes
+   */
+  virtual RotationZ ReversePhiRotation() const;
+ protected:
+  /**
+   * The radiator cell position
+   */
+  const Vector m_Position;
+  /**
+   * The rotation from global coordinates to the local radiator coordinates
+   */
+  const Rotation3D m_Rotation;
   /**
    * Get the centre of curvature of the mirror z coordinate in local coordinates
    */
   double GetMirrorCurvatureCentreZ() const;
-  /**
-   * Length of the radiator cell in the theta direction
-   */
-  const double m_ThetaLength;
   /**
    * The full thickness of the radiator cell
    */
@@ -117,9 +174,16 @@ class RadiatorCell {
    */
   const double m_AerogelThickness;
   /**
-   * Position of radiator cell in global coordinates, but rotated so that x is along the theta direction and y is along the phi direction
+   * The length between two edges of a hexagon
    */
-  const Vector m_Position;
+  const double m_HexagonSize;
+  /**
+   * Radiator cell row number (first) and column number (second)
+   * For a single central cell, it is assigned number (0, 0)
+   * For an array of radiator cells, numbering starts from (0, 1)
+   * from the middle of the main row
+   */
+  const std::pair<std::size_t, std::size_t> m_CellNumber;
   /**
    * The SiPM in the radiator cell
    */
@@ -127,37 +191,15 @@ class RadiatorCell {
   /**
    * Radius of curvature of the spherical mirror
    */
-  const double m_MirrorCurvature;
+  double m_MirrorCurvature;
+  /**
+   * Default centre of curvature of the mirror
+   */
+  const Vector m_DefaultMirrorCentre;
   /**
    * Centre of curvature of the mirror
    */
-  const Vector m_MirrorCentre;
-  /**
-   * Angular size of the radiator cell in the phi direction
-   */
-  const double m_DeltaPhi;
-  /**
-   * Radiator cell number
-   * For a single central cell, it is assigned number 0
-   * For an array of radiator cells, numbering starts from 1 from the middle to the right and -1 to the left
-   */
-  const int m_CellNumber;
-  /**
-   * Helper function to get cell position based on cell number
-   */
-  Vector GetCellPosition(int CellNumber) const;
-  /**
-   * Label that describes if the radiator cell is the first, last or if it's one of the middle radiators
-   */
-  FirstMiddleLast m_FirstMiddleLast;
-  /**
-   * Helper function to determine the mirror curvature
-   */
-  double DetermineMirrorCurvature() const;
-  /**
-   * Helper function to figure out position of SiPM
-   */
-  double DetermineSiPMPositionX() const;
+  ARCVector m_MirrorCentre;
 };
 
 #endif
